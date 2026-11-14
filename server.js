@@ -324,8 +324,23 @@ function advanceTurn(room, fromPlayer){
   room.turnIdx = nextIdx;
   let nextP = room.players[nextIdx];
   emitToRoom(room, 'turnChanged', { turn:nextP.name, wallLeft:room.wall.length });
-  if(nextP.isBot){ setTimeout(()=>maybeBotTurn(room), 800); }
-  else { io.to(nextP.id).emit('yourTurnToDraw', { wallLeft:room.wall.length }); }
+
+  if(nextP.isBot){
+    setTimeout(()=>maybeBotTurn(room), 800);
+  } else {
+    // MANUSIA: LANGSUNG KASIH 1 TILE, BIAR BISA LANGSUNG BUANG
+    if(room.wall.length===0){ endGameDraw(room); return; }
+    let drawn = room.wall.pop();
+    while(drawn && drawn.type==='flower'){
+      nextP.flowers.push(drawn);
+      if(room.wall.length===0) break;
+      drawn = room.wall.pop();
+    }
+    if(drawn) nextP.hand.push(drawn);
+    sendHand(room, nextP);
+    io.to(nextP.id).emit('youDrew', { tile:drawn, wallLeft:room.wall.length });
+    emitToRoom(room, 'playerDrew', { player:nextP.name, wallLeft:room.wall.length });
+  }
 }
 function endGameDraw(room){
   room.phase='finished';
