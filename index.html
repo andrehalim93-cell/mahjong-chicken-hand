@@ -61,6 +61,12 @@ input{font-family:inherit}
 .centerBox .logo{font-size:36px}
 .centerBox .wall{margin-top:6px;background:rgba(0,0,0,.55);border:1px solid rgba(250,204,21,.4);border-radius:12px;padding:8px;font-size:12px;line-height:1.5}
 .centerBox .lastTile{margin-top:8px}
+.centerBox{width:360px;max-width:92%}
+.poolTop,.poolBottom{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-height:28px;max-width:220px;margin:4px auto}
+.poolMid{display:flex;justify-content:center;align-items:flex-start;gap:6px}
+.poolSide{display:flex;flex-direction:column;flex-wrap:wrap;gap:2px;justify-content:flex-start;min-width:28px;max-height:120px}
+.poolCenter{min-width:90px;text-align:center}
+.poolTop .mTile,.poolBottom .mTile,.poolSide .mTile{width:22px;height:30px;font-size:8px}
 .seatPos{position:absolute;z-index:3;text-align:center;width:170px}
 .seatPos.top{top:10px;left:50%;transform:translateX(-50%)}
 .seatPos.left{left:8px;top:12px;transform:none;width:130px}
@@ -130,7 +136,15 @@ input{font-family:inherit}
 <div id="gameScreen" class="hidden">
   <div class="gameTop"><div class="pill">🀄 <b id="gCode">----</b> • 🧱 Sisa: <b id="wallLeft">144</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div></div>
   <div class="table" id="tableEl">
-   <div class="centerBox"><div id="lastTileEl" style="color:#cbd5e1;font-size:12px">Belum ada buangan</div></div>
+   <div class="centerBox" id="centerBox">
+  <div class="poolTop" id="poolTop"></div>
+  <div class="poolMid">
+    <div class="poolSide" id="poolLeft"></div>
+    <div class="poolCenter" id="lastTileEl">Belum ada buangan</div>
+    <div class="poolSide" id="poolRight"></div>
+  </div>
+  <div class="poolBottom" id="poolBottom"></div>
+</div>
     <div class="seatPos top" id="seatTop"></div><div class="seatPos left" id="seatLeft"></div><div class="seatPos right" id="seatRight"></div>
   </div>
   <div class="myArea">
