@@ -234,6 +234,16 @@ socket.on('gameStarted', d=>{
   if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Kamu dealer, buang 1 tile!'); }
   addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!');
   renderSeats(d.players, d.turn);
+function renderCentralPool(players){
+  let me = players.find(p=>p.name===myName);
+  let others = players.filter(p=>p.name!==myName);
+  // others urutannya: [kanan, atas, kiri] sesuai posMap di renderSeats
+  let topP = others[1], leftP = others[2], rightP = others[0];
+  if(topP) el('poolTop').innerHTML = topP.discards.map(t=>tileMini(t)).join('');
+  if(leftP) el('poolLeft').innerHTML = leftP.discards.map(t=>tileMini(t)).join('');
+  if(rightP) el('poolRight').innerHTML = rightP.discards.map(t=>tileMini(t)).join('');
+  if(me) el('poolBottom').innerHTML = me.discards.map(t=>tileMini(t)).join('');
+}
 });
 socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); if(d.canHu){ renderActionBar([{type:'selfHu'}]); } });
 socket.on('turnChanged', d=>{ el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
@@ -247,7 +257,7 @@ function renderSeats(players, turn){
   let posMap = ['right','top','left'];
   let slots = { top: el('seatTop'), left: el('seatLeft'), right: el('seatRight') };
   Object.values(slots).forEach(s=>s.innerHTML='');
-  others.forEach((p, idx)=>{ let pos = posMap[idx] || 'top'; let slot = slots[pos]; let isTurn = p.name===turn; let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join(''); let discHtml = p.discards.slice(-6).map(t=>tileMini(t)).join(''); slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':'🧑 '} ${esc(p.name)} ${p.isBot?`(${p.botLevel})`:''} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div><div style="font-size:10px;color:#fde68a;margin-top:4px">${meldHtml ? 'Set: ' : ''}</div>${meldHtml}<div style="font-size:10px;color:#a7f3d0;margin-top:4px">Buangan:</div><div class="discards">${discHtml || '<span style="font-size:10px;color:#94a3b8">-</span>'}</div>${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`; });
+  others.forEach((p, idx)=>{ let pos = posMap[idx] || 'top'; let slot = slots[pos]; let isTurn = p.name===turn; let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join(''); let discHtml = p.discards.slice(-6).map(t=>tileMini(t)).join(''); slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':'🧑 '} ${esc(p.name)} ${p.isBot?`(${p.botLevel})`:''} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div><div style="font-size:10px;color:#fde68a;margin-top:4px">${meldHtml ? 'Set: ' : ''}</div>${meldHtml}${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`; });
   let me = players.find(p=>p.name===myName); if(me){ myMelds=me.melds; myFlowers=me.flowers; renderMyHand(); }
 }
 function renderMyHand(){
