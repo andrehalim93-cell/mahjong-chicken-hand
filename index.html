@@ -68,10 +68,7 @@ input{font-family:inherit}
 .poolSide{display:flex;flex-direction:column;flex-wrap:wrap;gap:2px;justify-content:flex-start;min-width:28px;max-height:120px}
 .poolCenter{min-width:90px;text-align:center}
 .poolTop .mTile,.poolBottom .mTile,.poolSide .mTile{width:36px;height:50px;font-size:10px}
-.mTile{background:linear-gradient(180deg,#fffbeb,#fef3c7);border:2px solid #d6a419;border-bottom-width:4px;border-radius:6px;color:#1c1917;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;line-height:1;box-shadow:0 2px 4px rgba(0,0,0,.35)}
-.mTile .ico{font-size:15px;line-height:1}
-.mTile .num{font-size:13px;line-height:1;margin-top:1px}
-.mTile .sub{font-size:6px;letter-spacing:.5px;color:#92400e;line-height:1;margin-top:1px}
+.mTile{background:linear-gradient(180deg,#fffdf5,#fef3c7);border:2px solid #b45309;border-bottom-width:4px;border-radius:6px;color:#1c1917;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;line-height:1;box-shadow:0 2px 4px rgba(0,0,0,.35);overflow:hidden;padding:2px}
 .seatPos{position:absolute;z-index:3;text-align:center;width:170px}
 .seatPos.top{top:10px;left:50%;transform:translateX(-50%)}
 .seatPos.left{left:8px;top:50%;transform:translateY(-50%);width:130px}
@@ -82,26 +79,20 @@ input{font-family:inherit}
 .miniHand{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:6px;min-height:28px}
 .miniHand .mTile{width:22px;height:30px;background:#fef3c7;border-radius:4px;border:1px solid #a16207;font-size:9px;color:#422006;display:flex;flex-direction:row;align-items:center;justify-content:center;font-weight:900;box-shadow:0 1px 2px rgba(0,0,0,.3)}
 .miniHand .mTile.back{background:linear-gradient(180deg,#16a34a,#14532d);border-color:#052e16;color:transparent}
-.t{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:68px;background:linear-gradient(180deg,#fffbeb,#fef3c7);border:2px solid #d6a419;border-bottom-width:5px;border-radius:8px;color:#1c1917;box-shadow:0 4px 10px rgba(0,0,0,.35);font-weight:900;cursor:pointer;user-select:none;position:relative;transition:.12s}
-.t .ico{font-size:20px;line-height:1}.t .num{font-size:17px;line-height:1;margin-top:1px}.t .sub{font-size:8px;letter-spacing:.5px;color:#92400e}
-.t.red{color:#dc2626}.t.red .sub{color:#991b1b}.t.green{color:#15803d}.t.blue{color:#1d4ed8}
+.t{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:68px;background:linear-gradient(180deg,#fffdf5,#fef3c7);border:2px solid #b45309;border-bottom-width:5px;border-radius:8px;color:#1c1917;box-shadow:0 4px 10px rgba(0,0,0,.35);font-weight:900;cursor:pointer;user-select:none;position:relative;transition:.12s;overflow:hidden;padding:3px}
+.t .sub{font-size:7px;letter-spacing:.5px;color:#92400e;line-height:1;margin-top:1px}
 .t.sel{transform:translateY(-10px);border-color:#facc15;box-shadow:0 0 0 3px #facc15,0 10px 18px rgba(0,0,0,.4)}
 .t.myTurn:hover{transform:translateY(-6px)}
 .t.flower{background:linear-gradient(180deg,#fdf2f8,#fbcfe8);border-color:#db2777}
-.t.real{padding:2px}
-.t.real .realUni{font-size:34px;line-height:1;font-family:'Segoe UI Symbol','Noto Sans Symbols2',sans-serif}
-.t.real .sub{font-size:7px}
-.mTile.realMini{padding:1px}
-.mTile.realMini .realUni{font-size:22px;line-height:1}
 .myArea{max-width:900px;width:100%;margin:10px auto 0;background:rgba(0,0,0,.55);border:1px solid rgba(250,204,21,.35);border-radius:18px;padding:10px}
 .myArea .myTop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .myArea .myTop b{font-size:13px}.myArea .myTop span{font-size:11px;color:#a7f3d0}
 .myHand{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;min-height:74px}
 .meldsRow{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 .meld{display:flex;gap:3px;background:rgba(250,204,21,.15);border:1px solid rgba(250,204,21,.5);border-radius:10px;padding:5px}
-.meld .t{width:38px;height:50px;cursor:default}.meld .t .ico{font-size:14px}.meld .t .num{font-size:13px}
+.meld .t{width:38px;height:50px;cursor:default}
 .flowersRow{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:6px}
-.flowersRow .t{width:36px;height:46px;cursor:default}.flowersRow .t .ico{font-size:13px}.flowersRow .t .num{font-size:11px}
+.flowersRow .t{width:36px;height:46px;cursor:default}
 .actionBar{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
 .actionBar button{padding:13px 18px;border-radius:14px;font-weight:900;font-size:14px;color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.35)}
 .aPong{background:linear-gradient(180deg,#f97316,#ea580c)}
@@ -127,7 +118,20 @@ input{font-family:inherit}
 .dice{width:70px;height:70px;background:#fff;border:3px solid #422006;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 6px 0 #422006}
 .dice.rolling{animation:diceShake .15s infinite}
 @keyframes diceShake{0%{transform:rotate(-8deg) translateY(-2px)}100%{transform:rotate(8deg) translateY(2px)}}
-@media(max-width:640px){ .topLogo h1{font-size:30px} .t{width:44px;height:60px}.t .ico{font-size:17px}.t .num{font-size:15px} .seatPos.left,.seatPos.right{width:84px} .centerBox{width:92%} .table{min-height:460px} }
+/* ===== TILE ASLI - DIGAMBAR CSS, BUKAN EMOJI ===== */
+.face{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.face .rowDots{display:flex;gap:2px;justify-content:center;align-items:center}
+.dot{border-radius:50%;border:1px solid rgba(0,0,0,.25);box-shadow:inset -1px -1px 2px rgba(0,0,0,.25)}
+.dot.cR{background:radial-gradient(circle at 35% 35%,#fca5a5,#dc2626)} .dot.cG{background:radial-gradient(circle at 35% 35%,#86efac,#15803d)} .dot.cB{background:radial-gradient(circle at 35% 35%,#93c5fd,#1d4ed8)}
+.stick{border-radius:3px;border:1px solid rgba(0,0,0,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.stick.cR{background:linear-gradient(180deg,#fca5a5,#dc2626)} .stick.cG{background:linear-gradient(180deg,#86efac,#15803d)} .stick.cB{background:linear-gradient(180deg,#93c5fd,#1d4ed8)}
+.bigChar{font-weight:900;line-height:1;font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif}
+.charTop{font-weight:900;line-height:1;font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif}
+.charWan{font-weight:900;line-height:1;color:#dc2626;font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif}
+.face .lbl{font-size:6px;letter-spacing:.5px;color:#92400e;font-weight:800;line-height:1;margin-top:1px}
+.mTile .face .dot{width:6px;height:6px} .mTile .face .stick{width:4px;height:10px} .mTile .face .bigChar{font-size:18px} .mTile .face .charTop{font-size:12px} .mTile .face .charWan{font-size:12px}
+.t .face .dot{width:9px;height:9px} .t .face .stick{width:5px;height:14px} .t .face .bigChar{font-size:26px} .t .face .charTop{font-size:18px} .t .face .charWan{font-size:18px}
+@media(max-width:640px){ .topLogo h1{font-size:30px} .t{width:44px;height:60px} .seatPos.left,.seatPos.right{width:84px} .centerBox{width:92%} .table{min-height:460px} }
 </style>
 </head>
 <body>
@@ -193,7 +197,7 @@ input{font-family:inherit}
 let socket = io({ reconnection:true, reconnectionAttempts:999, reconnectionDelay:1000, transports:["websocket","polling"] });
 let myCode=null, myName=null, myHand=[], myMelds=[], myFlowers=[], isMyTurn=false, selectedTile=null, currentPlayers=[], soundOn=true;
 let turnTimeSec=30, turnTimerInt=null, turnLeft=30, isHost=false, usedBotNames=[];
-let BOT_NAMES=['ANDI','BUDI','SARI','DEWI','EKO','FITRI','GILANG','HANI','IVAN','JOKO','KIKI','LINA','MAMA','NINA','OPA','PUTRI','RINA','SINTA','TONI','Udin','VINA','WATI','YUDI','ZARA','AGUS','BAMBANG','CITRA','DODI','ERIK','FARAH'];
+let BOT_NAMES=['ANDI','BUDI','SARI','DEWI','EKO','FITRI','GILANG','HANI','IVAN','JOKO','KIKI','LINA','MAMA','NINA','OPA','PUTRI','RINA','SINTA','TONI','UDIN','VINA','WATI','YUDI','ZARA','AGUS','BAMBANG','CITRA','DODI','ERIK','FARAH'];
 let DICE_FACES=['','⚀','⚁','⚂','⚃','⚄','⚅'];
 function el(id){ return document.getElementById(id); }
 function showErr(m){ let e=el('homeErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',3000); }
@@ -227,17 +231,46 @@ function playMjSound(type){
     if(type==='dice'){ tone(400,0,0.1,0.2,'square'); tone(500,0.15,0.1,0.2,'square'); }
   }catch(e){}
 }
+/* ===== TILE ASLI - DIGAMBAR, BUKAN EMOJI / UNICODE ===== */
 function tileLabel(t){
-  // Unicode Mahjong asli U+1F000 - U+1F02F
-  if(t.type==='suit' && t.suit===0) return {uni:'🀇🀈🀉🀊🀋🀌🀍🀎🀏'[t.num-1], cls:'green', sub:'BAMBU'};
-  if(t.type==='suit' && t.suit===1) return {uni:'🀙🀚🀛🀜🀝🀞🀟🀠🀡'[t.num-1], cls:'blue', sub:'DOT'};
-  if(t.type==='suit' && t.suit===2) return {uni:'🀩🀪🀫🀬🀭🀮🀯🀰🀱'[t.num-1], cls:'red', sub:'KARAKTER'};
-  if(t.type==='wind') return {uni:'🀀🀁🀂🀃'[t.num], cls:'blue', sub:['TIMUR','SELATAN','BARAT','UTARA'][t.num]};
-  if(t.type==='dragon') return {uni:'🀄🀅🀆'[t.num], cls:t.num===0?'red':(t.num===1?'green':'blue'), sub:['NAGA MERAH','NAGA HIJAU','NAGA PUTIH'][t.num]};
-  return {uni:'🌸', cls:'red', sub:'BUNGA'};
+  if(t.type==='suit') return {sub:['BAMBU','DOT','KARAKTER'][t.suit], num:t.num, cls:t.suit===1?'red':(t.suit===0?'green':'blue')};
+  if(t.type==='wind') return {sub:['TIMUR','SELATAN','BARAT','UTARA'][t.num], num:t.num, cls:'blue'};
+  if(t.type==='dragon') return {sub:['NAGA MERAH','NAGA HIJAU','NAGA PUTIH'][t.num], num:t.num, cls:t.num===0?'red':(t.num===1?'green':'blue')};
+  return {sub:'BUNGA', num:'✿', cls:'red'};
 }
-function tileHTML(t, extraClass){ let l=tileLabel(t); return `<div class="t real ${l.cls} ${extraClass||''}" data-id="${t.id}"><div class="realUni">${l.uni}</div><div class="sub">${l.sub}</div></div>`; }
-function tileMini(t){ let l=tileLabel(t); return `<div class="mTile realMini ${l.cls}" title="${l.sub}"><div class="realUni">${l.uni}</div></div>`; }
+function tileFace(t){
+  let CN=['','一','二','三','四','五','六','七','八','九'];
+  let WINDS=['東','南','西','北'];
+  let DRAGONS=['中','發','白'];
+  let FLOWERS=['梅','蘭','菊','竹','春','夏','秋','冬'];
+  if(t.type==='suit' && t.suit===0){
+    if(t.num===1) return '<div class="face"><div class="bigChar" style="color:#15803d;font-size:26px">🦚</div><div class="lbl">BAMBU 1</div></div>';
+    let colors=['cB','cR','cG'];
+    let rows=[]; let perRow = t.num<=3 ? t.num : (t.num<=6 ? 3 : 3);
+    let left=t.num;
+    while(left>0){ let c=Math.min(perRow,left); let row='<div class="rowDots">'; for(let i=0;i<c;i++) row+='<div class="stick '+colors[(rows.length+i)%3]+'"></div>'; row+='</div>'; rows.push(row); left-=c; }
+    return '<div class="face">'+rows.join('')+'<div class="lbl">BAMBU '+t.num+'</div></div>';
+  }
+  if(t.type==='suit' && t.suit===1){
+    let colors=['cB','cR','cG'];
+    let rows=[]; let perRow = t.num<=3 ? t.num : 3; let left=t.num;
+    while(left>0){ let c=Math.min(perRow,left); let row='<div class="rowDots">'; for(let i=0;i<c;i++) row+='<div class="dot '+colors[(rows.length+i)%3]+'"></div>'; row+='</div>'; rows.push(row); left-=c; }
+    return '<div class="face">'+rows.join('')+'<div class="lbl">DOT '+t.num+'</div></div>';
+  }
+  if(t.type==='suit' && t.suit===2){
+    return '<div class="face"><div class="charTop" style="color:#1c1917">'+CN[t.num]+'</div><div class="charWan">萬</div><div class="lbl">KARAKTER '+t.num+'</div></div>';
+  }
+  if(t.type==='wind') return '<div class="face"><div class="bigChar" style="color:#1d4ed8">'+WINDS[t.num]+'</div><div class="lbl">'+['TIMUR','SELATAN','BARAT','UTARA'][t.num]+'</div></div>';
+  if(t.type==='dragon'){
+    let col = t.num===0 ? '#dc2626' : (t.num===1 ? '#15803d' : '#1c1917');
+    let ch = DRAGONS[t.num];
+    if(t.num===2) return '<div class="face"><div class="bigChar" style="color:#1d4ed8;border:2px solid #1d4ed8;border-radius:4px;padding:1px 4px">'+ch+'</div><div class="lbl">NAGA PUTIH</div></div>';
+    return '<div class="face"><div class="bigChar" style="color:'+col+'">'+ch+'</div><div class="lbl">'+['NAGA MERAH','NAGA HIJAU'][t.num]+'</div></div>';
+  }
+  return '<div class="face"><div class="bigChar" style="color:#db2777">'+FLOWERS[t.num%8]+'</div><div class="lbl">BUNGA</div></div>';
+}
+function tileHTML(t, extraClass){ let l=tileLabel(t); return '<div class="t '+(t.type==='flower'?'flower':'')+' '+(extraClass||'')+'" data-id="'+t.id+'">'+tileFace(t)+'</div>'; }
+function tileMini(t){ return '<div class="mTile">'+tileFace(t)+'</div>'; }
 function createRoom(){ myName=el('nameInput').value.trim(); if(!myName) return showErr('Isi nama dulu!'); socket.emit('createRoom',{name:myName}); }
 function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim().toUpperCase(); if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName}); }
 function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:myCode, level, botName}); }
