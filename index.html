@@ -57,14 +57,14 @@ input{font-family:inherit}
 .gameTop .pill{background:rgba(0,0,0,.55);border:1px solid rgba(250,204,21,.4);padding:7px 10px;border-radius:999px;font-size:12px;font-weight:800}
 .gameTop .pill b{color:#facc15}
 .table{flex:1;max-width:900px;width:100%;margin:0 auto;background:radial-gradient(ellipse at center,#1e6b34 0%,#14532d 60%,#0b3a1e 100%);border:8px solid #5b3a1a;border-radius:26px;box-shadow:inset 0 0 0 3px #8b5a2b,0 20px 40px rgba(0,0,0,.5);position:relative;min-height:480px;overflow:hidden}
-.centerBox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:210px;z-index:2}
+.centerBox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:120px;z-index:2}
 .centerBox .logo{font-size:36px}
 .centerBox .wall{margin-top:6px;background:rgba(0,0,0,.55);border:1px solid rgba(250,204,21,.4);border-radius:12px;padding:8px;font-size:12px;line-height:1.5}
 .centerBox .lastTile{margin-top:8px}
 .seatPos{position:absolute;z-index:3;text-align:center;width:170px}
 .seatPos.top{top:10px;left:50%;transform:translateX(-50%)}
-.seatPos.left{left:8px;top:50%;transform:translateY(-50%);width:110px}
-.seatPos.right{right:8px;top:50%;transform:translateY(-50%);width:110px}
+.seatPos.left{left:8px;top:12px;transform:none;width:130px}
+.seatPos.right{right:8px;top:12px;transform:none;width:130px}
 .playerChip{display:inline-block;background:rgba(0,0,0,.65);border:2px solid rgba(255,255,255,.25);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .playerChip.turn{border-color:#facc15;box-shadow:0 0 0 3px rgba(250,204,21,.35),0 0 18px #facc15;color:#fde68a;animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
@@ -130,7 +130,7 @@ input{font-family:inherit}
 <div id="gameScreen" class="hidden">
   <div class="gameTop"><div class="pill">🀄 <b id="gCode">----</b> • 🧱 Sisa: <b id="wallLeft">144</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div></div>
   <div class="table" id="tableEl">
-   <div class="centerBox"><div class="logo">🀄</div><div class="wall">🧱 Tembok: <b id="centerWall">144</b> tile<br><span style="color:#a7f3d0">Buang 1 tile tiap giliran</span></div><div class="lastTile" id="lastTileBox"><div style="font-size:11px;color:#fde68a">Buangan Terakhir:</div><div id="lastTileEl" style="margin-top:6px;color:#cbd5e1;font-size:12px">Belum ada</div></div></div>
+   <div class="centerBox"><div id="lastTileEl" style="color:#cbd5e1;font-size:12px">Belum ada buangan</div></div>
     <div class="seatPos top" id="seatTop"></div><div class="seatPos left" id="seatLeft"></div><div class="seatPos right" id="seatRight"></div>
   </div>
   <div class="myArea">
@@ -233,7 +233,7 @@ function renderSeats(players, turn){
   let posMap = ['right','top','left'];
   let slots = { top: el('seatTop'), left: el('seatLeft'), right: el('seatRight') };
   Object.values(slots).forEach(s=>s.innerHTML='');
-  others.forEach((p, idx)=>{ let pos = posMap[idx] || 'top'; let slot = slots[pos]; let isTurn = p.name===turn; let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileHTML(t)).join('')}</div>`).join(''); let discHtml = p.discards.slice(-6).map(t=>tileMini(t)).join(''); slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':'🧑 '} ${esc(p.name)} ${p.isBot?`(${p.botLevel})`:''} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div><div style="font-size:10px;color:#fde68a;margin-top:4px">${meldHtml ? 'Set: ' : ''}</div>${meldHtml}<div style="font-size:10px;color:#a7f3d0;margin-top:4px">Buangan:</div><div class="discards">${discHtml || '<span style="font-size:10px;color:#94a3b8">-</span>'}</div>${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`; });
+  others.forEach((p, idx)=>{ let pos = posMap[idx] || 'top'; let slot = slots[pos]; let isTurn = p.name===turn; let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join(''); let discHtml = p.discards.slice(-6).map(t=>tileMini(t)).join(''); slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':'🧑 '} ${esc(p.name)} ${p.isBot?`(${p.botLevel})`:''} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div><div style="font-size:10px;color:#fde68a;margin-top:4px">${meldHtml ? 'Set: ' : ''}</div>${meldHtml}<div style="font-size:10px;color:#a7f3d0;margin-top:4px">Buangan:</div><div class="discards">${discHtml || '<span style="font-size:10px;color:#94a3b8">-</span>'}</div>${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`; });
   let me = players.find(p=>p.name===myName); if(me){ myMelds=me.melds; myFlowers=me.flowers; renderMyHand(); }
 }
 function renderMyHand(){
