@@ -103,8 +103,9 @@ function startGame(room){
   let dealer = room.players[0];
   dealer.hand.push(room.wall.pop());
   dealer.hand.sort((a,b)=>tileKey(a).localeCompare(tileKey(b)));
-  emitToRoom(room, 'gameStarted', { players:publicPlayers(room), wallLeft:room.wall.length, turn:dealer.name });
+    emitToRoom(room, 'gameStarted', { players:publicPlayers(room), wallLeft:room.wall.length, turn:dealer.name });
   room.players.forEach(p=>sendHand(room,p));
+  setTimeout(()=>{ emitToRoom(room, 'turnChanged', { turn:dealer.name, wallLeft:room.wall.length }); }, 500);
   setTimeout(()=>maybeBotTurn(room), 1200);
 }
 function maybeBotTurn(room){
