@@ -234,20 +234,10 @@ socket.on('gameStarted', d=>{
   if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Kamu dealer, buang 1 tile!'); }
   addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!');
   renderSeats(d.players, d.turn);
-function renderCentralPool(players){
-  let me = players.find(p=>p.name===myName);
-  let others = players.filter(p=>p.name!==myName);
-  // others urutannya: [kanan, atas, kiri] sesuai posMap di renderSeats
-  let topP = others[1], leftP = others[2], rightP = others[0];
-  if(topP) el('poolTop').innerHTML = topP.discards.map(t=>tileMini(t)).join('');
-  if(leftP) el('poolLeft').innerHTML = leftP.discards.map(t=>tileMini(t)).join('');
-  if(rightP) el('poolRight').innerHTML = rightP.discards.map(t=>tileMini(t)).join('');
-  if(me) el('poolBottom').innerHTML = me.discards.map(t=>tileMini(t)).join('');
-}
 });
 socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); if(d.canHu){ renderActionBar([{type:'selfHu'}]); } });
 socket.on('turnChanged', d=>{ el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
-socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = tileHTML(d.tile) + `<div style="margin-top:6px">Dari: <b>${esc(d.from)}</b> • ${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); toast('⚡ Kamu bisa PONG / CHOW / HU! Cepet claim!'); } });
+socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = tileHTML(d.tile) + `<div style="margin-top:6px">Dari: <b>${esc(d.from)}</b> • ${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); toast('⚡ Kamu bisa PONG / CHOW / HU! Cepet claim!'); } });
 socket.on('meldMade', d=>{ if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); });
 socket.on('gameOver', d=>{ playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🐔🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message + (d.hand ? `\nTangan pemenang: ${d.hand.length} tile` : ''); el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
 socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); myHand=[]; myMelds=[]; myFlowers=[]; renderMyHand(); });
@@ -257,8 +247,19 @@ function renderSeats(players, turn){
   let posMap = ['right','top','left'];
   let slots = { top: el('seatTop'), left: el('seatLeft'), right: el('seatRight') };
   Object.values(slots).forEach(s=>s.innerHTML='');
-  others.forEach((p, idx)=>{ let pos = posMap[idx] || 'top'; let slot = slots[pos]; let isTurn = p.name===turn; let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join(''); let discHtml = p.discards.slice(-6).map(t=>tileMini(t)).join(''); slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':'🧑 '} ${esc(p.name)} ${p.isBot?`(${p.botLevel})`:''} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div><div style="font-size:10px;color:#fde68a;margin-top:4px">${meldHtml ? 'Set: ' : ''}</div>${meldHtml}${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`; });
+  others.forEach((p, idx)=>{ let pos = posMap[idx] || 'top'; let slot = slots[pos]; let isTurn = p.name===turn; let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join(''); slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':'🧑 '} ${esc(p.name)} ${p.isBot?`(${p.botLevel})`:''} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div><div style="font-size:10px;color:#fde68a;margin-top:4px">${meldHtml ? 'Set: ' : ''}</div>${meldHtml}${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`; });
   let me = players.find(p=>p.name===myName); if(me){ myMelds=me.melds; myFlowers=me.flowers; renderMyHand(); }
+}
+
+// INI YANG NO 4 - FUNGSI BARU, TEMPEL DI BAWAH renderSeats
+function renderCentralPool(players){
+  let me = players.find(p=>p.name===myName);
+  let others = players.filter(p=>p.name!==myName);
+  let topP = others[1], leftP = others[2], rightP = others[0];
+  if(topP) el('poolTop').innerHTML = topP.discards.map(t=>tileMini(t)).join('');
+  if(leftP) el('poolLeft').innerHTML = leftP.discards.map(t=>tileMini(t)).join('');
+  if(rightP) el('poolRight').innerHTML = rightP.discards.map(t=>tileMini(t)).join('');
+  if(me) el('poolBottom').innerHTML = me.discards.map(t=>tileMini(t)).join('');
 }
 function renderMyHand(){
   let sorted=[...myHand].sort((a,b)=>{ let order=t=> t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); if(order(a)!==order(b)) return order(a)-order(b); if(a.type==='suit' && b.type==='suit'){ if(a.suit!==b.suit) return a.suit-b.suit; return a.num-b.num; } return (a.num||0)-(b.num||0); });
