@@ -143,15 +143,15 @@ input{font-family:inherit}
 </head>
 <body>
 <div id="homeScreen">
-  <div class="topLogo"><div class="crown">👑🀄👑</div><h1>MAHJONG<br>CHICKEN HAND</h1><p>🐔 4 Set + 1 Pasang = HU! • 144 Tile • 2-4 Pemain • + BOT</p></div>
+  <div class="topLogo"><div class="crown">👑🀄👑</div><h1>MAHJONG<br>CHICKEN HAND</h1><p></p></div>
   <div class="card">
-    <h2>👋 Masuk dulu, <span>Sultan Mahjong</span></h2>
-    <div class="lbl">NAMA KAMU</div><input id="nameInput" class="inp" placeholder="Contoh: Budi, Andi, Sari..." maxlength="15">
-    <div class="lbl">KODE MEJA (KALAU MAU JOIN)</div><input id="codeInput" class="inp" placeholder="Contoh: AB12" maxlength="4" style="text-transform:uppercase">
+    <h2>👋<span>Selamat Datang</span></h2>
+    <div class="lbl">NAMA KAMU</div><input id="nameInput" class="inp" placeholder="Input nama kamu" maxlength="15">
+    <div class="lbl">KODE MEJA (KALAU MAU JOIN)</div><input id="codeInput" class="inp" placeholder="Input kode meja" maxlength="4" style="text-transform:uppercase">
     <button class="btn btn-gold" onclick="createRoom()">🀄 BUAT MEJA BARU</button>
     <button class="btn btn-green" onclick="joinRoom()">🚪 JOIN MEJA</button>
     <button class="btn btn-dark" onclick="document.getElementById('howtoBox').classList.toggle('hidden')">📖 CARA MAIN - KLIK</button>
-    <div id="howtoBox" class="hidden" style="margin-top:10px;color:#e2e8f0;font-size:12.5px;line-height:1.6"><b style="color:#fde68a">🎯 Tujuan:</b> Jadiin tangan kamu <b>4 Set + 1 Pasang (14 tile)</b> = <b>CHICKEN HAND, HU!</b><br><b style="color:#fde68a">🃏 Set:</b> PONG (3 sama) atau CHOW (urut, cuma buat Bambu/Dot/Karakter)<br><b style="color:#fde68a">🔄 Giliran:</b> Ambil 1 tile → Buang 1 tile. Kalau buangan orang bisa bikin kamu PONG / CHOW / HU, tombolnya muncul otomatis!<br><b style="color:#fde68a">🌸 Bunga:</b> Auto kebuka jadi bonus.<br><b style="color:#fde68a">🤖 BOT:</b> Tambah BOT di lobby. EASY gampang, HARD susah banget!</div>
+    <div id="howtoBox" class="hidden" style="margin-top:10px;color:#e2e8f0;font-size:12.5px;line-height:1.6"><b style="color:#fde68a">🎯 Tujuan:</b> Jadiin tangan kamu <b>4 Set + 1 Pasang (14 tile)</b> = <b>CHICKEN HAND, HU!</b><br><b style="color:#fde68a">🃏 Set:</b> PONG (3 sama) atau CHOW (urut, cuma buat Bambu/Dot/Karakter)<br><b style="color:#fde68a">🔄 Giliran:</b> Ambil 1 tile → Buang 1 tile. Kalau buangan orang bisa bikin kamu PONG / CHOW / HU, tombolnya muncul otomatis!<br><b style="color:#fde68a">🌸 Bunga:</b> Auto kebuka jadi bonus.<br><b style="color:#fde68a"></div>
     <div id="homeErr" style="display:none;margin-top:10px;background:#7f1d1d;color:#fecaca;padding:10px;border-radius:10px;font-size:13px"></div>
   </div>
   <div class="howto"><div>🐔 <b>CHICKEN HAND</b> = Menang paling gampang. Gak perlu fan, yang penting 4 Set + 1 Pasang langsung HU!</div><div>🤖 <b>MAIN SENDIRIAN BISA!</b> Tambah BOT di lobby, lawan Bot Pro kalau berani.</div><div>🀄 <b>144 TILE ASLI:</b> Bambu, Dot, Karakter, Angin, Naga, Bunga + Musim.</div></div>
