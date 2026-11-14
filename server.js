@@ -444,7 +444,7 @@ io.on('connection', (socket)=>{
     if(!p) return;
     if(room.players[room.turnIdx].name!==p.name) return;
     if(room.waitingClaim) return;
-    let idx = p.hand.findIndex(t=>t.id===tileId);
+    let idx = p.hand.findIndex(t=>t.id==tileId);
     if(idx<0) return;
     // Cek HU sendiri sebelum buang? Kalau udah HU, menang
     if(checkHu(p.hand)){ endGameWin(room, p.name, `${p.name} HU! Chicken Hand!`); return; }
