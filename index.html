@@ -67,7 +67,11 @@ input{font-family:inherit}
 .poolMid{display:flex;justify-content:center;align-items:flex-start;gap:6px}
 .poolSide{display:flex;flex-direction:column;flex-wrap:wrap;gap:2px;justify-content:flex-start;min-width:28px;max-height:120px}
 .poolCenter{min-width:90px;text-align:center}
-.poolTop .mTile,.poolBottom .mTile,.poolSide .mTile{width:22px;height:30px;font-size:8px}
+.poolTop .mTile,.poolBottom .mTile,.poolSide .mTile{width:36px;height:50px;font-size:10px}
+.mTile{background:linear-gradient(180deg,#fffbeb,#fef3c7);border:2px solid #d6a419;border-bottom-width:4px;border-radius:6px;color:#1c1917;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;line-height:1;box-shadow:0 2px 4px rgba(0,0,0,.35)}
+.mTile .ico{font-size:15px;line-height:1}
+.mTile .num{font-size:13px;line-height:1;margin-top:1px}
+.mTile .sub{font-size:6px;letter-spacing:.5px;color:#92400e;line-height:1;margin-top:1px}
 .seatPos{position:absolute;z-index:3;text-align:center;width:170px}
 .seatPos.top{top:10px;left:50%;transform:translateX(-50%)}
 .seatPos.left{left:8px;top:50%;transform:translateY(-50%);width:130px}
@@ -225,7 +229,7 @@ function tileLabel(t){
   return {ico:'🌸',num:'✿',sub:'BUNGA',cls:'red'};
 }
 function tileHTML(t, extraClass){ let l=tileLabel(t); return `<div class="t ${l.cls} ${extraClass||''}" data-id="${t.id}"><div class="ico">${l.ico}</div><div class="num">${l.num}</div><div class="sub">${l.sub}</div></div>`; }
-function tileMini(t){ let l=tileLabel(t); return `<div class="mTile" title="${l.sub} ${l.num}">${l.ico} ${l.num}</div>`; }
+function tileMini(t){ let l=tileLabel(t); return `<div class="mTile ${l.cls}" title="${l.sub} ${l.num}"><div class="ico">${l.ico}</div><div class="num">${l.num}</div><div class="sub">${l.sub}</div></div>`; }
 function createRoom(){ myName=el('nameInput').value.trim(); if(!myName) return showErr('Isi nama dulu!'); socket.emit('createRoom',{name:myName}); }
 function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim().toUpperCase(); if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName}); }
 function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:myCode, level, botName}); }
@@ -265,7 +269,7 @@ socket.on('gameStarted', d=>{
 });
 socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); if(d.canHu){ renderActionBar([{type:'selfHu'}]); } });
 socket.on('turnChanged', d=>{ el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
-socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileMini(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); toast('⚡ Kamu bisa PONG / CHOW / HU! Cepet claim!'); } });
+socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`;<div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); toast('⚡ Kamu bisa PONG / CHOW / HU! Cepet claim!'); } });
 socket.on('meldMade', d=>{ if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); });
 socket.on('gameOver', d=>{ clearInterval(turnTimerInt); playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🐔🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message + (d.hand ? `\nTangan pemenang: ${d.hand.length} tile` : ''); el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
 socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); myHand=[]; myMelds=[]; myFlowers=[]; usedBotNames=[]; renderMyHand(); });
