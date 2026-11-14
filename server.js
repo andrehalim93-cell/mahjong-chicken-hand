@@ -86,54 +86,54 @@ function normalizeLevel(level){
 }
 
 // ============ CEK HU BENERAN: 4 SET + 1 PAIR ============
+// ============ CEK HU BENERAN - VERSI ANTI-GAGAL ============
 function checkHu(hand){
   if(!hand || hand.length!==14) return false;
-  // Buang bunga, bunga gak dihitung
   let tiles = hand.filter(t=>t.type!=='flower');
   if(tiles.length!==14) return false;
 
+  // Hitung pake type-suit-num, bukan pake t.key
   let counts = {};
-  tiles.forEach(t=>{ counts[t.key]=(counts[t.key]||0)+1; });
+  tiles.forEach(t=>{
+    let k = t.type + '|' + t.suit + '|' + t.num;
+    counts[k] = (counts[k]||0)+1;
+  });
 
-  // Coba semua kemungkinan Pair
-  for(let pairKey in counts){
-    if(counts[pairKey] < 2) continue;
+  // Coba semua pair
+  for(let k in counts){
+    if(counts[k] < 2) continue;
     let rest = {...counts};
-    rest[pairKey] -= 2;
+    rest[k] -= 2;
     if(canForm4Melds(rest)) return true;
   }
   return false;
 }
 
 function canForm4Melds(counts){
-  // Cari tile yang masih sisa
   let keys = Object.keys(counts).filter(k=>counts[k]>0);
-  if(keys.length===0) return true; // Udah habis, berarti 4 set kebentuk!
+  if(keys.length===0) return true;
 
   let key = keys[0];
+  let [type, suitStr, numStr] = key.split('|');
+  let suit = parseInt(suitStr);
+  let num = parseInt(numStr);
   let count = counts[key];
 
-  // 1. Coba PONG (3 sama)
+  // 1. Coba PONG
   if(count >= 3){
     let next = {...counts};
     next[key] -= 3;
     if(canForm4Melds(next)) return true;
   }
 
-  // 2. Coba CHOW (urut, cuma buat suit: Bambu/Dot/Karakter)
-  // key format: 'suit-0-6' = suit, jenis, angka
-  let parts = key.split('-');
-  if(parts[0]==='suit'){
-    let suit = parts[1];
-    let num = parseInt(parts[2]);
-    if(num <= 7){
-      let k1 = `suit-${suit}-${num+1}`;
-      let k2 = `suit-${suit}-${num+2}`;
-      if((counts[k1]||0) > 0 && (counts[k2]||0) > 0){
-        let next = {...counts};
-        next[key] -= 1; next[k1] -= 1; next[k2] -= 1;
-        if(canForm4Melds(next)) return true;
-      }
+  // 2. Coba CHOW - cuma buat suit (Bambu/Dot/Karakter)
+  if(type==='suit' && num <= 7){
+    let k1 = `suit|${suit}|${num+1}`;
+    let k2 = `suit|${suit}|${num+2}`;
+    if((counts[k1]||0) > 0 && (counts[k2]||0) > 0){
+      let next = {...counts};
+      next[key] -= 1; next[k1] -= 1; next[k2] -= 1;
+      if(canForm4Melds(next)) return true;
     }
   }
   return false;
