@@ -210,7 +210,17 @@ socket.on('updateLobby', room=>{
 });
 function removeBot(name){ if(confirm('Hapus '+name+'?')) socket.emit('removeBot',{code:myCode, botName:name}); }
 socket.on('errorMsg', m=>{ showErr(m); toast(m); });
-socket.on('gameStarted', d=>{ el('lobbyScreen').classList.add('hidden'); el('gameScreen').classList.remove('hidden'); el('gCode').innerText=myCode; el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft; el('turnName').innerText=d.turn; currentPlayers=d.players; el('myNameLabel').innerText='🧑 '+myName; addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!'); renderSeats(d.players, d.turn); });
+socket.on('gameStarted', d=>{
+  el('lobbyScreen').classList.add('hidden'); el('gameScreen').classList.remove('hidden');
+  el('gCode').innerText=myCode; el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft;
+  el('turnName').innerText=d.turn; currentPlayers=d.players; el('myNameLabel').innerText='🧑 '+myName;
+  // FIX BOT MACET: Langsung cek giliran pertama!
+  isMyTurn = (d.turn===myName);
+  el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...';
+  if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Kamu dealer, buang 1 tile!'); }
+  addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!');
+  renderSeats(d.players, d.turn);
+});
 socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); if(d.canHu){ renderActionBar([{type:'selfHu'}]); } });
 socket.on('turnChanged', d=>{ el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
 socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = tileHTML(d.tile) + `<div style="margin-top:6px">Dari: <b>${esc(d.from)}</b> • ${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); toast('⚡ Kamu bisa PONG / CHOW / HU! Cepet claim!'); } });
