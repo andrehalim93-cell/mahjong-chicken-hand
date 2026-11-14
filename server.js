@@ -1,4 +1,4 @@
-// server.js - MAHJONG CHICKEN HAND ONLINE - FULL FIX BOT + LOBBY
+// server.js - MAHJONG CHICKEN HAND ONLINE - FULL FIX + DADU + TIMER + NAMA BOT
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -19,7 +19,7 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 let rooms = {};
 
-// ============ TILE HELPERS - SESUAI index.txt ============
+// ============ TILE HELPERS ============
 function tileKey(t){
   if(t.type==='suit') return 'suit-'+t.suit+'-'+t.num;
   if(t.type==='wind') return 'wind-'+t.num;
@@ -51,29 +51,53 @@ function genCode(){ let c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let 
 
 // ============ ROOM HELPERS ============
 function emitToRoom(room, ev, data){ io.to(room.code).emit(ev, data); }
-
-// INI KUNCINYA - kirim 2 nama event biar client lama & baru sama-sama dapet
 function emitLobby(room){
-  let payload = { code: room.code, players: publicPlayers(room), hostId: room.players.find(x=>x.isHost)?.id, turnTime: room.turnTime };
+  let payload = { code: room.code, players: publicPlayers(room), hostId: room.players.find(x=>x.isHost)?.id, turnTimeSec: room.turnTimeSec, turnTime: room.turnTimeSec };
   io.to(room.code).emit('lobbyUpdate', payload);
   io.to(room.code).emit('updateLobby', payload);
 }
 function addLog(room, msg){ emitToRoom(room, 'gameLog', { msg }); }
 
-// publicPlayers dibikin lengkap biar index.txt gak crash (butuh botLevel & hostId)
+// FIX BUG 4: jangan kirim hand asli, cuma handCount
 function publicPlayers(room){
   return room.players.map(p=>({
     name:p.name, isBot:p.isBot, level:p.level||'',
     botLevel: p.level||'easy',
     hostId: room.players.find(x=>x.isHost)?.id,
     id:p.id, isHost:p.isHost,
-    handCount:p.hand.length, hand:p.hand,
+    handCount:p.hand.length,
     melds:p.melds, discards:p.discards, flowers:p.flowers
   }));
 }
+function clearTurnTimer(room){ if(room.turnTimer){ clearTimeout(room.turnTimer); room.turnTimer=null; } }
+function startTurnTimer(room){
+  clearTurnTimer(room);
+  if(!room.turnTimeSec || room.turnTimeSec===0) return; // 0 = tanpa batas
+  if(room.phase!=='playing') return;
+  room.turnTimer = setTimeout(()=>{
+    if(!room || room.phase!=='playing') return;
+    let cur = room.players[room.turnIdx];
+    if(!cur) return;
+    if(room.waitingClaim) return;
+    // Waktu habis -> auto buang 1 tile random (biar game gak macet)
+    if(cur.isBot){ maybeBotTurn(room); return; }
+    if(cur.hand.length>0){
+      let tile = botChooseDiscard(cur);
+      if(!tile) tile = cur.hand[0];
+      let idx = cur.hand.findIndex(t=>t.id===tile.id);
+      if(idx>=0) cur.hand.splice(idx,1);
+      cur.discards.push(tile);
+      room.lastDiscard = { tile, from:cur.name };
+      emitToRoom(room, 'discarded', { from:cur.name, tile, tileName:tileName(tile), wallLeft:room.wall.length, players:publicPlayers(room), claims: getClaimsFor(room, tile, cur.name) });
+      room.players.forEach(x=>sendHand(room,x));
+      addLog(room, `⏰ ${cur.name} kehabisan waktu, auto buang ${tileName(tile)}!`);
+      handleAfterDiscard(room, cur, tile);
+    }
+  }, room.turnTimeSec*1000);
+}
 function sendHand(room, p){
   if(!p.isBot){
-    let canHu = checkHu([...p.hand, ...p.melds.flatMap(m=>m.tiles)]);
+    let canHu = canHuWithMelds(p.hand, p.melds);
     io.to(p.id).emit('yourHand', { hand:sortHand([...p.hand]), melds:p.melds, flowers:p.flowers, discards:p.discards, canHu });
   }
 }
@@ -85,63 +109,70 @@ function normalizeLevel(level){
   return 'easy';
 }
 
-// ============ CEK HU BENERAN: 4 SET + 1 PAIR ============
-// ============ CEK HU BENERAN - VERSI ANTI-GAGAL ============
+// ============ CEK HU BENERAN ============
 function checkHu(hand){
   if(!hand || hand.length!==14) return false;
   let tiles = hand.filter(t=>t.type!=='flower');
   if(tiles.length!==14) return false;
-
-  // Hitung pake type-suit-num, bukan pake t.key
   let counts = {};
-  tiles.forEach(t=>{
-    let k = t.type + '|' + t.suit + '|' + t.num;
-    counts[k] = (counts[k]||0)+1;
-  });
-
-  // Coba semua pair
+  tiles.forEach(t=>{ let k = t.type + '|' + t.suit + '|' + t.num; counts[k] = (counts[k]||0)+1; });
   for(let k in counts){
     if(counts[k] < 2) continue;
-    let rest = {...counts};
-    rest[k] -= 2;
+    let rest = {...counts}; rest[k] -= 2;
     if(canForm4Melds(rest)) return true;
   }
   return false;
 }
-
-function canForm4Melds(counts){
+// FIX BUG 5: HU yang bener kalau udah punya meld (set kebuka)
+function canHuWithMelds(hand, melds){
+  melds = melds || [];
+  let meldCount = melds.length;
+  let tiles = hand.filter(t=>t.type!=='flower');
+  // Total harus 14: tangan + meld*3 = 14, dan tangan harus bisa jadi (4-meldCount) set + 1 pair
+  if(tiles.length + meldCount*3 !== 14) return false;
+  if(meldCount===0) return checkHu(hand);
+  // Coba semua pair di tangan
+  let counts = {};
+  tiles.forEach(t=>{ let k = t.type + '|' + t.suit + '|' + t.num; counts[k]=(counts[k]||0)+1; });
+  let needSets = 4 - meldCount;
+  for(let k in counts){
+    if(counts[k] < 2) continue;
+    let rest = {...counts}; rest[k]-=2;
+    if(canFormSets(rest, needSets)) return true;
+  }
+  // Kalau tangan tinggal pair doang (needSets 0)
+  if(needSets===0 && tiles.length===2 && tiles[0].key===tiles[1].key) return true;
+  return false;
+}
+function canFormSets(counts, needSets){
   let keys = Object.keys(counts).filter(k=>counts[k]>0);
-  if(keys.length===0) return true;
-
+  if(keys.length===0) return needSets===0;
+  if(needSets===0) return false;
   let key = keys[0];
   let [type, suitStr, numStr] = key.split('|');
-  let suit = parseInt(suitStr);
-  let num = parseInt(numStr);
-  let count = counts[key];
-
-  // 1. Coba PONG
-  if(count >= 3){
-    let next = {...counts};
-    next[key] -= 3;
-    if(canForm4Melds(next)) return true;
-  }
-
-  // 2. Coba CHOW - cuma buat suit (Bambu/Dot/Karakter)
+  let suit = parseInt(suitStr); let num = parseInt(numStr); let count = counts[key];
+  if(count >= 3){ let next={...counts}; next[key]-=3; if(canFormSets(next, needSets-1)) return true; }
   if(type==='suit' && num <= 7){
-    let k1 = `suit|${suit}|${num+1}`;
-    let k2 = `suit|${suit}|${num+2}`;
-    if((counts[k1]||0) > 0 && (counts[k2]||0) > 0){
-      let next = {...counts};
-      next[key] -= 1; next[k1] -= 1; next[k2] -= 1;
-      if(canForm4Melds(next)) return true;
-    }
+    let k1 = `suit|${suit}|${num+1}`; let k2 = `suit|${suit}|${num+2}`;
+    if((counts[k1]||0)>0 && (counts[k2]||0)>0){ let next={...counts}; next[key]-=1; next[k1]-=1; next[k2]-=1; if(canFormSets(next, needSets-1)) return true; }
   }
   return false;
 }
-function canHuWithTile(hand, tile){
-  let h=[...hand, tile];
-  return checkHu(h);
+function canForm4Melds(counts){
+  let keys = Object.keys(counts).filter(k=>counts[k]>0);
+  if(keys.length===0) return true;
+  let key = keys[0];
+  let [type, suitStr, numStr] = key.split('|');
+  let suit = parseInt(suitStr); let num = parseInt(numStr); let count = counts[key];
+  if(count >= 3){ let next = {...counts}; next[key] -= 3; if(canForm4Melds(next)) return true; }
+  if(type==='suit' && num <= 7){
+    let k1 = `suit|${suit}|${num+1}`; let k2 = `suit|${suit}|${num+2}`;
+    if((counts[k1]||0) > 0 && (counts[k2]||0) > 0){ let next = {...counts}; next[key] -= 1; next[k1] -= 1; next[k2] -= 1; if(canForm4Melds(next)) return true; }
+  }
+  return false;
 }
+function canHuWithTile(hand, tile){ return checkHu([...hand, tile]); }
+function canHuWithTileAndMelds(hand, melds, tile){ return canHuWithMelds([...hand, tile], melds); }
 
 // ============ BOT AI ============
 function botChooseDiscard(bot){
@@ -158,6 +189,7 @@ function botChooseDiscard(bot){
 }
 function botDecideClaim(bot, tile, isNext){
   if(tile.type==='flower') return null;
+  if(canHuWithTileAndMelds(bot.hand, bot.melds, tile)) return { action:'hu' };
   let count = bot.hand.filter(t=>t.key===tile.key).length;
   if(count>=2) return { action:'pong' };
   if(isNext && tile.type==='suit'){
@@ -178,17 +210,12 @@ function botDrawAndDiscard(room, bot){
   if(drawn) bot.hand.push(drawn);
   sendHand(room, bot);
   emitToRoom(room, 'playerDrew', { player:bot.name, wallLeft:room.wall.length });
-  emitToRoom(room, 'turnChanged', { turn:bot.name, wallLeft:room.wall.length });
   setTimeout(()=>botDiscard(room, bot), 900);
 }
 function botDiscard(room, bot){
   if(!room || room.phase!=='playing') return;
   if(room.players[room.turnIdx].name!==bot.name) return;
-  // Cek HU dulu
-  if(checkHu(bot.hand)){
-    endGameWin(room, bot.name, 'Bot HU! Chicken Hand!');
-    return;
-  }
+  if(canHuWithMelds(bot.hand, bot.melds)){ endGameWin(room, bot.name, 'Bot HU! Chicken Hand!'); return; }
   let tile = botChooseDiscard(bot);
   if(!tile) return;
   let idx = bot.hand.findIndex(t=>t.id===tile.id);
@@ -208,15 +235,13 @@ function maybeBotTurn(room){
   if(cur.hand.length>=14){ setTimeout(()=>botDiscard(room, cur), 1000); return; }
   setTimeout(()=>botDrawAndDiscard(room, cur), 1000);
 }
-
-// Hitung siapa aja yang bisa claim tile buangan (buat client)
 function getClaimsFor(room, tile, fromName){
   let claims=[];
   let fromIdx = room.players.findIndex(p=>p.name===fromName);
   room.players.forEach((p, idx)=>{
     if(p.name===fromName) return;
     if(p.isBot) return;
-    let canHu = canHuWithTile(p.hand, tile);
+    let canHu = canHuWithTileAndMelds(p.hand, p.melds, tile);
     let pong = p.hand.filter(t=>t.key===tile.key).length>=2;
     let chow=[];
     let isNext = ((fromIdx+1)%room.players.length)===idx;
@@ -232,13 +257,21 @@ function getClaimsFor(room, tile, fromName){
 }
 
 // ============ GAME FLOW ============
-function startGame(room){
+function startGame(room, turnTimeSec){
+  if(turnTimeSec!==undefined && turnTimeSec!==null) room.turnTimeSec = turnTimeSec;
   let tiles = shuffle(createTiles());
   room.wall = tiles;
-  room.phase='playing'; room.turnIdx=0; room.lastDiscard=null; room.waitingClaim=false; room.currentClaim=null;
+  room.phase='playing'; room.lastDiscard=null; room.waitingClaim=false; room.currentClaim=null;
+  // FITUR 2: LEMPAR DADU - tentukan dealer dari dadu
+  let d1 = 1+Math.floor(Math.random()*6);
+  let d2 = 1+Math.floor(Math.random()*6);
+  let total = d1+d2;
+  let dealerIdx = (total-1) % room.players.length;
+  room.turnIdx = dealerIdx;
+  room.lastDice = { d1, d2, total, dealer: room.players[dealerIdx].name };
   room.players.forEach((p, idx)=>{
     p.hand=[]; p.melds=[]; p.discards=[]; p.flowers=[];
-    let count = idx===0 ? 14 : 13;
+    let count = idx===dealerIdx ? 14 : 13;
     for(let i=0;i<count;i++){
       let t = room.wall.pop();
       while(t && t.type==='flower'){ p.flowers.push(t); t=room.wall.pop(); }
@@ -246,66 +279,68 @@ function startGame(room){
     }
     p.hand = sortHand(p.hand);
   });
-  let dealer = room.players[0];
-  emitToRoom(room, 'gameStarted', { players:publicPlayers(room), wallLeft:room.wall.length, turn:dealer.name });
+  let dealer = room.players[dealerIdx];
+  emitToRoom(room, 'diceRolled', { d1, d2, total, dealer: dealer.name });
+  emitToRoom(room, 'gameStarted', { players:publicPlayers(room), wallLeft:room.wall.length, turn:dealer.name, turnTimeSec:room.turnTimeSec, dice:{d1,d2,total,dealer:dealer.name} });
   room.players.forEach(p=>sendHand(room,p));
-  addLog(room, `🀄 Game mulai! Dealer: ${dealer.name}. Rebutan HU!`);
+  addLog(room, `🎲 Dadu: ${d1} + ${d2} = ${total}! Dealer: ${dealer.name}. Rebutan HU!`);
   setTimeout(()=>{ emitToRoom(room, 'turnChanged', { turn:dealer.name, wallLeft:room.wall.length }); }, 500);
+  startTurnTimer(room);
   setTimeout(()=>maybeBotTurn(room), 1200);
 }
-
 function handleAfterDiscard(room, discarder, tile){
+  clearTurnTimer(room);
   room.waitingClaim=true;
   room.currentClaim={ tile, from:discarder.name };
-  // Kasih tau semua orang ada yang bisa di-claim, biar client munculin tombol
   emitToRoom(room, 'claimAvailable', { tile, from:discarder.name, claims: getClaimsFor(room, tile, discarder.name) });
+  // FIX: 8000ms biar sama dengan client (7 detik tombol + 1 detik toleransi)
   setTimeout(()=>{
     if(!room || room.phase!=='playing') return;
     if(!room.waitingClaim) return;
     let discarderIdx = room.players.findIndex(p=>p.name===discarder.name);
-    // 1. Bot PONG dulu
+    // 1. Bot HU dulu (paling prioritas)
+    for(let i=0;i<room.players.length;i++){
+      let p=room.players[i];
+      if(p.name===discarder.name) continue;
+      if(p.isBot && canHuWithTileAndMelds(p.hand, p.melds, tile)){ endGameWin(room, p.name, `${p.name} HU dari buangan ${discarder.name}!`); return; }
+    }
+    // 2. Bot PONG
     for(let i=0;i<room.players.length;i++){
       let p=room.players[i];
       if(p.name===discarder.name) continue;
       if(p.isBot){
-        if(canHuWithTile(p.hand, tile)){
-          // Bot HU dari buangan orang
-          endGameWin(room, p.name, `${p.name} HU dari buangan ${discarder.name}!`);
-          return;
-        }
         let dec=botDecideClaim(p, tile, false);
         if(dec && dec.action==='pong'){ doClaim(room, p, 'pong', null, tile, discarder); return; }
       }
     }
-    // 2. Bot CHOW (next player)
+    // 3. Bot CHOW (next player)
     let nextIdx=(discarderIdx+1)%room.players.length;
     let nextP=room.players[nextIdx];
     if(nextP && nextP.isBot){
       let dec=botDecideClaim(nextP, tile, true);
       if(dec && dec.action==='chow'){ doClaim(room, nextP, 'chow', dec.chowNums, tile, discarder); return; }
     }
-    // 3. Gak ada yang claim -> lanjut
+    // 4. Gak ada yang claim -> lanjut
     room.waitingClaim=false; room.lastDiscard=null; room.currentClaim=null;
     advanceTurn(room, discarder);
-  }, 10000);
+  }, 8000);
 }
-
 function doClaim(room, claimer, action, chowNums, tile, discarder){
+  clearTurnTimer(room);
+  if(action==='hu'){ endGameWin(room, claimer.name, `${claimer.name} HU!`); return; }
   let dIdx = discarder.discards.findIndex(t=>t.id===tile.id);
   if(dIdx>=0) discarder.discards.splice(dIdx,1);
   let need=[];
   if(action==='pong'){
     need = claimer.hand.filter(t=>t.key===tile.key).slice(0,2);
+    if(need.length<2) return;
   } else if(action==='chow' && chowNums){
-    // chowNums bisa [2,3] atau [2,3,4] - ambil yang bukan tile buangan
     chowNums.forEach(n=>{
       if(n===tile.num) return;
       let found = claimer.hand.find(t=>t.type==='suit' && t.suit===tile.suit && t.num===n);
       if(found) need.push(found);
     });
-  } else if(action==='hu'){
-    endGameWin(room, claimer.name, `${claimer.name} HU!`);
-    return;
+    if(need.length<2) return;
   }
   need.forEach(t=>{ let i=claimer.hand.findIndex(x=>x.id===t.id); if(i>=0) claimer.hand.splice(i,1); });
   claimer.melds.push({ type:action, tiles:[tile, ...need] });
@@ -316,21 +351,22 @@ function doClaim(room, claimer, action, chowNums, tile, discarder){
   emitToRoom(room, 'turnChanged', { turn:claimer.name, wallLeft:room.wall.length });
   room.players.forEach(p=>sendHand(room,p));
   addLog(room, `⚡ ${claimer.name} ${action.toUpperCase()} ${tileName(tile)} dari ${discarder.name}!`);
+  startTurnTimer(room);
   if(claimer.isBot){ setTimeout(()=>{ botDiscard(room, claimer); }, 1500); }
 }
-
 function advanceTurn(room, fromPlayer){
   if(!room || room.phase!=='playing') return;
+  clearTurnTimer(room);
   let fromIdx = room.players.findIndex(p=>p.name===fromPlayer.name);
+  if(fromIdx===-1) fromIdx = room.turnIdx;
   let nextIdx = (fromIdx+1)%room.players.length;
   room.turnIdx = nextIdx;
   let nextP = room.players[nextIdx];
   emitToRoom(room, 'turnChanged', { turn:nextP.name, wallLeft:room.wall.length });
-
+  startTurnTimer(room);
   if(nextP.isBot){
     setTimeout(()=>maybeBotTurn(room), 800);
   } else {
-    // MANUSIA: LANGSUNG KASIH 1 TILE, BIAR BISA LANGSUNG BUANG
     if(room.wall.length===0){ endGameDraw(room); return; }
     let drawn = room.wall.pop();
     while(drawn && drawn.type==='flower'){
@@ -345,11 +381,13 @@ function advanceTurn(room, fromPlayer){
   }
 }
 function endGameDraw(room){
+  clearTurnTimer(room);
   room.phase='finished';
   emitToRoom(room, 'gameOver', { winner:null, message:'Tembok habis! Seri!', reason:'draw', msg:'Tembok habis! Seri!' });
   addLog(room, '🏳️ Tembok habis, seri!');
 }
 function endGameWin(room, winnerName, msg){
+  clearTurnTimer(room);
   room.phase='finished'; room.waitingClaim=false;
   let winner = room.players.find(p=>p.name===winnerName);
   emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: winner?winner.hand:[] });
@@ -362,7 +400,7 @@ io.on('connection', (socket)=>{
 
   socket.on('createRoom', ({ name })=>{
     let code = genCode();
-    let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTime:30000 };
+    let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec:30, turnTimer:null, lastDice:null };
     let p = { id:socket.id, name:name||'Player', isBot:false, isHost:true, hand:[], melds:[], discards:[], flowers:[], level:'' };
     room.players.push(p);
     rooms[code]=room;
@@ -384,36 +422,37 @@ io.on('connection', (socket)=>{
     emitLobby(room);
   });
 
-  // ===== ADDBOT - UDAH FIX =====
-  socket.on('addBot', ({ code, level })=>{
+  // FIX BUG 1: pake botName dari client, jangan bikin Bot Gampang lagi
+  socket.on('addBot', ({ code, level, botName })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
     if(room.players.length>=4){ socket.emit('errorMsg', 'Sudah 4 pemain!'); return; }
     level = normalizeLevel(level);
-    let botNum = room.players.filter(p=>p.isBot).length + 1;
-    let levelName = level==='easy' ? 'Gampang' : level==='medium' ? 'Lumayan' : 'Pro';
-    let bot = { id:'bot-'+Date.now()+'-'+Math.random(), name:`Bot ${levelName} ${botNum}`, isBot:true, isHost:false, hand:[], melds:[], discards:[], flowers:[], level };
+    let base = (botName||'').trim();
+    if(!base) base = 'BOT'+(room.players.filter(p=>p.isBot).length+1);
+    // Biar gak kembar namanya
+    let finalName = base; let n=2;
+    while(room.players.some(p=>p.name===finalName)){ finalName = base+' '+n; n++; }
+    let bot = { id:'bot-'+Date.now()+'-'+Math.random(), name:finalName, isBot:true, isHost:false, hand:[], melds:[], discards:[], flowers:[], level };
     room.players.push(bot);
     emitLobby(room);
-    addLog(room, `🤖 ${bot.name} masuk!`);
+    addLog(room, `🤖 ${bot.name} (${level.toUpperCase()} BOT) masuk!`);
   });
 
-  // ===== FILLBOTS - TADINYA GAK ADA, INI YANG BIKIN TOMBOL ISI FULL BOT DIEM =====
   socket.on('fillBots', ({ code, level })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
     level = normalizeLevel(level);
+    let fallbacks = ['ANDI','BUDI','SARI','DEWI','EKO','FITRI'];
     while(room.players.length < 4){
-      let botNum = room.players.filter(p=>p.isBot).length + 1;
-      let levelName = level==='easy' ? 'Gampang' : level==='medium' ? 'Lumayan' : 'Pro';
-      let bot = { id:'bot-'+Date.now()+'-'+Math.random(), name:`Bot ${levelName} ${botNum}`, isBot:true, isHost:false, hand:[], melds:[], discards:[], flowers:[], level };
+      let base = fallbacks.find(n=>!room.players.some(p=>p.name===n)) || ('BOT'+(room.players.length+1));
+      let bot = { id:'bot-'+Date.now()+'-'+Math.random(), name:base, isBot:true, isHost:false, hand:[], melds:[], discards:[], flowers:[], level };
       room.players.push(bot);
     }
     emitLobby(room);
     addLog(room, `🤖 Bot diisi full sampe 4 orang!`);
   });
 
-  // ===== REMOVEBOT - TADINYA GAK ADA =====
   socket.on('removeBot', ({ code, botName })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
@@ -422,16 +461,33 @@ io.on('connection', (socket)=>{
     emitLobby(room);
   });
 
-  socket.on('startGame', ({ code })=>{
+  // FIX BUG 2: handler setting waktu giliran (HOST ONLY)
+  socket.on('setTurnTime', ({ code, seconds })=>{
+    let room = rooms[(code||'').toUpperCase()];
+    if(!room) return;
+    let me = room.players.find(p=>p.id===socket.id);
+    if(!me || !me.isHost){ socket.emit('errorMsg','Cuma HOST yang bisa ganti waktu!'); return; }
+    let sec = Number(seconds);
+    if(isNaN(sec) || sec<0) sec = 30;
+    if(sec!==0 && sec<5) sec = 5; // minimal 5 detik biar gak mustahil
+    if(sec!==0 && sec>120) sec = 120;
+    room.turnTimeSec = sec;
+    emitToRoom(room, 'turnTimeUpdated', { seconds:sec });
+    emitLobby(room);
+    addLog(room, `⏱️ Waktu giliran diganti jadi ${sec===0?'Tanpa Batas':sec+' detik'}!`);
+  });
+
+  socket.on('startGame', ({ code, turnTimeSec })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
     if(room.players.length<2){ socket.emit('errorMsg', 'Minimal 2 pemain buat mulai! Tambah bot!'); return; }
-    startGame(room);
+    startGame(room, turnTimeSec);
   });
 
   socket.on('playAgain', ({ code })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
+    clearTurnTimer(room);
     room.phase='lobby';
     room.players.forEach(p=>{ p.hand=[]; p.melds=[]; p.discards=[]; p.flowers=[]; });
     emitLobby(room);
@@ -461,18 +517,16 @@ io.on('connection', (socket)=>{
     if(!p) return;
     if(room.players[room.turnIdx].name!==p.name) return;
     if(room.waitingClaim) return;
-if((p.hand.length - 2) % 3 !== 0){
-  socket.emit('errorMsg', 'Ambil tile dulu! Tangan kamu masih ' + p.hand.length);
-  return;
-}
+    if((p.hand.length - 2) % 3 !== 0){
+      socket.emit('errorMsg', 'Ambil tile dulu! Tangan kamu masih ' + p.hand.length);
+      return;
+    }
     let idx = p.hand.findIndex(t=>t.id==tileId);
     if(idx<0) return;
-    // Cek HU sendiri sebelum buang? Kalau udah HU, menang
-    if(checkHu(p.hand)){ endGameWin(room, p.name, `${p.name} HU! Chicken Hand!`); return; }
+    if(canHuWithMelds(p.hand, p.melds)){ endGameWin(room, p.name, `${p.name} HU! Chicken Hand!`); return; }
     let tile = p.hand.splice(idx,1)[0];
     p.discards.push(tile);
     room.lastDiscard = { tile, from:p.name };
-    // Kirim 2 format biar client lama & baru sama-sama dapet
     emitToRoom(room, 'discarded', { from:p.name, tile, tileName:tileName(tile), wallLeft:room.wall.length, players:publicPlayers(room), claims: getClaimsFor(room, tile, p.name) });
     emitToRoom(room, 'playerDiscarded', { player:p.name, tile, wallLeft:room.wall.length });
     room.players.forEach(x=>sendHand(room,x));
@@ -507,10 +561,9 @@ if((p.hand.length - 2) % 3 !== 0){
     if(!room || room.phase!=='playing') return;
     let p = room.players.find(x=>x.id===socket.id);
     if(!p) return;
-    if(checkHu(p.hand)){ endGameWin(room, p.name, `${p.name} HU! Chicken Hand!`); }
+    if(canHuWithMelds(p.hand, p.melds)){ endGameWin(room, p.name, `${p.name} HU! Chicken Hand!`); }
   });
 
-  // Chat - kirim 2 nama biar client lama & baru dapet
   socket.on('tableChat', ({ code, msg })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
@@ -529,12 +582,14 @@ if((p.hand.length - 2) % 3 !== 0){
         let left = room.players[idx];
         room.players.splice(idx,1);
         if(room.players.length===0){
+          clearTurnTimer(room);
           delete rooms[code];
         } else {
           if(left.isHost && room.players.length>0) room.players[0].isHost = true;
           emitLobby(room);
           addLog(room, `👋 ${left.name} keluar!`);
           if(room.phase==='playing'){
+            if(room.turnIdx >= room.players.length) room.turnIdx = 0;
             if(room.players[room.turnIdx] && room.players[room.turnIdx].name===left.name){
               advanceTurn(room, left);
             }
@@ -546,4 +601,4 @@ if((p.hand.length - 2) % 3 !== 0){
   });
 });
 
-server.listen(PORT, ()=>{ console.log(`🀄 MAHJONG ONLINE + BOT di port ${PORT}`); });  
+server.listen(PORT, ()=>{ console.log(`🀄 MAHJONG ONLINE + BOT di port ${PORT}`); });
