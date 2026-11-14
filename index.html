@@ -19,7 +19,7 @@ input{font-family:inherit}
 .topLogo p{color:#a7f3d0;font-size:13px;margin-top:6px;letter-spacing:.5px}
 .card{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.05));border:1px solid rgba(250,204,21,.35);border-radius:20px;padding:16px;margin:16px auto;max-width:460px;box-shadow:0 18px 40px rgba(0,0,0,.45);backdrop-filter:blur(8px);position:relative}
 .card h2{font-size:16px;margin-bottom:10px}
-.card h2 span{color:#fde68a}
+.card h2 span{color:#facc15}
 .lbl{font-size:11px;letter-spacing:1px;color:#fde68a;font-weight:700;margin:12px 0 6px}
 .inp{width:100%;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.45);color:#fff;font-size:15px;outline:none}
 .inp::placeholder{color:#94a3b8}
@@ -52,16 +52,17 @@ input{font-family:inherit}
 .bEasy{background:#16a34a}.bNorm{background:#eab308;color:#422006}.bHard{background:#dc2626}
 .btnFill{margin-top:8px;background:#facc15;color:#422006;padding:11px;border-radius:12px;font-weight:900;width:100%}
 .smallNote{max-width:560px;margin:10px auto 0;text-align:center;color:#a7f3d0;font-size:12px;line-height:1.5}
+.timeBox{max-width:560px;margin:12px auto 0;background:rgba(0,0,0,.35);border:1px solid rgba(250,204,21,.3);border-radius:18px;padding:14px;text-align:center}
+.timeBox h3{font-size:14px;margin-bottom:8px}
+.timeBtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.timeBtns button{padding:9px 14px;border-radius:999px;font-weight:900;font-size:12px;background:rgba(255,255,255,.15);color:#fff;border:2px solid transparent}
+.timeBtns button.active{background:#facc15;color:#422006;border-color:#facc15}
 #gameScreen{min-height:100vh;background:radial-gradient(ellipse at 50% 30%,#2f7a44 0%,#14532d 35%,#07130c 100%);padding:8px;display:flex;flex-direction:column}
 .gameTop{display:flex;justify-content:space-between;align-items:center;max-width:900px;width:100%;margin:0 auto;padding:4px 4px 6px;flex-wrap:wrap;gap:6px}
 .gameTop .pill{background:rgba(0,0,0,.55);border:1px solid rgba(250,204,21,.4);padding:7px 10px;border-radius:999px;font-size:12px;font-weight:800}
 .gameTop .pill b{color:#facc15}
 .table{flex:1;max-width:900px;width:100%;margin:0 auto;background:radial-gradient(ellipse at center,#1e6b34 0%,#14532d 60%,#0b3a1e 100%);border:8px solid #5b3a1a;border-radius:26px;box-shadow:inset 0 0 0 3px #8b5a2b,0 20px 40px rgba(0,0,0,.5);position:relative;min-height:480px;overflow:hidden}
-.centerBox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:120px;z-index:2}
-.centerBox .logo{font-size:36px}
-.centerBox .wall{margin-top:6px;background:rgba(0,0,0,.55);border:1px solid rgba(250,204,21,.4);border-radius:12px;padding:8px;font-size:12px;line-height:1.5}
-.centerBox .lastTile{margin-top:8px}
-.centerBox{width:360px;max-width:92%}
+.centerBox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:360px;max-width:92%;z-index:2}
 .poolTop,.poolBottom{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-height:28px;max-width:220px;margin:4px auto}
 .poolMid{display:flex;justify-content:center;align-items:flex-start;gap:6px}
 .poolSide{display:flex;flex-direction:column;flex-wrap:wrap;gap:2px;justify-content:flex-start;min-width:28px;max-height:120px}
@@ -69,16 +70,14 @@ input{font-family:inherit}
 .poolTop .mTile,.poolBottom .mTile,.poolSide .mTile{width:22px;height:30px;font-size:8px}
 .seatPos{position:absolute;z-index:3;text-align:center;width:170px}
 .seatPos.top{top:10px;left:50%;transform:translateX(-50%)}
-.seatPos.left{left:8px;top:12px;transform:none;width:130px}
-.seatPos.right{right:8px;top:12px;transform:none;width:130px}
+.seatPos.left{left:8px;top:50%;transform:translateY(-50%);width:130px}
+.seatPos.right{right:8px;top:50%;transform:translateY(-50%);width:130px}
 .playerChip{display:inline-block;background:rgba(0,0,0,.65);border:2px solid rgba(255,255,255,.25);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .playerChip.turn{border-color:#facc15;box-shadow:0 0 0 3px rgba(250,204,21,.35),0 0 18px #facc15;color:#fde68a;animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 .miniHand{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:6px;min-height:28px}
 .miniHand .mTile{width:22px;height:30px;background:#fef3c7;border-radius:4px;border:1px solid #a16207;font-size:9px;color:#422006;display:flex;align-items:center;justify-content:center;font-weight:900;box-shadow:0 1px 2px rgba(0,0,0,.3)}
 .miniHand .mTile.back{background:linear-gradient(180deg,#16a34a,#14532d);border-color:#052e16;color:transparent}
-.discards{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:4px;max-width:110px;margin-left:auto;margin-right:auto}
-.discards .mTile{width:20px;height:26px;font-size:8px}
 .t{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:68px;background:linear-gradient(180deg,#fffbeb,#fef3c7);border:2px solid #d6a419;border-bottom-width:5px;border-radius:8px;color:#1c1917;box-shadow:0 4px 10px rgba(0,0,0,.35);font-weight:900;cursor:pointer;user-select:none;position:relative;transition:.12s}
 .t .ico{font-size:20px;line-height:1}.t .num{font-size:17px;line-height:1;margin-top:1px}.t .sub{font-size:8px;letter-spacing:.5px;color:#92400e}
 .t.red{color:#dc2626}.t.red .sub{color:#991b1b}.t.green{color:#15803d}.t.blue{color:#1d4ed8}
@@ -108,7 +107,18 @@ input{font-family:inherit}
 .winBox{background:linear-gradient(180deg,#fef3c7,#fde68a);color:#422006;border-radius:22px;padding:22px;text-align:center;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.6)}
 .winBox h2{font-size:26px}.winBox p{margin-top:8px;font-size:14px;line-height:1.5}.winBox .btn{margin-top:14px}
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111827;border:1px solid #facc15;color:#fde68a;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:800;z-index:200;display:none;max-width:92%;text-align:center}
-@media(max-width:640px){ .topLogo h1{font-size:30px} .t{width:44px;height:60px}.t .ico{font-size:17px}.t .num{font-size:15px} .seatPos.left,.seatPos.right{width:84px} .centerBox{width:170px} .table{min-height:460px} }
+#turnPopup{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.8);background:rgba(0,0,0,.85);border:3px solid #facc15;border-radius:20px;padding:18px 28px;text-align:center;z-index:300;display:none;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:.2s}
+#turnPopup.show{display:block;transform:translate(-50%,-50%) scale(1)}
+#turnPopup .tpName{font-size:24px;font-weight:900;color:#facc15;margin-top:6px}
+#turnPopup .tpSub{font-size:12px;color:#a7f3d0;margin-top:4px}
+#diceModal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:250;display:none;align-items:center;justify-content:center}
+#diceModal.show{display:flex}
+.diceBox{background:linear-gradient(180deg,#fef3c7,#fde68a);color:#422006;border-radius:22px;padding:24px;text-align:center;min-width:280px}
+.diceRow{display:flex;gap:16px;justify-content:center;margin:16px 0}
+.dice{width:70px;height:70px;background:#fff;border:3px solid #422006;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 6px 0 #422006}
+.dice.rolling{animation:diceShake .15s infinite}
+@keyframes diceShake{0%{transform:rotate(-8deg) translateY(-2px)}100%{transform:rotate(8deg) translateY(2px)}}
+@media(max-width:640px){ .topLogo h1{font-size:30px} .t{width:44px;height:60px}.t .ico{font-size:17px}.t .num{font-size:15px} .seatPos.left,.seatPos.right{width:84px} .centerBox{width:92%} .table{min-height:460px} }
 </style>
 </head>
 <body>
@@ -130,11 +140,12 @@ input{font-family:inherit}
   <div class="roomTop"><div style="font-size:12px;letter-spacing:2px;color:#fde68a;font-weight:800">KODE MEJA KAMU</div><div class="code" id="roomCodeBig">----</div><small>Kasih kode ini ke temen kamu, biar join!</small></div>
   <div class="seats" id="seatsWrap"></div>
   <div class="botBox" id="botBox"><h3>🤖 Tambah BOT (Cuma HOST yang bisa)</h3><div class="botBtns"><button class="bEasy" onclick="addBot('easy')">🟢 BOT<br>EASY</button><button class="bNorm" onclick="addBot('normal')">🟡 BOT<br>NORMAL</button><button class="bHard" onclick="addBot('hard')">🔴 BOT<br>HARD</button></div><button class="btnFill" onclick="fillBots()">⚡ ISI FULL BOT SAMPE 4 ORANG</button><div style="font-size:11px;color:#a7f3d0;margin-top:8px;text-align:center">EASY = gampang • NORMAL = lumayan mikir • HARD = ngitung kartu kamu!</div></div>
+  <div class="timeBox" id="timeBox"><h3>⏱️ WAKTU GILIRAN (HOST ONLY)</h3><div class="timeBtns" id="timeBtns"><button data-sec="10" onclick="setTurnTime(10,this)">10 DETIK</button><button data-sec="15" onclick="setTurnTime(15,this)">15 DETIK</button><button data-sec="30" onclick="setTurnTime(30,this)" class="active">30 DETIK</button><button data-sec="60" onclick="setTurnTime(60,this)">60 DETIK</button><button data-sec="0" onclick="setTurnTime(0,this)">TANPA BATAS ♾️</button></div><div id="timeInfo" style="font-size:11px;color:#a7f3d0;margin-top:8px">Saat ini: 30 detik per giliran</div></div>
   <div style="max-width:560px;margin:14px auto 0"><button class="btn btn-gold" id="startBtn" onclick="startGame()">🚀 MULAI GAME (MIN 2 PEMAIN)</button><button class="btn btn-dark" onclick="location.reload()">⬅️ KELUAR KE HOME</button></div>
   <div class="smallNote">💡 Tips: Kalau sendirian, pencet <b>ISI FULL BOT</b> biar langsung main lawan 3 bot!<br>Host bisa klik bot buat ngehapus bot.</div>
 </div>
 <div id="gameScreen" class="hidden">
-  <div class="gameTop"><div class="pill">🀄 <b id="gCode">----</b> • 🧱 Sisa: <b id="wallLeft">144</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div></div>
+  <div class="gameTop"><div class="pill">🀄 <b id="gCode">----</b> • 🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div></div>
   <div class="table" id="tableEl">
    <div class="centerBox" id="centerBox">
   <div class="poolTop" id="poolTop"></div>
@@ -167,15 +178,25 @@ input{font-family:inherit}
 </div>
 <div id="winModal"><div class="winBox"><div style="font-size:48px">🐔🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2><p id="winMsg">...</p><button class="btn btn-gold" onclick="playAgain()">🔁 MAIN LAGI (MEJA SAMA)</button><button class="btn btn-dark" onclick="location.reload()">🏠 BALIK KE HOME</button></div></div>
 <div id="toast"></div>
+<div id="turnPopup"><div style="font-size:28px">🎯</div><div style="font-size:11px;letter-spacing:2px;color:#fde68a;font-weight:800">GILIRAN SEKARANG</div><div class="tpName" id="turnPopupName">-</div><div class="tpSub" id="turnPopupSub">Siap-siap buang tile!</div></div>
+<div id="diceModal"><div class="diceBox"><div style="font-size:28px">🎲</div><h2 style="margin-top:6px">LEMPAR DADU!</h2><p style="font-size:12px;color:#92400e;margin-top:4px" id="diceText">Menentukan siapa yang mulai duluan...</p><div class="diceRow"><div class="dice" id="dice1">⚀</div><div class="dice" id="dice2">⚀</div></div><p id="diceTotal" style="font-weight:900;font-size:16px">Total: -</p><p id="diceWinner" style="font-size:13px;margin-top:6px;color:#15803d;font-weight:800"></p></div></div>
 <script>
 let socket = io({ reconnection:true, reconnectionAttempts:999, reconnectionDelay:1000, transports:["websocket","polling"] });
 let myCode=null, myName=null, myHand=[], myMelds=[], myFlowers=[], isMyTurn=false, selectedTile=null, currentPlayers=[], soundOn=true;
+let turnTimeSec=30, turnTimerInt=null, turnLeft=30, isHost=false, usedBotNames=[];
+let BOT_NAMES=['ANDI','BUDI','SARI','DEWI','EKO','FITRI','GILANG','HANI','IVAN','JOKO','KIKI','LINA','MAMA','NINA','OPA','PUTRI','RINA','SINTA','TONI','Udin','VINA','WATI','YUDI','ZARA','AGUS','BAMBANG','CITRA','DODI','ERIK','FARAH'];
+let DICE_FACES=['','⚀','⚁','⚂','⚃','⚄','⚅'];
 function el(id){ return document.getElementById(id); }
 function showErr(m){ let e=el('homeErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',3000); }
 function toast(m){ let t=el('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 function esc(s){ let d=document.createElement('div'); d.innerText=String(s||''); return d.innerHTML; }
 function toggleSound(){ soundOn=!soundOn; el('soundBtn').innerText=soundOn?'ON':'OFF'; toast(soundOn?'🔊 Suara ON':'🔇 Suara OFF'); }
-// ===== SUARA - TANPA FILE =====
+function botDisplayName(p){ if(!p.isBot) return esc(p.name); let lvl=(p.botLevel||'easy').toUpperCase(); return esc(p.name)+' ('+lvl+' BOT)'; }
+function randomBotName(){ let pool=BOT_NAMES.filter(n=>!usedBotNames.includes(n) && n!==myName); if(pool.length===0) pool=BOT_NAMES.slice(); let n=pool[Math.floor(Math.random()*pool.length)]; usedBotNames.push(n); return n; }
+function setTurnTime(sec, btn){ if(!isHost){ toast('Cuma HOST yang bisa ganti waktu!'); return; } turnTimeSec=sec; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); el('timeInfo').innerText = sec===0 ? 'Saat ini: Tanpa batas' : 'Saat ini: '+sec+' detik per giliran'; el('turnTimer').innerText = sec===0 ? '♾️' : sec+'s'; socket.emit('setTurnTime',{code:myCode, seconds:sec}); }
+function showTurnPopup(name){ let p=el('turnPopup'); el('turnPopupName').innerText = name===myName ? 'KAMU! 🔥' : name; el('turnPopupSub').innerText = name===myName ? 'Giliran kamu! Buang 1 tile!' : 'Tunggu '+name+' buang tile...'; p.classList.add('show'); setTimeout(()=>p.classList.remove('show'), 1600); }
+function startTurnTimer(){ clearInterval(turnTimerInt); if(turnTimeSec===0){ el('turnTimer').innerText='♾️'; return; } turnLeft=turnTimeSec; el('turnTimer').innerText=turnLeft+'s'; turnTimerInt=setInterval(()=>{ turnLeft--; if(turnLeft<=0){ clearInterval(turnTimerInt); el('turnTimer').innerText='0s'; } else { el('turnTimer').innerText=turnLeft+'s'; } },1000); }
+function showDiceRoll(firstPlayer){ let m=el('diceModal'); m.classList.add('show'); let d1=el('dice1'), d2=el('dice2'); d1.classList.add('rolling'); d2.classList.add('rolling'); el('diceText').innerText='Menentukan siapa yang mulai duluan...'; el('diceTotal').innerText='Total: -'; el('diceWinner').innerText=''; let ticks=0; let iv=setInterval(()=>{ let a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6); d1.innerText=DICE_FACES[a]; d2.innerText=DICE_FACES[b]; ticks++; if(ticks>12){ clearInterval(iv); d1.classList.remove('rolling'); d2.classList.remove('rolling'); let total=a+b; el('diceTotal').innerText='Total: '+total+' ('+a+' + '+b+')'; el('diceWinner').innerText = firstPlayer ? '🎯 '+firstPlayer+' jalan duluan!' : '🎯 Giliran pertama dimulai!'; setTimeout(()=>m.classList.remove('show'), 1400); } },140); }
 let mjAudio = null;
 function playMjSound(type){
   if(!soundOn) return;
@@ -194,6 +215,7 @@ function playMjSound(type){
     if(type==='chow'){ tone(523, 0, 0.15, 0.2, 'sine'); tone(659, 0.12, 0.2, 0.2, 'sine'); }
     if(type==='hu'){ tone(523,0,0.2,0.2,'triangle'); tone(659,0.2,0.2,0.2,'triangle'); tone(784,0.4,0.2,0.2,'triangle'); tone(1046,0.6,0.6,0.25,'triangle'); }
     if(type==='turn'){ tone(1000, 0, 0.1, 0.12, 'sine'); }
+    if(type==='dice'){ tone(400,0,0.1,0.2,'square'); tone(500,0.15,0.1,0.2,'square'); }
   }catch(e){}
 }
 function tileLabel(t){
@@ -206,51 +228,56 @@ function tileHTML(t, extraClass){ let l=tileLabel(t); return `<div class="t ${l.
 function tileMini(t){ let l=tileLabel(t); return `<div class="mTile" title="${l.sub} ${l.num}">${l.ico} ${l.num}</div>`; }
 function createRoom(){ myName=el('nameInput').value.trim(); if(!myName) return showErr('Isi nama dulu!'); socket.emit('createRoom',{name:myName}); }
 function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim().toUpperCase(); if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName}); }
-function addBot(level){ socket.emit('addBot',{code:myCode, level}); }
-function fillBots(){ socket.emit('fillBots',{code:myCode, level:'normal'}); }
-function startGame(){ socket.emit('startGame',{code:myCode}); }
+function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:myCode, level, botName}); }
+function fillBots(){ let need=4 - (currentPlayers.length||0); if(need<=0) need=3; for(let i=0;i<need;i++){ setTimeout(()=>addBot('normal'), i*150); } }
+function startGame(){ socket.emit('startGame',{code:myCode, turnTimeSec}); }
 function playAgain(){ socket.emit('playAgain',{code:myCode}); el('winModal').classList.remove('show'); }
 socket.on('roomCreated', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('roomCodeBig').innerText=d.code; });
 socket.on('joinedRoom', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('roomCodeBig').innerText=d.code; });
 socket.on('updateLobby', room=>{
-  myCode=room.code; let wrap=el('seatsWrap'); wrap.innerHTML='';
+  myCode=room.code; currentPlayers=room.players; if(room.turnTimeSec!==undefined && room.turnTimeSec!==null){ turnTimeSec=room.turnTimeSec; el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s'; el('timeInfo').innerText = turnTimeSec===0?'Saat ini: Tanpa batas':'Saat ini: '+turnTimeSec+' detik per giliran'; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec)); }
+  isHost = room.players.some(p=>p.name===myName && !p.isBot && p.id===room.hostId);
+  el('timeBox').style.display = isHost ? 'block' : 'none'; el('botBox').style.display = isHost ? 'block' : 'none';
+  let wrap=el('seatsWrap'); wrap.innerHTML='';
   room.players.forEach(p=>{
     let isMe=p.name===myName && !p.isBot;
-    wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}" ${p.isBot?`onclick="removeBot('${esc(p.name)}') style="cursor:pointer"` :''}><div class="ava">${p.isBot?(p.botLevel==='hard'?'🤖🔴':p.botLevel==='easy'?'🤖🟢':'🤖🟡'):'🧑'}</div><div class="nm">${esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?`BOT ${p.botLevel.toUpperCase()} - Klik buat hapus`:(p.id===room.hostId?'👑 HOST':'Pemain')}</div></div>`;
+    wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}" ${p.isBot && isHost?`onclick="removeBot('${esc(p.name)}')" style="cursor:pointer"`:''}><div class="ava">${p.isBot?(p.botLevel==='hard'?'🤖🔴':p.botLevel==='easy'?'🤖🟢':'🤖🟡'):'🧑'}</div><div class="nm">${p.isBot?botDisplayName(p):esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?`BOT ${ (p.botLevel||'').toUpperCase()} - ${isHost?'Klik buat hapus':''}`:(p.id===room.hostId?'👑 HOST':'Pemain')}</div></div>`;
   });
   for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty">💺 Kursi Kosong<br><small>Menunggu pemain...</small></div>`;
   el('startBtn').disabled = room.players.length<2;
   el('startBtn').innerText = room.players.length<2 ? `⏳ BUTUH MIN 2 PEMAIN (${room.players.length}/4)` : `🚀 MULAI GAME (${room.players.length} PEMAIN)`;
 });
+socket.on('turnTimeUpdated', d=>{ turnTimeSec=d.seconds; el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s'; el('timeInfo').innerText = turnTimeSec===0?'Saat ini: Tanpa batas':'Saat ini: '+turnTimeSec+' detik per giliran'; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec)); toast('⏱️ Waktu giliran diganti jadi '+(turnTimeSec===0?'Tanpa Batas':turnTimeSec+' detik')); });
 function removeBot(name){ if(confirm('Hapus '+name+'?')) socket.emit('removeBot',{code:myCode, botName:name}); }
 socket.on('errorMsg', m=>{ showErr(m); toast(m); });
 socket.on('gameStarted', d=>{
   el('lobbyScreen').classList.add('hidden'); el('gameScreen').classList.remove('hidden');
-  el('gCode').innerText=myCode; el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft;
+  el('gCode').innerText=myCode; el('wallLeft').innerText=d.wallLeft;
+  if(d.turnTimeSec!==undefined) turnTimeSec=d.turnTimeSec;
+  el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s';
   el('turnName').innerText=d.turn; currentPlayers=d.players; el('myNameLabel').innerText='🧑 '+myName;
   isMyTurn = (d.turn===myName);
   el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...';
-  if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Kamu dealer, buang 1 tile!'); }
+  playMjSound('dice'); showDiceRoll(d.turn);
+  setTimeout(()=>{ showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Kamu dealer, buang 1 tile!'); } }, 2100);
   addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!');
-  renderSeats(d.players, d.turn);
+  renderSeats(d.players, d.turn); renderCentralPool(d.players);
 });
 socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); if(d.canHu){ renderActionBar([{type:'selfHu'}]); } });
-socket.on('turnChanged', d=>{ el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
-socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = tileHTML(d.tile) + `<div style="margin-top:6px">Dari: <b>${esc(d.from)}</b> • ${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); toast('⚡ Kamu bisa PONG / CHOW / HU! Cepet claim!'); } });
-socket.on('meldMade', d=>{ if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); });
-socket.on('gameOver', d=>{ playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🐔🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message + (d.hand ? `\nTangan pemenang: ${d.hand.length} tile` : ''); el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
-socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); myHand=[]; myMelds=[]; myFlowers=[]; renderMyHand(); });
+socket.on('turnChanged', d=>{ el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
+socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileMini(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); toast('⚡ Kamu bisa PONG / CHOW / HU! Cepet claim!'); } });
+socket.on('meldMade', d=>{ if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); });
+socket.on('gameOver', d=>{ clearInterval(turnTimerInt); playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🐔🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message + (d.hand ? `\nTangan pemenang: ${d.hand.length} tile` : ''); el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
+socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); myHand=[]; myMelds=[]; myFlowers=[]; usedBotNames=[]; renderMyHand(); });
 function addLog(m){ let l=el('gameLog'); l.innerHTML = m + '<br>' + l.innerHTML; }
 function renderSeats(players, turn){
   let others = players.filter(p=>p.name!==myName);
   let posMap = ['right','top','left'];
   let slots = { top: el('seatTop'), left: el('seatLeft'), right: el('seatRight') };
   Object.values(slots).forEach(s=>s.innerHTML='');
-  others.forEach((p, idx)=>{ let pos = posMap[idx] || 'top'; let slot = slots[pos]; let isTurn = p.name===turn; let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join(''); slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':'🧑 '} ${esc(p.name)} ${p.isBot?`(${p.botLevel})`:''} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div><div style="font-size:10px;color:#fde68a;margin-top:4px">${meldHtml ? 'Set: ' : ''}</div>${meldHtml}${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`; });
+  others.forEach((p, idx)=>{ let pos = posMap[idx] || 'top'; let slot = slots[pos]; let isTurn = p.name===turn; let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join(''); slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':''}${botDisplayName(p)} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div><div style="font-size:10px;color:#fde68a;margin-top:4px">${meldHtml ? 'Set: ' : ''}</div>${meldHtml}${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`; });
   let me = players.find(p=>p.name===myName); if(me){ myMelds=me.melds; myFlowers=me.flowers; renderMyHand(); }
 }
-
-// INI YANG NO 4 - FUNGSI BARU, TEMPEL DI BAWAH renderSeats
 function renderCentralPool(players){
   let me = players.find(p=>p.name===myName);
   let others = players.filter(p=>p.name!==myName);
