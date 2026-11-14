@@ -131,6 +131,13 @@ input{font-family:inherit}
 .face .lbl{font-size:6px;letter-spacing:.5px;color:#92400e;font-weight:800;line-height:1;margin-top:1px}
 .mTile .face .dot{width:6px;height:6px} .mTile .face .stick{width:4px;height:10px} .mTile .face .bigChar{font-size:18px} .mTile .face .charTop{font-size:12px} .mTile .face .charWan{font-size:12px}
 .t .face .dot{width:9px;height:9px} .t .face .stick{width:5px;height:14px} .t .face .bigChar{font-size:26px} .t .face .charTop{font-size:18px} .t .face .charWan{font-size:18px}
+.meldZone{position:absolute;z-index:2;display:flex;gap:4px;flex-wrap:wrap;max-width:190px}
+.meldZone .meld{padding:3px;gap:2px}
+.meldZone .meld .t{width:30px;height:40px}
+.meldZone .meld .mTile{width:28px;height:38px}
+.meldTopRight{top:10px;right:10px;justify-content:flex-end}
+.meldLeftBottom{left:10px;bottom:10px;justify-content:flex-start}
+.meldRightBottom{right:10px;bottom:10px;justify-content:flex-end}
 @media(max-width:640px){ .topLogo h1{font-size:30px} .t{width:44px;height:60px} .seatPos.left,.seatPos.right{width:84px} .centerBox{width:92%} .table{min-height:460px} }
 </style>
 </head>
@@ -170,6 +177,9 @@ input{font-family:inherit}
   <div class="poolBottom" id="poolBottom"></div>
 </div>
     <div class="seatPos top" id="seatTop"></div><div class="seatPos left" id="seatLeft"></div><div class="seatPos right" id="seatRight"></div>
+<div class="meldZone meldTopRight" id="meldTop"></div>
+<div class="meldZone meldLeftBottom" id="meldLeft"></div>
+<div class="meldZone meldRightBottom" id="meldRight"></div>
   </div>
   <div class="myArea">
     <div class="myTop"><div><b id="myNameLabel">Kamu</b> <span id="myStatus">• Menunggu giliran...</span></div><div><span id="myCount">13 tile</span> • <span id="myMeldCount">0 set</span></div></div>
@@ -320,7 +330,19 @@ function renderSeats(players, turn){
   let posMap = ['right','top','left'];
   let slots = { top: el('seatTop'), left: el('seatLeft'), right: el('seatRight') };
   Object.values(slots).forEach(s=>s.innerHTML='');
-  others.forEach((p, idx)=>{ let pos = posMap[idx] || 'top'; let slot = slots[pos]; let isTurn = p.name===turn; let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join(''); slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':''}${botDisplayName(p)} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div><div style="font-size:10px;color:#fde68a;margin-top:4px">${meldHtml ? 'Set: ' : ''}</div>${meldHtml}${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`; });
+  // Kosongin dulu 3 zona meld
+  el('meldTop').innerHTML=''; el('meldLeft').innerHTML=''; el('meldRight').innerHTML='';
+  let meldSlots = { top: el('meldTop'), left: el('meldLeft'), right: el('meldRight') };
+  others.forEach((p, idx)=>{
+    let pos = posMap[idx] || 'top';
+    let slot = slots[pos];
+    let isTurn = p.name===turn;
+    // 1. Di seatPos CUMA chip + tangan tertutup, TANPA meld lagi - ini yang bikin nimpa tadi
+    slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':''}${botDisplayName(p)} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div>${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`;
+    // 2. Meld PONG/CHOW dipindah ke zona pojok
+    let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join('');
+    if(meldHtml && meldSlots[pos]) meldSlots[pos].innerHTML = meldHtml;
+  });
   let me = players.find(p=>p.name===myName); if(me){ myMelds=me.melds; myFlowers=me.flowers; renderMyHand(); }
 }
 function renderCentralPool(players){
