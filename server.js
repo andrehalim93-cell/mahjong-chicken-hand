@@ -444,6 +444,11 @@ io.on('connection', (socket)=>{
     if(!p) return;
     if(room.players[room.turnIdx].name!==p.name) return;
     if(room.waitingClaim) return;
+      // WAJIB 14 DULU BARU BOLEH BUANG - kalau masih 13 berarti belum ambil
+  if(p.hand.length !== 14){
+    socket.emit('errorMsg', 'Ambil tile dulu! Tangan kamu masih ' + p.hand.length);
+    return;
+  }
     let idx = p.hand.findIndex(t=>t.id==tileId);
     if(idx<0) return;
     // Cek HU sendiri sebelum buang? Kalau udah HU, menang
