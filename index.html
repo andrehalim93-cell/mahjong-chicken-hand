@@ -19,7 +19,7 @@ input{font-family:inherit}
 .topLogo p{color:#a7f3d0;font-size:13px;margin-top:6px;letter-spacing:.5px}
 .card{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.05));border:1px solid rgba(250,204,21,.35);border-radius:20px;padding:16px;margin:16px auto;max-width:460px;box-shadow:0 18px 40px rgba(0,0,0,.45);backdrop-filter:blur(8px);position:relative}
 .card h2{font-size:16px;margin-bottom:10px}
-.card h2 span{color:#facc15}
+.card h2 span{color:#fde68a}
 .lbl{font-size:11px;letter-spacing:1px;color:#fde68a;font-weight:700;margin:12px 0 6px}
 .inp{width:100%;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.45);color:#fff;font-size:15px;outline:none}
 .inp::placeholder{color:#94a3b8}
@@ -216,7 +216,7 @@ socket.on('updateLobby', room=>{
   myCode=room.code; let wrap=el('seatsWrap'); wrap.innerHTML='';
   room.players.forEach(p=>{
     let isMe=p.name===myName && !p.isBot;
-    wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}" ${p.isBot?`onclick="removeBot('${esc(p.name)}') style="cursor:pointer"`:''}><div class="ava">${p.isBot?(p.botLevel==='hard'?'🤖🔴':p.botLevel==='easy'?'🤖🟢':'🤖🟡'):'🧑'}</div><div class="nm">${esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?`BOT ${p.botLevel.toUpperCase()} - Klik buat hapus`:(p.id===room.hostId?'👑 HOST':'Pemain')}</div></div>`;
+    wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}" ${p.isBot?`onclick="removeBot('${esc(p.name)}') style="cursor:pointer"` :''}><div class="ava">${p.isBot?(p.botLevel==='hard'?'🤖🔴':p.botLevel==='easy'?'🤖🟢':'🤖🟡'):'🧑'}</div><div class="nm">${esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?`BOT ${p.botLevel.toUpperCase()} - Klik buat hapus`:(p.id===room.hostId?'👑 HOST':'Pemain')}</div></div>`;
   });
   for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty">💺 Kursi Kosong<br><small>Menunggu pemain...</small></div>`;
   el('startBtn').disabled = room.players.length<2;
@@ -228,7 +228,6 @@ socket.on('gameStarted', d=>{
   el('lobbyScreen').classList.add('hidden'); el('gameScreen').classList.remove('hidden');
   el('gCode').innerText=myCode; el('wallLeft').innerText=d.wallLeft; el('centerWall').innerText=d.wallLeft;
   el('turnName').innerText=d.turn; currentPlayers=d.players; el('myNameLabel').innerText='🧑 '+myName;
-  // FIX BOT MACET: Langsung cek giliran pertama!
   isMyTurn = (d.turn===myName);
   el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...';
   if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Kamu dealer, buang 1 tile!'); }
