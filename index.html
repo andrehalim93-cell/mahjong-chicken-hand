@@ -88,6 +88,11 @@ input{font-family:inherit}
 .t.sel{transform:translateY(-10px);border-color:#facc15;box-shadow:0 0 0 3px #facc15,0 10px 18px rgba(0,0,0,.4)}
 .t.myTurn:hover{transform:translateY(-6px)}
 .t.flower{background:linear-gradient(180deg,#fdf2f8,#fbcfe8);border-color:#db2777}
+.t.real{padding:2px}
+.t.real .realUni{font-size:34px;line-height:1;font-family:'Segoe UI Symbol','Noto Sans Symbols2',sans-serif}
+.t.real .sub{font-size:7px}
+.mTile.realMini{padding:1px}
+.mTile.realMini .realUni{font-size:22px;line-height:1}
 .myArea{max-width:900px;width:100%;margin:10px auto 0;background:rgba(0,0,0,.55);border:1px solid rgba(250,204,21,.35);border-radius:18px;padding:10px}
 .myArea .myTop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .myArea .myTop b{font-size:13px}.myArea .myTop span{font-size:11px;color:#a7f3d0}
@@ -223,13 +228,16 @@ function playMjSound(type){
   }catch(e){}
 }
 function tileLabel(t){
-  if(t.type==='suit'){ let sym=['🎋','🔴','🀄'][t.suit]; let cls=t.suit===1?'red':(t.suit===0?'green':'blue'); return {ico:sym,num:t.num,sub:['BAMBU','DOT','KARAKTER'][t.suit],cls}; }
-  if(t.type==='wind'){ let n=['TIMUR','SELATAN','BARAT','UTARA'][t.num]; return {ico:'💨',num:n[0],sub:n,cls:'blue'}; }
-  if(t.type==='dragon'){ let n=['MERAH','HIJAU','PUTIH'][t.num]; let ico=['🐲','🐉','🤍'][t.num]; return {ico:ico,num:n[0],sub:'NAGA',cls:t.num===0?'red':(t.num===1?'green':'blue')}; }
-  return {ico:'🌸',num:'✿',sub:'BUNGA',cls:'red'};
+  // Unicode Mahjong asli U+1F000 - U+1F02F
+  if(t.type==='suit' && t.suit===0) return {uni:'🀇🀈🀉🀊🀋🀌🀍🀎🀏'[t.num-1], cls:'green', sub:'BAMBU'};
+  if(t.type==='suit' && t.suit===1) return {uni:'🀙🀚🀛🀜🀝🀞🀟🀠🀡'[t.num-1], cls:'blue', sub:'DOT'};
+  if(t.type==='suit' && t.suit===2) return {uni:'🀩🀪🀫🀬🀭🀮🀯🀰🀱'[t.num-1], cls:'red', sub:'KARAKTER'};
+  if(t.type==='wind') return {uni:'🀀🀁🀂🀃'[t.num], cls:'blue', sub:['TIMUR','SELATAN','BARAT','UTARA'][t.num]};
+  if(t.type==='dragon') return {uni:'🀄🀅🀆'[t.num], cls:t.num===0?'red':(t.num===1?'green':'blue'), sub:['NAGA MERAH','NAGA HIJAU','NAGA PUTIH'][t.num]};
+  return {uni:'🌸', cls:'red', sub:'BUNGA'};
 }
-function tileHTML(t, extraClass){ let l=tileLabel(t); return `<div class="t ${l.cls} ${extraClass||''}" data-id="${t.id}"><div class="ico">${l.ico}</div><div class="num">${l.num}</div><div class="sub">${l.sub}</div></div>`; }
-function tileMini(t){ let l=tileLabel(t); return `<div class="mTile ${l.cls}" title="${l.sub} ${l.num}"><div class="ico">${l.ico}</div><div class="num">${l.num}</div><div class="sub">${l.sub}</div></div>`; }
+function tileHTML(t, extraClass){ let l=tileLabel(t); return `<div class="t real ${l.cls} ${extraClass||''}" data-id="${t.id}"><div class="realUni">${l.uni}</div><div class="sub">${l.sub}</div></div>`; }
+function tileMini(t){ let l=tileLabel(t); return `<div class="mTile realMini ${l.cls}" title="${l.sub}"><div class="realUni">${l.uni}</div></div>`; }
 function createRoom(){ myName=el('nameInput').value.trim(); if(!myName) return showErr('Isi nama dulu!'); socket.emit('createRoom',{name:myName}); }
 function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim().toUpperCase(); if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName}); }
 function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:myCode, level, botName}); }
