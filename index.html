@@ -7,54 +7,58 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#065f46;color:#fff;min-height:100vh}
+body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial;background:radial-gradient(ellipse at top,#0d9488 0%,#065f46 40%,#022c22 100%);color:#fff;min-height:100vh}
 button{cursor:pointer;border:none;font-family:inherit}
-input,select{font-family:inherit}
-.topbar{background:#064e3b;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:20}
-.topbar b{font-size:16px}
-.pill{background:rgba(0,0,0,.4);padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700}
-.wrap{max-width:520px;margin:0 auto;padding:12px;padding-bottom:120px}
-.card{background:#0f766e;border:2px solid #14b8a6;border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:0 8px 20px rgba(0,0,0,.3)}
-.card h2{margin:0 0 8px;font-size:18px}
-.card p{margin:4px 0;font-size:13px;color:#ccfbf1}
-.big-input{width:100%;padding:12px;border-radius:12px;border:none;font-size:16px;margin:6px 0;outline:none}
-.btn{width:100%;padding:13px;border-radius:12px;font-weight:900;font-size:15px;margin-top:8px}
-.btn-gold{background:#facc15;color:#000}
+input{font-family:inherit}
+.topbar{background:linear-gradient(180deg,#064e3b,#022c22);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:20;box-shadow:0 4px 20px rgba(0,0,0,.5);border-bottom:2px solid #facc15}
+.topbar b{font-size:17px;letter-spacing:.5px;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.pill{background:rgba(0,0,0,.45);border:1px solid rgba(250,204,21,.4);padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800}
+.wrap{max-width:560px;margin:0 auto;padding:14px;padding-bottom:120px}
+.card{background:linear-gradient(180deg,#0f766e,#0d5c52);border:2px solid rgba(250,204,21,.35);border-radius:22px;padding:16px;margin-bottom:14px;box-shadow:0 12px 28px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.15)}
+.card h2{margin:0 0 8px;font-size:19px;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.card p{margin:5px 0;font-size:13px;color:#ccfbf1;line-height:1.5}
+.big-input{width:100%;padding:13px 14px;border-radius:14px;border:2px solid rgba(0,0,0,.2);font-size:16px;margin:6px 0;outline:none;background:#fff;color:#111;box-shadow:inset 0 2px 6px rgba(0,0,0,.08)}
+.big-input:focus{border-color:#facc15}
+.btn{width:100%;padding:14px;border-radius:14px;font-weight:900;font-size:15px;margin-top:9px;box-shadow:0 4px 0 rgba(0,0,0,.35);transition:transform .08s}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.btn-gold{background:linear-gradient(180deg,#fde047,#facc15);color:#422006}
 .btn-white{background:#fff;color:#065f46}
-.btn-dark{background:#134e4a;color:#fff}
-.btn-green{background:#22c55e;color:#fff}
-.btn-red{background:#ef4444;color:#fff}
+.btn-dark{background:#134e4a;color:#fff;border:1px solid rgba(255,255,255,.2)}
+.btn-green{background:linear-gradient(180deg,#4ade80,#22c55e);color:#052e16}
+.btn-red{background:linear-gradient(180deg,#f87171,#ef4444);color:#fff}
 .row{display:flex;gap:8px}
 .row .btn{flex:1}
 .hidden{display:none!important}
-.player-row{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.35);padding:8px 10px;border-radius:12px;margin:6px 0;font-size:13px}
-.player-row .left{display:flex;gap:8px;align-items:center}
-.avatar{width:32px;height:32px;border-radius:50%;background:#facc15;color:#000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px}
-.time-btn{flex:1;padding:10px;border-radius:10px;background:#475569;color:#fff;font-weight:900;font-size:12px;line-height:1.2}
-.time-btn.active{background:#facc15!important;color:#000!important}
-.table{background:#0b5e3f;border:4px solid #92400e;border-radius:20px;padding:10px;min-height:320px;position:relative}
-.center-info{text-align:center;background:rgba(0,0,0,.5);border-radius:14px;padding:10px;margin-bottom:10px}
-.center-info b{font-size:15px}
-.timer-wrap{width:200px;height:8px;background:rgba(0,0,0,.6);border-radius:999px;overflow:hidden;margin:6px auto 0}
-#timerBar{height:100%;width:100%;background:#4ade80;transition:width 1s linear}
-.discard-area{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;min-height:90px}
-.mini-tile{background:#fff;color:#000;border-radius:8px;padding:6px 2px;text-align:center;font-size:11px;font-weight:800;line-height:1.1;box-shadow:0 2px 0 #999}
-.mini-tile small{display:block;font-size:9px;color:#666;font-weight:400}
-.hand-area{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
-.hand-tile{background:#fff;color:#000;border-radius:10px;width:52px;height:68px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:13px;line-height:1.1;cursor:pointer;box-shadow:0 3px 0 #999;position:relative}
-.hand-tile.selected{transform:translateY(-12px);outline:3px solid #facc15;box-shadow:0 6px 0 #999,0 0 0 3px #facc15}
-.hand-tile span{font-size:18px}
-.meld-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0}
-.meld{border:2px solid #facc15;background:rgba(250,204,21,.15);border-radius:10px;padding:4px 6px;font-size:11px;font-weight:800}
-.log{height:90px;overflow:auto;background:rgba(0,0,0,.5);border-radius:12px;padding:8px;font-size:12px;line-height:1.5}
+.player-row{display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);padding:10px 12px;border-radius:14px;margin:7px 0;font-size:13px}
+.player-row .left{display:flex;gap:10px;align-items:center}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(180deg,#fde047,#facc15);color:#422006;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;box-shadow:0 3px 0 rgba(0,0,0,.4);border:2px solid #fff}
+.time-btn{flex:1;padding:11px 4px;border-radius:14px;background:#334155;color:#fff;font-weight:900;font-size:12px;line-height:1.2;box-shadow:0 3px 0 rgba(0,0,0,.4)}
+.time-btn.active{background:linear-gradient(180deg,#fde047,#facc15)!important;color:#422006!important;box-shadow:0 3px 0 rgba(0,0,0,.4),0 0 0 2px #fff!important}
+/* MEJA */
+.table{background:radial-gradient(ellipse at center,#10b981 0%,#047857 55%,#065f46 100%);border:6px solid #78350f;border-radius:28px;padding:12px;min-height:340px;position:relative;box-shadow:0 12px 30px rgba(0,0,0,.5),inset 0 0 40px rgba(0,0,0,.25);outline:3px solid #facc15;outline-offset:-3px}
+.center-info{text-align:center;background:rgba(0,0,0,.55);border:1px solid rgba(250,204,21,.4);border-radius:16px;padding:11px;margin-bottom:10px;backdrop-filter:blur(4px)}
+.center-info b{font-size:15px;letter-spacing:.3px}
+.timer-wrap{width:220px;height:10px;background:rgba(0,0,0,.6);border-radius:999px;overflow:hidden;margin:8px auto 0;border:1px solid rgba(255,255,255,.2)}
+#timerBar{height:100%;width:100%;background:linear-gradient(90deg,#4ade80,#22c55e);transition:width 1s linear}
+.discard-area{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;min-height:96px}
+.mini-tile{background:linear-gradient(180deg,#fff,#fef3c7);color:#111;border-radius:10px;padding:7px 2px;text-align:center;font-size:11px;font-weight:800;line-height:1.15;box-shadow:0 3px 0 #a8a29e,0 2px 6px rgba(0,0,0,.3)}
+.mini-tile small{display:block;font-size:9px;color:#78716c;font-weight:600}
+/* TANGAN */
+.hand-area{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.hand-tile{background:linear-gradient(180deg,#fff,#fef9c3);color:#111;border-radius:12px;width:56px;height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:12px;line-height:1.1;cursor:pointer;box-shadow:0 4px 0 #a8a29e,0 6px 14px rgba(0,0,0,.35);position:relative;transition:transform .12s}
+.hand-tile span{font-size:22px}
+.hand-tile.selected{transform:translateY(-14px);outline:3px solid #facc15;box-shadow:0 6px 0 #a8a29e,0 10px 18px rgba(0,0,0,.4),0 0 0 3px #facc15}
+.meld-row{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin:8px 0}
+.meld{border:2px solid #facc15;background:rgba(250,204,21,.18);border-radius:12px;padding:6px 9px;font-size:11px;font-weight:800;box-shadow:0 2px 0 rgba(0,0,0,.3)}
+.log{height:96px;overflow:auto;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px;font-size:12px;line-height:1.6}
 .log div{margin:2px 0}
-.chat-box{height:90px;overflow:auto;background:rgba(0,0,0,.5);border-radius:12px;padding:8px;font-size:12px;margin-bottom:6px}
-.chat-row{display:flex;gap:6px}
-.chat-row input{flex:1;padding:10px;border-radius:10px;border:none;outline:none}
-.chat-row button{padding:10px 14px;border-radius:10px;background:#facc15;font-weight:900}
-.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;font-weight:700;z-index:99;box-shadow:0 8px 20px rgba(0,0,0,.5);max-width:90%;text-align:center}
-.claim-bar{position:fixed;left:0;right:0;bottom:0;background:#111827;padding:12px;z-index:50;display:flex;gap:8px;justify-content:center;border-top:3px solid #facc15}
-.claim-bar button{padding:12px 16px;border-radius:12px;font-weight:900;font-size:13px}
+.chat-box{height:96px;overflow:auto;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px;font-size:12px;margin-bottom:8px;line-height:1.5}
+.chat-row{display:flex;gap:8px}
+.chat-row input{flex:1;padding:11px;border-radius:12px;border:none;outline:none;font-size:14px}
+.chat-row button{padding:11px 16px;border-radius:12px;background:linear-gradient(180deg,#fde047,#facc15);font-weight:900;color:#422006;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 18px;border-radius:999px;font-size:13px;font-weight:700;z-index:99;box-shadow:0 10px 24px rgba(0,0,0,.5);max-width:90%;text-align:center;border:1px solid #facc15}
+.claim-bar{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(180deg,#1f2937,#111827);padding:14px;z-index:50;display:flex;gap:8px;justify-content:center;border-top:3px solid #facc15;box-shadow:0 -10px 30px rgba(0,0,0,.5)}
+.claim-bar button{padding:13px 18px;border-radius:14px;font-weight:900;font-size:13px;box-shadow:0 3px 0 rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -71,22 +75,22 @@ input,select{font-family:inherit}
   <div class="card">
     <h2>👋 Selamat Datang!</h2>
     <p>Main Mahjong Chicken Hand bareng temen / lawan bot. Rebutan HU, PONG, CHOW!</p>
-    <label style="font-size:12px;font-weight:800">NAMA KAMU</label>
+    <label style="font-size:12px;font-weight:800;letter-spacing:.5px">NAMA KAMU</label>
     <input id="playerName" class="big-input" placeholder="Contoh: alun" maxlength="12" value="alun">
     <button class="btn btn-gold" onclick="createRoom()">➕ BUAT MEJA BARU</button>
-    <div style="text-align:center;margin:10px 0;font-size:12px;color:#99f6e4">— ATAU —</div>
-    <label style="font-size:12px;font-weight:800">KODE MEJA (4 HURUF)</label>
+    <div style="text-align:center;margin:12px 0;font-size:12px;color:#99f6e4;letter-spacing:2px">— ATAU —</div>
+    <label style="font-size:12px;font-weight:800;letter-spacing:.5px">KODE MEJA (4 HURUF)</label>
     <input id="joinCode" class="big-input" placeholder="Contoh: AB12" maxlength="4" style="text-transform:uppercase">
     <button class="btn btn-white" onclick="joinRoom()">🚪 GABUNG MEJA</button>
-    <p style="font-size:11px;margin-top:10px">💡 Tips: Bikin meja -> Tambah Bot -> Setting Waktu -> Mulai Game. Kalau bot diem, tunggu 30 detik, auto buang.</p>
+    <p style="font-size:11px;margin-top:12px;background:rgba(0,0,0,.3);padding:8px;border-radius:10px">💡 Tips: Bikin meja → Tambah Bot → Setting Waktu → Mulai Game. Kalau bot diem, tunggu timer habis, auto buang.</p>
   </div>
   <div class="card">
     <h2>📖 Cara Main Cepet</h2>
     <p>• 14 tile = dealer jalan duluan, buang 1</p>
-    <p>• Ambil 1 dari tembok -> Buang 1</p>
-    <p>• PONG: punya 2 kembar + orang buang yang sama</p>
-    <p>• CHOW: urutan 3 angka (cuma dari kiri kamu)</p>
-    <p>• Waktu habis -> auto buang random!</p>
+    <p>• Ambil 1 dari tembok → Buang 1</p>
+    <p>• <b>PONG:</b> punya 2 kembar + orang buang yang sama</p>
+    <p>• <b>CHOW:</b> urutan 3 angka (cuma dari kiri kamu)</p>
+    <p>• ⏰ Waktu habis → auto buang random!</p>
   </div>
 </div>
 
@@ -96,23 +100,23 @@ input,select{font-family:inherit}
     <h2>🪑 Lobby Meja <span id="lobbyCode" style="color:#facc15">-</span></h2>
     <p>Kirim kode ini ke temen kamu biar join. Minimal 2 pemain.</p>
     <button class="btn btn-dark" onclick="copyCode()">📋 SALIN KODE MEJA</button>
-    <div id="lobbyPlayers" style="margin-top:10px"></div>
+    <div id="lobbyPlayers" style="margin-top:12px"></div>
 
     <!-- SETTING WAKTU GILIRAN - HOST -->
-    <div style="background:rgba(0,0,0,.5);border:2px solid #facc15;border-radius:14px;padding:12px;margin:10px 0">
-      <div style="font-size:12px;font-weight:900;color:#fde68a">⏰ SETTING WAKTU GILIRAN</div>
+    <div style="background:rgba(0,0,0,.45);border:2px solid #facc15;border-radius:16px;padding:13px;margin:12px 0">
+      <div style="font-size:12px;font-weight:900;color:#fde68a;letter-spacing:.5px">⏰ SETTING WAKTU GILIRAN</div>
       <div style="font-size:11px;color:#e2e8f0;margin:4px 0">Kalau lewat waktu, auto buang random!</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:9px">
         <button onclick="setTurnTime(10000, this)" class="time-btn" data-time="10000">⚡ 10s<br><span style="font-size:9px;font-weight:400">Super Cepat</span></button>
         <button onclick="setTurnTime(15000, this)" class="time-btn" data-time="15000">🔥 15s<br><span style="font-size:9px;font-weight:400">Cepat</span></button>
         <button onclick="setTurnTime(30000, this)" class="time-btn active" data-time="30000">⏰ 30s<br><span style="font-size:9px;font-weight:400">Normal</span></button>
         <button onclick="setTurnTime(60000, this)" class="time-btn" data-time="60000">🐢 60s<br><span style="font-size:9px;font-weight:400">Santai</span></button>
       </div>
-      <div id="turnTimeInfo" style="font-size:11px;color:#a7f3d0;margin-top:8px">⏰ Saat ini: <b>30 detik / giliran</b> - Host bisa ganti sebelum mulai</div>
+      <div id="turnTimeInfo" style="font-size:11px;color:#a7f3d0;margin-top:9px">⏰ Saat ini: <b>30 detik / giliran</b> - Host bisa ganti sebelum mulai</div>
       <div id="turnTimeHostNote" style="font-size:10px;color:#fca5a5;margin-top:4px;display:none">⚠️ Kamu bukan host, cuma host yang bisa ganti!</div>
     </div>
 
-    <div style="font-size:12px;font-weight:900;margin-top:10px">🤖 TAMBAH BOT</div>
+    <div style="font-size:12px;font-weight:900;margin-top:10px;letter-spacing:.5px">🤖 TAMBAH BOT</div>
     <div class="row">
       <button class="btn btn-green" onclick="addBot('easy')">🟢 Gampang</button>
       <button class="btn btn-dark" onclick="addBot('medium')">🟡 Lumayan</button>
@@ -130,35 +134,35 @@ input,select{font-family:inherit}
 
 <!-- ========== GAME ========== -->
 <div id="gameView" class="hidden">
-  <div class="card" style="padding:10px">
+  <div class="card" style="padding:12px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-      <div><b id="gameCodeLabel">Meja -</b> • 🧱 Tembok: <b id="wallLeft">136</b></div>
-      <div class="pill">🎯 Giliran: <span id="turnName">-</span> • ⏰ <span id="timerText">30</span>s</div>
+      <div style="font-size:13px"><b id="gameCodeLabel">Meja -</b> • 🧱 Tembok: <b id="wallLeft" style="color:#facc15">136</b></div>
+      <div class="pill">🎯 Giliran: <span id="turnName" style="color:#facc15">-</span> • ⏰ <span id="timerText">30</span>s</div>
     </div>
     <div class="timer-wrap"><div id="timerBar"></div></div>
-    <div id="playersBoard" style="margin-top:10px"></div>
+    <div id="playersBoard" style="margin-top:11px"></div>
   </div>
 
   <div class="table">
     <div class="center-info">
       <div>🀄 <b>MEJA MAHJONG</b></div>
       <div style="font-size:11px;color:#a7f3d0" id="statusText">Menunggu...</div>
-      <div style="font-size:11px;margin-top:4px">Buangan terakhir: <b id="lastDiscardText">-</b></div>
+      <div style="font-size:11px;margin-top:4px">Buangan terakhir: <b id="lastDiscardText" style="color:#fde68a">-</b></div>
     </div>
-    <div style="font-size:11px;font-weight:900;margin-bottom:6px">🗑️ BUANGAN DI MEJA:</div>
+    <div style="font-size:11px;font-weight:900;margin-bottom:7px;letter-spacing:.5px">🗑️ BUANGAN DI MEJA:</div>
     <div class="discard-area" id="discardArea"></div>
   </div>
 
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <b>🃏 Tangan Kamu (<span id="handCount">0</span>)</b>
-      <button class="btn btn-gold" style="width:auto;padding:8px 14px;margin:0" onclick="drawTile()" id="drawBtn">🎲 AMBIL TILE</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <b style="font-size:15px">🃏 Tangan Kamu (<span id="handCount" style="color:#facc15">0</span>)</b>
+      <button class="btn btn-gold" style="width:auto;padding:10px 16px;margin:0" onclick="drawTile()" id="drawBtn">🎲 AMBIL TILE</button>
     </div>
     <div id="myMelds" class="meld-row"></div>
     <div id="myFlowers" style="text-align:center;font-size:12px;color:#fde68a;margin:4px 0"></div>
     <div class="hand-area" id="myHand"></div>
-    <button class="btn btn-red" onclick="discardSelected()" id="discardBtn" style="margin-top:12px">🗑️ BUANG TILE YANG DIPILIH</button>
-    <div style="font-size:11px;color:#fde68a;text-align:center;margin-top:6px">Klik 1 tile buat pilih, terus pencet BUANG. Kalau giliran kamu, AMBIL dulu baru BUANG.</div>
+    <button class="btn btn-red" onclick="discardSelected()" id="discardBtn" style="margin-top:14px">🗑️ BUANG TILE YANG DIPILIH</button>
+    <div style="font-size:11px;color:#fde68a;text-align:center;margin-top:7px">Klik 1 tile buat pilih, terus pencet BUANG. Kalau giliran kamu, AMBIL dulu baru BUANG.</div>
   </div>
 
   <div class="card">
@@ -176,14 +180,14 @@ input,select{font-family:inherit}
 
 <!-- CLAIM BAR -->
 <div id="claimBar" class="claim-bar hidden">
-  <button style="background:#22c55e;color:#fff" id="pongBtn" onclick="doClaimAction('pong')">⚡ PONG!</button>
-  <button style="background:#3b82f6;color:#fff" id="chowBtn" onclick="showChowOptions()">🎋 CHOW!</button>
+  <button style="background:linear-gradient(180deg,#4ade80,#22c55e);color:#052e16" id="pongBtn" onclick="doClaimAction('pong')">⚡ PONG!</button>
+  <button style="background:linear-gradient(180deg,#60a5fa,#3b82f6);color:#fff" id="chowBtn" onclick="showChowOptions()">🎋 CHOW!</button>
   <button style="background:#475569;color:#fff" onclick="hideClaim()">✖️ LEWAT</button>
 </div>
 <div id="chowOptions" class="claim-bar hidden" style="flex-direction:column;align-items:center">
-  <div style="font-size:13px;font-weight:900;color:#fff;margin-bottom:6px">Pilih CHOW yang mana?</div>
-  <div style="display:flex;gap:8px" id="chowBtns"></div>
-  <button style="background:#475569;color:#fff;margin-top:6px" onclick="hideChow()">Batal</button>
+  <div style="font-size:13px;font-weight:900;color:#fff;margin-bottom:8px">Pilih CHOW yang mana?</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center" id="chowBtns"></div>
+  <button style="background:#475569;color:#fff;margin-top:8px" onclick="hideChow()">Batal</button>
 </div>
 
 <script>
@@ -235,8 +239,6 @@ function tileLabel(t){
   let s = t.suit==='dot'?'Tong':t.suit==='bamboo'?'Tiao':'Wan';
   return s+' '+t.num;
 }
-
-// ===== MENU =====
 function createRoom(){
   myName = el('playerName').value.trim() || 'Player';
   socket.emit('createRoom', { name: myName });
@@ -248,8 +250,6 @@ function joinRoom(){
   socket.emit('joinRoom', { name:myName, code });
 }
 function copyCode(){ navigator.clipboard.writeText(myCode); toast('Kode '+myCode+' disalin!'); }
-
-// ===== LOBBY =====
 function addBot(level){ socket.emit('addBot', { code:myCode, level }); }
 function setTurnTime(ms, btn){
   if(!amIHost){ toast('⚠️ Cuma host yang bisa ganti waktu!'); return; }
@@ -277,8 +277,6 @@ function renderLobby(players){
 }
 function sendChat(){ let v=el('chatInput').value.trim(); if(!v) return; socket.emit('tableChat',{code:myCode,msg:v}); el('chatInput').value=''; }
 function sendChat2(){ let v=el('chatInput2').value.trim(); if(!v) return; socket.emit('tableChat',{code:myCode,msg:v}); el('chatInput2').value=''; }
-
-// ===== GAME =====
 function drawTile(){
   if(currentTurn!==myName){ toast('Bukan giliran kamu!'); return; }
   if(myHand.length>=14){ toast('Udah 14 tile, tinggal buang!'); return; }
@@ -314,23 +312,19 @@ function renderBoard(players){
     html+=`<div class="player-row" style="${isTurn?'outline:3px solid #facc15':''}"><div class="left"><div class="avatar">${p.isBot?'🤖':p.name.slice(0,1).toUpperCase()}</div><div><b>${p.name}${isMe?' (Kamu)':''}</b>${isTurn?' 🎯 GILIRAN':''}<br><span style="font-size:11px;color:#a7f3d0">Tile: ${p.handCount} • Meld: ${p.melds.length} • Bunga: ${p.flowers.length}</span></div></div><div style="text-align:right;font-size:11px">🗑️ ${p.discards.length} buangan</div></div>`;
   });
   el('playersBoard').innerHTML=html;
-  // Discard area = gabungan semua buangan
   let all=[];
   players.forEach(p=>p.discards.forEach(t=>all.push({t, from:p.name})));
   let da=el('discardArea'); da.innerHTML='';
   all.slice(-24).forEach(x=>{
     let d=document.createElement('div'); d.className='mini-tile'; d.innerHTML=`${tileEmoji(x.t)} ${tileLabel(x.t)}<small>${x.from}</small>`; da.appendChild(d);
   });
-  if(all.length===0) da.innerHTML='<div style="font-size:12px;color:#a7f3d0">Belum ada buangan...</div>';
+  if(all.length===0) da.innerHTML='<div style="font-size:12px;color:#e2e8f0;background:rgba(0,0,0,.3);padding:8px;border-radius:10px;text-align:center">Belum ada buangan...</div>';
 }
 function addLog(msg){
   let d=document.createElement('div'); d.innerText=msg; el('gameLog').appendChild(d); el('gameLog').scrollTop=9999;
 }
 function doClaimAction(action){
-  if(action==='pong'){
-    socket.emit('claim', { code:myCode, action:'pong' });
-    hideClaim();
-  }
+  if(action==='pong'){ socket.emit('claim', { code:myCode, action:'pong' }); hideClaim(); }
 }
 function showChowOptions(){
   if(!lastDiscardInfo) return;
@@ -354,30 +348,17 @@ function hideChow(){ el('chowOptions').classList.add('hidden'); }
 function hideClaim(){ el('claimBar').classList.add('hidden'); }
 function checkClaimPossibility(tile, from){
   if(from===myName) return;
-  // PONG?
   let cnt = myHand.filter(t=>t.key===tile.key).length;
   let canPong = cnt>=2;
-  // CHOW? cek next player
-  // Kita tampilkan bar kalau bisa pong, chow dicek di showChowOptions
-  if(canPong){
-    lastDiscardInfo={tile, from};
-    el('claimBar').classList.remove('hidden');
-    setTimeout(()=>hideClaim(), 8000);
-  } else {
-    // Coba cek chow, kalau bisa, tampilkan juga
+  if(canPong){ lastDiscardInfo={tile, from}; el('claimBar').classList.remove('hidden'); setTimeout(()=>hideClaim(), 8000); }
+  else {
     if(tile.suit==='dot'||tile.suit==='bamboo'||tile.suit==='char'){
       let nums = myHand.filter(t=>t.suit===tile.suit).map(t=>t.num);
       let canChow = (nums.includes(tile.num-2)&&nums.includes(tile.num-1))||(nums.includes(tile.num-1)&&nums.includes(tile.num+1))||(nums.includes(tile.num+1)&&nums.includes(tile.num+2));
-      if(canChow){
-        lastDiscardInfo={tile, from};
-        el('claimBar').classList.remove('hidden');
-        setTimeout(()=>hideClaim(), 8000);
-      }
+      if(canChow){ lastDiscardInfo={tile, from}; el('claimBar').classList.remove('hidden'); setTimeout(()=>hideClaim(), 8000); }
     }
   }
 }
-
-// ===== SOCKET LISTENERS =====
 socket.on('roomCreated', d=>{ myCode=d.code; amIHost=true; el('lobbyCode').innerText=d.code; el('topCode').innerText='Meja '+d.code; showView('lobbyView'); renderLobby(d.players); toast('Meja '+d.code+' dibuat!'); });
 socket.on('joinedRoom', d=>{ myCode=d.code; amIHost=false; el('lobbyCode').innerText=d.code; el('topCode').innerText='Meja '+d.code; showView('lobbyView'); renderLobby(d.players); if(d.turnTime){ selectedTurnTime=d.turnTime; el('turnTimeInfo').innerHTML=`⏰ Saat ini: <b>${d.turnTime/1000} detik / giliran</b>`; } toast('Gabung meja '+d.code+'!'); });
 socket.on('lobbyUpdate', d=>{ renderLobby(d.players); if(d.turnTime){ selectedTurnTime=d.turnTime; el('turnTimeInfo').innerHTML=`⏰ Saat ini: <b>${d.turnTime/1000} detik / giliran</b> - Host bisa ganti sebelum mulai`; document.querySelectorAll('.time-btn').forEach(b=>b.classList.toggle('active', parseInt(b.getAttribute('data-time'))===d.turnTime)); } });
@@ -390,7 +371,7 @@ socket.on('turnTimer', d=>{
   currentTotalTime = Math.floor((d.totalTime||d.timeLeft)/1000);
   timeLeft = currentTotalTime;
   el('timerText').innerText=timeLeft;
-  el('timerBar').style.width='100%'; el('timerBar').style.background='#4ade80';
+  el('timerBar').style.width='100%'; el('timerBar').style.background='linear-gradient(90deg,#4ade80,#22c55e)';
   timerInterval=setInterval(()=>{
     timeLeft--;
     if(timeLeft<0){ clearInterval(timerInterval); return; }
@@ -420,8 +401,6 @@ socket.on('chatMsg', d=>{
 });
 socket.on('errorMsg', d=>{ toast(d.msg); });
 socket.on('yourTurnToDraw', d=>{ if(myHand.length<14) toast('Giliran kamu! Pencet AMBIL TILE!'); });
-
-// Enter buat chat
 el('chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendChat(); });
 el('chatInput2').addEventListener('keydown', e=>{ if(e.key==='Enter') sendChat2(); });
 </script>
