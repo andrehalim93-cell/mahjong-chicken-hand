@@ -257,6 +257,8 @@ function startGame(room){
 function handleAfterDiscard(room, discarder, tile){
   room.waitingClaim=true;
   room.currentClaim={ tile, from:discarder.name };
+  // Kasih tau semua orang ada yang bisa di-claim, biar client munculin tombol
+  emitToRoom(room, 'claimAvailable', { tile, from:discarder.name, claims: getClaimsFor(room, tile, discarder.name) });
   setTimeout(()=>{
     if(!room || room.phase!=='playing') return;
     if(!room.waitingClaim) return;
@@ -285,7 +287,7 @@ function handleAfterDiscard(room, discarder, tile){
     // 3. Gak ada yang claim -> lanjut
     room.waitingClaim=false; room.lastDiscard=null; room.currentClaim=null;
     advanceTurn(room, discarder);
-  }, 1500);
+  }, 10000);
 }
 
 function doClaim(room, claimer, action, chowNums, tile, discarder){
