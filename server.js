@@ -1,291 +1,502 @@
-require('dotenv').config();
-const express = require('express'), http = require('http'), socketIo = require('socket.io'), cors = require('cors'), path = require('path');
-const app = express(); app.use(cors()); app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/health', (req, res) => res.send('OK'));
+// server.js - MAHJONG CHICKEN HAND ONLINE + BOT - FULL FIXED
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
+const path = require('path');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname)));
+
 const server = http.createServer(app);
-const io = socketIo(server, { cors: { origin: "*" }, transports: ["websocket", "polling"] });
-const ROOMS = {};
-function buildWall(){
-  let wall = [];
-  for(let s=0;s<3;s++) for(let n=1;n<=9;n++) for(let i=0;i<4;i++) wall.push({ type:'suit', suit:s, num:n, id:`s${s}-${n}-${i}` });
-  for(let n=0;n<4;n++) for(let i=0;i<4;i++) wall.push({ type:'wind', num:n, id:`w${n}-${i}` });
-  for(let n=0;n<3;n++) for(let i=0;i<4;i++) wall.push({ type:'dragon', num:n, id:`d${n}-${i}` });
-  for(let n=0;n<8;n++) wall.push({ type:'flower', num:n, id:`f${n}` });
-  return wall.sort(()=>0.5-Math.random());
-}
-function tileKey(t){ if(t.type==='suit') return `s${t.suit}-${t.num}`; if(t.type==='wind') return `w${t.num}`; if(t.type==='dragon') return `d${t.num}`; return `f${t.num}`; }
+const io = new Server(server, { cors: { origin: "*", methods: ["GET","POST"] } });
+
+const PORT = process.env.PORT || 3000;
+
+// Health check buat UptimeRobot biar ga tidur
+app.get('/health', (req, res) => res.send('OK'));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+
+let rooms = {}; // code -> room
+
+// ============ TILE HELPERS ============
+function tileKey(suit, num){ return suit + '-' + num; }
 function tileName(t){
-  if(t.type==='suit'){ const s=['🎋','🔴','🀄'][t.suit]; return `${s} ${t.num}`; }
-  if(t.type==='wind') return ['💨 Timur','💨 Selatan','💨 Barat','💨 Utara'][t.num];
-  if(t.type==='dragon') return ['🐲 Merah','🐲 Hijau','🐲 Putih'][t.num];
-  return ['🌸 Bunga 1','🌸 Bunga 2','🌸 Bunga 3','🌸 Bunga 4','🍂 Musim 1','🍂 Musim 2','🍂 Musim 3','🍂 Musim 4'][t.num];
-}
-function isChickenWin(hand, melds){
-  let counts = {};
-  hand.forEach(t=>{ let k=tileKey(t); counts[k]=(counts[k]||0)+1; });
-  let needSets = 4 - melds.length;
-  for(let pairKey in counts){
-    if(counts[pairKey] < 2) continue;
-    let tmp = {...counts}; tmp[pairKey]-=2;
-    let tiles = [];
-    for(let k in tmp) for(let i=0;i<tmp[k];i++) tiles.push(k);
-    if(canFormSets(tiles, needSets)) return true;
+  if(t.suit==='flower') return '🌸 Bunga ' + t.num;
+  if(t.suit==='wind') {
+    let names = {1:'Timur',2:'Selatan',3:'Barat',4:'Utara'};
+    return names[t.num] || 'Angin';
   }
-  return false;
-}
-function canFormSets(keys, need){
-  if(need===0) return keys.length===0;
-  if(keys.length===0) return false;
-  keys.sort();
-  let first = keys[0];
-  let same = keys.filter(k=>k===first).length;
-  if(same>=3){
-    let rest = [...keys]; for(let i=0;i<3;i++) rest.splice(rest.indexOf(first),1);
-    if(canFormSets(rest, need-1)) return true;
+  if(t.suit==='dragon') {
+    let names = {1:'Naga Merah',2:'Naga Hijau',3:'Naga Putih'};
+    return names[t.num] || 'Naga';
   }
-  if(first.startsWith('s')){
-    let parts = first.split('-'); let suit=parseInt(parts[0].replace('s','')); let num=parseInt(parts[1]);
-    if(num<=7){
-      let k2=`s${suit}-${num+1}`, k3=`s${suit}-${num+2}`;
-      if(keys.includes(k2) && keys.includes(k3)){
-        let rest=[...keys]; rest.splice(rest.indexOf(first),1); rest.splice(rest.indexOf(k2),1); rest.splice(rest.indexOf(k3),1);
-        if(canFormSets(rest, need-1)) return true;
+  let s = t.suit==='dot' ? '🔴 Tong' : t.suit==='bamboo' ? '🎋 Tiao' : '🀄 Wan';
+  return s + ' ' + t.num;
+}
+
+function createTiles(){
+  let tiles = [];
+  let id = 1;
+  // 3 suit x 1-9 x 4 copy = 108
+  ['dot','bamboo','char'].forEach(suit=>{
+    for(let n=1;n<=9;n++){
+      for(let c=0;c<4;c++){
+        tiles.push({ id:id++, suit, num:n, key:tileKey(suit,n) });
       }
     }
+  });
+  // Wind 4x4 = 16
+  for(let n=1;n<=4;n++) for(let c=0;c<4;c++) tiles.push({ id:id++, suit:'wind', num:n, key:tileKey('wind',n) });
+  // Dragon 3x4 = 12
+  for(let n=1;n<=3;n++) for(let c=0;c<4;c++) tiles.push({ id:id++, suit:'dragon', num:n, key:tileKey('dragon',n) });
+  // Flower 8 = 8 (1 copy each)
+  for(let n=1;n<=8;n++) tiles.push({ id:id++, suit:'flower', num:n, key:tileKey('flower',n) });
+  return tiles; // total 144
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    let j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
   }
-  return false;
+  return arr;
 }
-function canPong(hand, discard){ return hand.filter(t=>tileKey(t)===tileKey(discard)).length>=2; }
-function canChow(hand, discard){
-  if(discard.type!=='suit') return [];
-  let res=[]; let n=discard.num, s=discard.suit;
-  let has=(num)=>hand.some(t=>t.type==='suit'&&t.suit===s&&t.num===num);
-  if(n>=3 && has(n-2) && has(n-1)) res.push([n-2,n-1,n]);
-  if(n>=2 && n<=8 && has(n-1) && has(n+1)) res.push([n-1,n,n+1]);
-  if(n<=7 && has(n+1) && has(n+2)) res.push([n,n+1,n+2]);
-  return res;
+
+function sortHand(hand){
+  let order = { 'dot':0, 'bamboo':1, 'char':2, 'wind':3, 'dragon':4, 'flower':5 };
+  return hand.sort((a,b)=>{
+    if(order[a.suit]!==order[b.suit]) return order[a.suit]-order[b.suit];
+    return a.num-b.num;
+  });
 }
-function usefulness(hand, tile){
-  let k = tileKey(tile); let score = 0;
-  hand.forEach(t=>{ if(tileKey(t)===k) score+=3; });
-  if(tile.type==='suit'){ hand.forEach(t=>{ if(t.type==='suit' && t.suit===tile.suit && Math.abs(t.num-tile.num)<=2) score+=1; }); }
-  if(tile.type==='wind' || tile.type==='dragon'){ let c = hand.filter(t=>tileKey(t)===k).length; if(c>=2) score+=2; else score-=1; }
-  return score;
+
+function genCode(){
+  let chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c='';
+  for(let i=0;i<4;i++) c+=chars[Math.floor(Math.random()*chars.length)];
+  return c;
 }
+
+// ============ ROOM HELPERS ============
+function emitToRoom(room, ev, data){ io.to(room.code).emit(ev, data); }
+function addLog(room, msg){ emitToRoom(room, 'gameLog', { msg }); }
+
+function publicPlayers(room){
+  return room.players.map(p=>({
+    name:p.name, isBot:p.isBot, level:p.level||'',
+    handCount:p.hand.length, melds:p.melds, discards:p.discards,
+    flowers:p.flowers, isHost:p.isHost
+  }));
+}
+
+function sendHand(room, p){
+  if(!p.isBot){
+    io.to(p.id).emit('yourHand', { hand:sortHand([...p.hand]), melds:p.melds, flowers:p.flowers, discards:p.discards });
+  }
+}
+
+function botLog(room, botName, msg){
+  // Buat debug di log aja, ga ganggu game
+  console.log(`[BOT ${botName}] ${msg}`);
+}
+
+// ============ BOT AI ============
 function botChooseDiscard(bot){
-  let hand = bot.hand; if(hand.length===0) return null;
-  if(bot.level==='easy') return hand[Math.floor(Math.random()*hand.length)];
-  if(bot.level==='normal'){ let best=null, bestScore=999; hand.forEach(t=>{ let s = usefulness(hand, t) + Math.random()*1.5; if(s < bestScore){ bestScore=s; best=t; } }); return best; }
-  let best=null, bestScore=999; hand.forEach(t=>{ let s = usefulness(hand, t); if(t.type==='suit' && (t.num===1 || t.num===9)) s-=0.5; if(s < bestScore){ bestScore=s; best=t; } }); return best;
+  let hand = bot.hand.filter(t=>t.suit!=='flower');
+  if(hand.length===0) return bot.hand[0];
+  // Hitung pasangan
+  let counts = {};
+  hand.forEach(t=>{ counts[t.key]=(counts[t.key]||0)+1; });
+  // Cari tile yang jomblo (ga ada pasangan, ga nyambung)
+  let candidates = hand.filter(t=>counts[t.key]===1);
+  // Utamain buang honor yang jomblo dulu (wind/dragon)
+  let honorSingle = candidates.filter(t=>t.suit==='wind'||t.suit==='dragon');
+  if(honorSingle.length>0) return honorSingle[Math.floor(Math.random()*honorSingle.length)];
+  // Terus buang terminal 1/9 yang jomblo
+  let terminal = candidates.filter(t=>t.num===1||t.num===9);
+  if(terminal.length>0) return terminal[Math.floor(Math.random()*terminal.length)];
+  // Kalau ga ada, buang random dari yang jomblo
+  if(candidates.length>0) return candidates[Math.floor(Math.random()*candidates.length)];
+  // Kalau semua ada pasangan, buang random (jangan buang yang udah pair)
+  return hand[Math.floor(Math.random()*hand.length)];
 }
-function botDecideClaim(bot, discard, isNext){
-  if(isChickenWin([...bot.hand, discard], bot.melds)) return { action:'hu' };
-  if(bot.level==='easy'){ if(Math.random()<0.2 && canPong(bot.hand, discard)) return { action:'pong' }; return null; }
-  if(bot.level==='normal'){ if(canPong(bot.hand, discard) && Math.random()<0.7) return { action:'pong' }; if(isNext){ let chows = canChow(bot.hand, discard); if(chows.length>0 && Math.random()<0.5) return { action:'chow', chowNums:chows[0] }; } return null; }
-  if(canPong(bot.hand, discard)){ if(usefulness(bot.hand, discard) >= 2) return { action:'pong' }; }
-  if(isNext){ let chows = canChow(bot.hand, discard); if(chows.length>0) return { action:'chow', chowNums:chows[0] }; }
+
+function botDecideClaim(bot, tile, isNext){
+  if(tile.suit==='flower') return null;
+  let count = bot.hand.filter(t=>t.key===tile.key).length;
+  // PONG kalau punya 2
+  if(count>=2) return { action:'pong' };
+  // CHOW cuma kalau dia next player
+  if(isNext && (tile.suit==='dot'||tile.suit==='bamboo'||tile.suit==='char')){
+    let nums = bot.hand.filter(t=>t.suit===tile.suit).map(t=>t.num);
+    // Cek pola chow: tile-2, tile-1, tile+1, tile+2
+    if(nums.includes(tile.num-2) && nums.includes(tile.num-1)) return { action:'chow', chowNums:[tile.num-2, tile.num-1] };
+    if(nums.includes(tile.num-1) && nums.includes(tile.num+1)) return { action:'chow', chowNums:[tile.num-1, tile.num+1] };
+    if(nums.includes(tile.num+1) && nums.includes(tile.num+2)) return { action:'chow', chowNums:[tile.num+1, tile.num+2] };
+  }
   return null;
 }
-function publicPlayers(room){ return room.players.map(p=>({ name:p.name, isBot:!!p.isBot, botLevel:p.botLevel||null, handCount:p.hand.length, melds:p.melds, flowers:p.flowers, discards:p.discards })); }
-function sendHand(room, p){ if(p.isBot) return; let s = io.sockets.sockets.get(p.id); if(s) s.emit('yourHand', { hand:p.hand, canHu:isChickenWin(p.hand, p.melds) }); }
-function emitToRoom(room, ev, data){ io.to(room.code).emit(ev, data); }
-function startGame(room){
-  room.wall = buildWall();
-  room.players.forEach(p=>{
-    p.hand=[]; p.melds=[]; p.flowers=[]; p.discards=[];
-    for(let i=0;i<13;i++) p.hand.push(room.wall.pop());
-    let i=0; while(i<p.hand.length){ if(p.hand[i].type==='flower'){ p.flowers.push(p.hand.splice(i,1)[0]); if(room.wall.length) p.hand.push(room.wall.pop()); } else i++; }
-    p.hand.sort((a,b)=>tileKey(a).localeCompare(tileKey(b)));
-  });
-  room.phase='playing'; room.turnIdx=0; room.lastDiscard=null; room.waitingClaim=null;
-  let dealer = room.players[0];
-  dealer.hand.push(room.wall.pop());
-  dealer.hand.sort((a,b)=>tileKey(a).localeCompare(tileKey(b)));
-    emitToRoom(room, 'gameStarted', { players:publicPlayers(room), wallLeft:room.wall.length, turn:dealer.name });
-  room.players.forEach(p=>sendHand(room,p));
-  setTimeout(()=>{ emitToRoom(room, 'turnChanged', { turn:dealer.name, wallLeft:room.wall.length }); }, 500);
-  setTimeout(()=>maybeBotTurn(room), 1200);
+
+function botDrawAndDiscard(room, bot){
+  if(!room || room.phase!=='playing') return;
+  if(room.players[room.turnIdx].name!==bot.name) return;
+  if(room.waitingClaim) return;
+  // Ambil dari wall
+  if(room.wall.length===0){ endGameDraw(room); return; }
+  let drawn = room.wall.pop();
+  // Kalau bunga, simpen jadi flower, ambil lagi
+  while(drawn && drawn.suit==='flower'){
+    bot.flowers.push(drawn);
+    if(room.wall.length===0) break;
+    drawn = room.wall.pop();
+  }
+  if(drawn) bot.hand.push(drawn);
+  sendHand(room, bot);
+  emitToRoom(room, 'turnChanged', { turn:bot.name, wallLeft:room.wall.length });
+  emitToRoom(room, 'playerDrew', { player:bot.name, wallLeft:room.wall.length });
+  setTimeout(()=>botDiscard(room, bot), 900);
 }
+
+function botDiscard(room, bot){
+  if(!room || room.phase!=='playing') return;
+  if(room.players[room.turnIdx].name!==bot.name) return;
+  let tile = botChooseDiscard(bot);
+  if(!tile) return;
+  let idx = bot.hand.findIndex(t=>t.id===tile.id);
+  if(idx>=0) bot.hand.splice(idx,1);
+  bot.discards.push(tile);
+  room.lastDiscard = { tile, from:bot.name };
+  emitToRoom(room, 'playerDiscarded', { player:bot.name, tile, wallLeft:room.wall.length });
+  room.players.forEach(p=>sendHand(room,p));
+  handleAfterDiscard(room, bot, tile);
+}
+
+// FIX UTAMA: Abis PONG, bot langsung buang, ga usah ambil
 function maybeBotTurn(room){
   if(!room || room.phase!=='playing') return;
   if(room.waitingClaim) return;
   let cur = room.players[room.turnIdx];
   if(!cur || !cur.isBot) return;
-  if(cur.hand.length>=14){ setTimeout(()=>botDiscard(room, cur), 900 + Math.random()*800); }
-  else if(cur.hand.length===13){ if(room.wall.length>0) cur.hand.push(room.wall.pop()); sendHand(room, cur); setTimeout(()=>botDiscard(room, cur), 900); }
+  // Kalau tangan bot udah 14 (abis PONG / abis ambil), langsung buang
+  if(cur.hand.length >= 14){
+    setTimeout(()=>botDiscard(room, cur), 1000);
+    return;
+  }
+  // Kalau masih 13, giliran biasa: ambil dulu baru buang
+  setTimeout(()=>botDrawAndDiscard(room, cur), 1000);
 }
-function botDiscard(room, bot){
-  if(!room || room.phase!=='playing') return;
-  if(room.players[room.turnIdx].name!==bot.name) return;
-  let tile = botChooseDiscard(bot); if(!tile) return;
-  let idx = bot.hand.findIndex(t=>t.id===tile.id);
-  bot.hand.splice(idx,1); bot.discards.push(tile); room.lastDiscard={ tile, from:bot.name };
-  handleAfterDiscard(room, bot, tile);
+
+// ============ GAME FLOW ============
+function startGame(room){
+  let tiles = shuffle(createTiles());
+  room.wall = tiles;
+  room.phase = 'playing';
+  room.turnIdx = 0;
+  room.lastDiscard = null;
+  room.waitingClaim = false;
+  room.currentClaim = null;
+  room.turnCount = 0;
+
+  // Bagi tile: dealer 14, lain 13
+  room.players.forEach((p, idx)=>{
+    p.hand = [];
+    p.melds = [];
+    p.discards = [];
+    p.flowers = [];
+    let count = idx===0 ? 14 : 13;
+    for(let i=0;i<count;i++){
+      let t = room.wall.pop();
+      // Kalau bunga, ganti
+      while(t && t.suit==='flower'){
+        p.flowers.push(t);
+        t = room.wall.pop();
+      }
+      if(t) p.hand.push(t);
+    }
+    p.hand = sortHand(p.hand);
+  });
+
+  let dealer = room.players[0];
+  emitToRoom(room, 'gameStarted', { players:publicPlayers(room), wallLeft:room.wall.length, turn:dealer.name });
+  room.players.forEach(p=>sendHand(room,p));
+  addLog(room, `🀄 Game mulai! Dealer: ${dealer.name}. Rebutan HU!`);
+  // FIX: Kirim turnChanged juga biar client sinkron giliran pertama
+  setTimeout(()=>{ emitToRoom(room, 'turnChanged', { turn:dealer.name, wallLeft:room.wall.length }); }, 500);
+  setTimeout(()=>maybeBotTurn(room), 1200);
 }
+
 function handleAfterDiscard(room, discarder, tile){
-  let claims=[];
-  room.players.forEach(p=>{
-    if(p.name===discarder.name) return;
-    let canHu = isChickenWin([...p.hand, tile], p.melds);
-    let pong = canPong(p.hand, tile);
-    let isNext = room.players[(room.players.indexOf(discarder)+1)%room.players.length].name===p.name;
-    let chow = isNext ? canChow(p.hand, tile) : [];
-    if(canHu||pong||chow.length>0) claims.push({ name:p.name, canHu, pong, chow, isBot:!!p.isBot });
-  });
-  emitToRoom(room, 'discarded', { from:discarder.name, tile, tileName:tileName(tile), wallLeft:room.wall.length, claims, players:publicPlayers(room) });
-  if(claims.length===0){ advanceTurn(room, discarder); return; }
-  room.waitingClaim={ tile, from:discarder.name, claims };
-  let botClaims = claims.filter(c=>c.isBot);
-  botClaims.sort((a,b)=> (b.canHu?1:0)-(a.canHu?1:0));
-  let handled=false;
-  botClaims.forEach((c, idx)=>{
-    setTimeout(()=>{
-      if(!room.waitingClaim || handled) return;
-      let bot = room.players.find(p=>p.name===c.name); if(!bot) return;
-      let isNext = room.players[(room.players.indexOf(discarder)+1)%room.players.length].name===bot.name;
-      let dec = botDecideClaim(bot, tile, isNext);
-      if(dec){ handled=true; doClaim(room, bot, dec.action, dec.chowNums, tile, discarder); }
-    }, 800 + idx*700);
-  });
-  room.waitingClaim.timeout=setTimeout(()=>{ if(!room.waitingClaim) return; room.waitingClaim=null; advanceTurn(room, discarder); }, 8000);
+  room.turnCount++;
+  // Cek ada yang mau claim? Kasih waktu 1.2 detik buat bot mikir
+  room.waitingClaim = true;
+  room.currentClaim = { tile, from:discarder.name };
+
+  // Bot lain cek claim
+  setTimeout(()=>{
+    if(!room || room.phase!=='playing') return;
+    if(!room.waitingClaim) return; // Udah di-claim duluan
+
+    let discarderIdx = room.players.findIndex(p=>p.name===discarder.name);
+    // Urutan: PONG dulu (semua player), baru CHOW (next player)
+    // 1. Cek PONG dari bot
+    for(let i=0;i<room.players.length;i++){
+      let p = room.players[i];
+      if(p.name===discarder.name) continue;
+      if(p.isBot){
+        let dec = botDecideClaim(p, tile, false);
+        if(dec && dec.action==='pong'){
+          doClaim(room, p, 'pong', null, tile, discarder);
+          return;
+        }
+      }
+    }
+    // 2. Cek CHOW dari next player kalau dia bot
+    let nextIdx = (discarderIdx+1)%room.players.length;
+    let nextP = room.players[nextIdx];
+    if(nextP.isBot){
+      let dec = botDecideClaim(nextP, tile, true);
+      if(dec && dec.action==='chow'){
+        doClaim(room, nextP, 'chow', dec.chowNums, tile, discarder);
+        return;
+      }
+    }
+
+    // 3. Ga ada yang claim -> lanjut giliran biasa
+    room.waitingClaim = false;
+    room.lastDiscard = null;
+    room.currentClaim = null;
+    advanceTurn(room, discarder);
+  }, 1200);
 }
+
+function doClaim(room, claimer, action, chowNums, tile, discarder){
+  // Hapus tile buangan dari discarder
+  let dIdx = discarder.discards.findIndex(t=>t.id===tile.id);
+  if(dIdx>=0) discarder.discards.splice(dIdx,1);
+
+  let need = [];
+  if(action==='pong'){
+    need = claimer.hand.filter(t=>t.key===tile.key).slice(0,2);
+  } else if(action==='chow' && chowNums){
+    chowNums.forEach(n=>{
+      let found = claimer.hand.find(t=>t.suit===tile.suit && t.num===n);
+      if(found) need.push(found);
+    });
+  }
+
+  need.forEach(t=>{
+    let i = claimer.hand.findIndex(x=>x.id===t.id);
+    if(i>=0) claimer.hand.splice(i,1);
+  });
+  claimer.melds.push({ type:action, tiles:[tile, ...need] });
+
+  // FIX PONG MACET: Reset waitingClaim, pindah giliran ke claimer
+  room.waitingClaim = false;
+  room.lastDiscard = null;
+  room.currentClaim = null;
+  room.turnIdx = room.players.findIndex(p=>p.name===claimer.name);
+
+  emitToRoom(room, 'claimed', { claimer:claimer.name, action, tiles:[tile, ...need], turn:claimer.name });
+  emitToRoom(room, 'turnChanged', { turn:claimer.name, wallLeft:room.wall.length });
+  room.players.forEach(p=>sendHand(room,p));
+  addLog(room, `⚡ ${claimer.name} ${action.toUpperCase()} ${tileName(tile)} dari ${discarder.name}!`);
+
+  // Kalau yang claim BOT, langsung suruh BUANG (tanpa ambil)
+  if(claimer.isBot){
+    setTimeout(()=>{ botDiscard(room, claimer); }, 1500);
+  }
+  // Kalau yang claim MANUSIA, client-nya udah tau dia harus buang karena turn = dia
+}
+
 function advanceTurn(room, fromPlayer){
   if(!room || room.phase!=='playing') return;
-  room.turnIdx=(room.players.findIndex(p=>p.name===fromPlayer.name)+1)%room.players.length;
-  let next=room.players[room.turnIdx];
-  if(room.wall.length===0){ emitToRoom(room,'gameOver',{winner:null, message:'😐 Tembok habis! Seri, gak ada yang HU!'}); room.phase='ended'; return; }
-  next.hand.push(room.wall.pop());
-  next.hand.sort((a,b)=>tileKey(a).localeCompare(tileKey(b)));
-  while(next.hand.some(t=>t.type==='flower')){ let fi=next.hand.findIndex(t=>t.type==='flower'); next.flowers.push(next.hand.splice(fi,1)[0]); if(room.wall.length>0) next.hand.push(room.wall.pop()); }
-  emitToRoom(room,'turnChanged',{turn:next.name, wallLeft:room.wall.length});
-  sendHand(room,next);
-  setTimeout(()=>maybeBotTurn(room), 600);
-}
-function doClaim(room, claimer, action, chowNums, tile, discarder){
-  if(room.waitingClaim && room.waitingClaim.timeout) clearTimeout(room.waitingClaim.timeout);
-  room.waitingClaim=null;
-  if(discarder){ let di = discarder.discards.findIndex(t=>t.id===tile.id); if(di!==-1) discarder.discards.splice(di,1); }
-  if(action==='hu'){ claimer.hand.push(tile); emitToRoom(room,'gameOver',{winner:claimer.name, message:`🐔 CHICKEN HAND! ${claimer.name} HU! 4 Set + 1 Pasang!`, hand:claimer.hand, melds:claimer.melds, isBot:!!claimer.isBot}); room.phase='ended'; return; }
-  if(action==='pong'){
-    let taken=[]; for(let i=claimer.hand.length-1;i>=0 && taken.length<2;i--){ if(tileKey(claimer.hand[i])===tileKey(tile)) taken.push(claimer.hand.splice(i,1)[0]); }
-    claimer.melds.push({type:'pong', tiles:[...taken, tile]});
-    room.turnIdx=room.players.findIndex(p=>p.name===claimer.name);
-    emitToRoom(room,'meldMade',{by:claimer.name, meld:claimer.melds[claimer.melds.length-1], players:publicPlayers(room)});
-    emitToRoom(room,'turnChanged',{turn:claimer.name, wallLeft:room.wall.length, needDiscard:true});
-    sendHand(room,claimer); setTimeout(()=>maybeBotTurn(room), 800); return;
+  let fromIdx = room.players.findIndex(p=>p.name===fromPlayer.name);
+  let nextIdx = (fromIdx+1)%room.players.length;
+  room.turnIdx = nextIdx;
+  let nextP = room.players[nextIdx];
+
+  emitToRoom(room, 'turnChanged', { turn:nextP.name, wallLeft:room.wall.length });
+
+  if(nextP.isBot){
+    setTimeout(()=>maybeBotTurn(room), 800);
+  } else {
+    // Giliran manusia: manusia harus ambil dulu via client 'drawTile'
+    // Client akan emit drawTile, server kasih tile
+    io.to(nextP.id).emit('yourTurnToDraw', { wallLeft:room.wall.length });
   }
-  if(action==='chow'){
-    let taken=[]; chowNums.forEach(n=>{ if(n===tile.num) return; let i=claimer.hand.findIndex(t=>t.type==='suit'&&t.suit===tile.suit&&t.num===n); if(i!==-1) taken.push(claimer.hand.splice(i,1)[0]); });
-    taken.push(tile); taken.sort((a,b)=>a.num-b.num);
-    claimer.melds.push({type:'chow', tiles:taken});
-    room.turnIdx=room.players.findIndex(p=>p.name===claimer.name);
-    emitToRoom(room,'meldMade',{by:claimer.name, meld:claimer.melds[claimer.melds.length-1], players:publicPlayers(room)});
-    emitToRoom(room,'turnChanged',{turn:claimer.name, wallLeft:room.wall.length, needDiscard:true});
-    sendHand(room,claimer); setTimeout(()=>maybeBotTurn(room), 800); return;
-  }
-  if(action==='pass'){ advanceTurn(room, discarder); return; }
 }
-io.on('connection', socket=>{
-  socket.on('createRoom', ({name})=>{
-    name=String(name||'').trim().slice(0,15); if(!name) return socket.emit('errorMsg','Nama dulu!');
-    let code=Math.random().toString(36).substring(2,6).toUpperCase();
-    ROOMS[code]={ code, hostId:socket.id, players:[{id:socket.id,name,hand:[],melds:[],flowers:[],discards:[],isBot:false}], phase:'lobby', wall:[], turnIdx:0, lastDiscard:null, waitingClaim:null, botCount:0 };
-    socket.join(code); socket.emit('roomCreated',{code}); io.to(code).emit('updateLobby', ROOMS[code]);
+
+function endGameDraw(room){
+  room.phase = 'finished';
+  emitToRoom(room, 'gameOver', { reason:'draw', msg:'Tembok habis! Seri!' });
+  addLog(room, '🏳️ Tembok habis, seri!');
+}
+
+function checkWin(hand, melds){
+  // Chicken Hand: semua tile bisa jadi meld + 1 pair, atau 7 pair, dll - versi simpel: cek total tile 14 dan bisa dipasangkan
+  // Buat simpel, kita anggap HU kalau player punya 4 meld + 1 pair (total tile di tangan + meld = 14)
+  // Ini cek sederhana buat demo, kalau mau akurat bisa diperluas
+  if(hand.length + melds.length*3 !== 14) return false;
+  // Cek 7 pair (khusus)
+  let counts = {};
+  hand.forEach(t=>{ counts[t.key]=(counts[t.key]||0)+1; });
+  let pairs = Object.values(counts).filter(c=>c>=2).length;
+  if(hand.length===14 && pairs>=7) return true;
+  // Cek simpel: ada minimal 1 pair
+  return pairs>=1;
+}
+
+// ============ SOCKET.IO ============
+io.on('connection', (socket)=>{
+  console.log('User connected:', socket.id);
+
+  socket.on('createRoom', ({ name })=>{
+    let code = genCode();
+    let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false };
+    let p = { id:socket.id, name:name||'Player', isBot:false, isHost:true, hand:[], melds:[], discards:[], flowers:[], level:'' };
+    room.players.push(p);
+    rooms[code]=room;
+    socket.join(code);
+    socket.emit('roomCreated', { code, players:publicPlayers(room) });
+    emitToRoom(room, 'lobbyUpdate', { players:publicPlayers(room) });
   });
-  socket.on('joinRoom', ({code,name})=>{
-    code=(code||'').toUpperCase(); name=String(name||'').trim().slice(0,15);
-    let room=ROOMS[code]; if(!room) return socket.emit('errorMsg','Kode salah!');
-    if(room.phase!=='lobby') return socket.emit('errorMsg','Game sudah mulai!');
-    if(room.players.length>=4) return socket.emit('errorMsg','Meja penuh! Max 4 orang');
-    if(room.players.some(p=>p.name.toLowerCase()===name.toLowerCase())) return socket.emit('errorMsg','Nama udah dipake!');
-    room.players.push({id:socket.id,name,hand:[],melds:[],flowers:[],discards:[],isBot:false});
-    socket.join(code); socket.emit('joinedRoom',{code}); io.to(code).emit('updateLobby', room);
+
+  socket.on('joinRoom', ({ name, code })=>{
+    code = (code||'').toUpperCase().trim();
+    let room = rooms[code];
+    if(!room){ socket.emit('errorMsg', { msg:'Room tidak ditemukan! Cek kode!' }); return; }
+    if(room.players.length>=4){ socket.emit('errorMsg', { msg:'Room penuh!' }); return; }
+    if(room.phase==='playing'){ socket.emit('errorMsg', { msg:'Game sudah mulai!' }); return; }
+    let p = { id:socket.id, name:name||'Player', isBot:false, isHost:false, hand:[], melds:[], discards:[], flowers:[], level:'' };
+    room.players.push(p);
+    socket.join(code);
+    socket.emit('joinedRoom', { code, players:publicPlayers(room) });
+    emitToRoom(room, 'lobbyUpdate', { players:publicPlayers(room) });
   });
-  socket.on('addBot', ({code, level})=>{
-    let room=ROOMS[code]; if(!room) return; if(room.hostId!==socket.id) return socket.emit('errorMsg','Cuma HOST yang bisa tambah bot!');
-    if(room.phase!=='lobby') return socket.emit('errorMsg','Game sudah mulai!');
-    if(room.players.length>=4) return socket.emit('errorMsg','Meja penuh! Max 4');
-    level=['easy','normal','hard'].includes(level)?level:'normal';
-    room.botCount=(room.botCount||0)+1;
-    let names={easy:'Bot Gampang', normal:'Bot Lumayan', hard:'Bot Pro'};
-    let botName=`${names[level]} ${room.botCount}`;
-    if(room.players.some(p=>p.name===botName)) botName+=` #${Date.now()%100}`;
-    room.players.push({id:'bot-'+Date.now()+'-'+Math.random().toString(36).slice(2,5), name:botName, hand:[],melds:[],flowers:[],discards:[], isBot:true, botLevel:level});
-    io.to(code).emit('updateLobby', room);
+
+  socket.on('addBot', ({ code, level })=>{
+    let room = rooms[(code||'').toUpperCase()];
+    if(!room) return;
+    if(room.players.length>=4){ socket.emit('errorMsg', { msg:'Sudah 4 pemain!' }); return; }
+    let botNum = room.players.filter(p=>p.isBot).length + 1;
+    let levelName = level==='easy' ? 'Gampang' : level==='medium' ? 'Lumayan' : 'Pro';
+    let bot = { id:'bot-'+Date.now()+'-'+Math.random(), name:`Bot ${levelName} ${botNum}`, isBot:true, isHost:false, hand:[], melds:[], discards:[], flowers:[], level:level||'easy' };
+    room.players.push(bot);
+    emitToRoom(room, 'lobbyUpdate', { players:publicPlayers(room) });
+    addLog(room, `🤖 ${bot.name} masuk!`);
   });
-  socket.on('removeBot', ({code, botName})=>{
-    let room=ROOMS[code]; if(!room) return; if(room.hostId!==socket.id) return; if(room.phase!=='lobby') return;
-    room.players=room.players.filter(p=>!(p.isBot && p.name===botName));
-    io.to(code).emit('updateLobby', room);
-  });
-  socket.on('fillBots', ({code, level})=>{
-    let room=ROOMS[code]; if(!room) return; if(room.hostId!==socket.id) return; if(room.phase!=='lobby') return;
-    level=['easy','normal','hard'].includes(level)?level:'normal';
-    while(room.players.length<4){ room.botCount=(room.botCount||0)+1; let names={easy:'Bot Gampang', normal:'Bot Lumayan', hard:'Bot Pro'}; room.players.push({id:'bot-'+Date.now()+'-'+Math.random().toString(36).slice(2,5), name:`${names[level]} ${room.botCount}`, hand:[],melds:[],flowers:[],discards:[], isBot:true, botLevel:level}); }
-    io.to(code).emit('updateLobby', room);
-  });
-  socket.on('startGame', ({code})=>{
-    let room=ROOMS[code]; if(!room||room.hostId!==socket.id) return;
-    if(room.players.length<2) return socket.emit('errorMsg','Minimal 2 pemain! Tambah BOT kalau sendirian!');
-    if(room.players.length>4) return socket.emit('errorMsg','Max 4 pemain!');
+
+  socket.on('startGame', ({ code })=>{
+    let room = rooms[(code||'').toUpperCase()];
+    if(!room) return;
+    if(room.players.length<2){ socket.emit('errorMsg', { msg:'Minimal 2 pemain buat mulai! Tambah bot!' }); return; }
     startGame(room);
   });
-  socket.on('discard', ({code, tileId})=>{
-    let room=ROOMS[code]; if(!room||room.phase!=='playing') return;
-    let me=room.players.find(p=>p.id===socket.id); if(!me||me.isBot) return;
-    if(room.players[room.turnIdx].id!==socket.id) return socket.emit('errorMsg','Bukan giliran kamu!');
-    if(room.waitingClaim) return;
-    let idx=me.hand.findIndex(t=>t.id===tileId); if(idx===-1) return socket.emit('errorMsg','Tile gak ketemu!');
-    let tile=me.hand.splice(idx,1)[0];
-    me.discards.push(tile); room.lastDiscard={tile, from:me.name};
-    handleAfterDiscard(room, me, tile);
-  });
-  socket.on('claim', ({code, action, chowNums})=>{
-    let room=ROOMS[code]; if(!room||!room.waitingClaim) return;
-    let me=room.players.find(p=>p.id===socket.id); if(!me||me.isBot) return;
-    let can = room.waitingClaim.claims.find(c=>c.name===me.name);
-    if(!can && action!=='pass') return socket.emit('errorMsg','Kamu gak bisa claim tile ini!');
-    if(action==='pass'){
-      if(room.waitingClaim.claims.length===1){ if(room.waitingClaim.timeout) clearTimeout(room.waitingClaim.timeout); room.waitingClaim=null; let discarder = room.players.find(p=>p.name===room.lastDiscard.from); advanceTurn(room, discarder); }
-      return;
+
+  socket.on('drawTile', ({ code })=>{
+    let room = rooms[(code||'').toUpperCase()];
+    if(!room || room.phase!=='playing') return;
+    let p = room.players.find(x=>x.id===socket.id);
+    if(!p) return;
+    if(room.players[room.turnIdx].name!==p.name) return;
+    if(p.hand.length>=14) return; // Udah punya 14, tinggal buang
+    if(room.wall.length===0){ endGameDraw(room); return; }
+    let drawn = room.wall.pop();
+    while(drawn && drawn.suit==='flower'){
+      p.flowers.push(drawn);
+      if(room.wall.length===0) break;
+      drawn = room.wall.pop();
     }
-    let tile = room.waitingClaim.tile;
-    let discarder = room.players.find(p=>p.name===room.waitingClaim.from);
-    doClaim(room, me, action, chowNums, tile, discarder);
+    if(drawn) p.hand.push(drawn);
+    sendHand(room, p);
+    emitToRoom(room, 'playerDrew', { player:p.name, wallLeft:room.wall.length });
+    io.to(p.id).emit('youDrew', { tile:drawn, wallLeft:room.wall.length });
   });
-  socket.on('tableChat', ({code, msg})=>{
-    let room=ROOMS[code]; if(!room) return;
-    let me=room.players.find(p=>p.id===socket.id); if(!me) return;
-    msg=String(msg||'').trim().slice(0,100); if(!msg) return;
-    io.to(code).emit('tableChatMsg', { name:me.name, msg, time:new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) });
+
+  socket.on('discard', ({ code, tileId })=>{
+    let room = rooms[(code||'').toUpperCase()];
+    if(!room || room.phase!=='playing') return;
+    let p = room.players.find(x=>x.id===socket.id);
+    if(!p) return;
+    if(room.players[room.turnIdx].name!==p.name) return;
+    if(room.waitingClaim) return;
+    let idx = p.hand.findIndex(t=>t.id===tileId);
+    if(idx<0) return;
+    let tile = p.hand.splice(idx,1)[0];
+    p.discards.push(tile);
+    room.lastDiscard = { tile, from:p.name };
+    emitToRoom(room, 'playerDiscarded', { player:p.name, tile, wallLeft:room.wall.length });
+    room.players.forEach(x=>sendHand(room,x));
+    handleAfterDiscard(room, p, tile);
   });
-  socket.on('selfHu', ({code})=>{
-    let room=ROOMS[code]; if(!room||room.phase!=='playing') return;
-    let me=room.players.find(p=>p.id===socket.id); if(!me||me.isBot) return;
-    if(!isChickenWin(me.hand, me.melds)) return socket.emit('errorMsg','Belum HU! Belum 4 Set + 1 Pasang!');
-    io.to(code).emit('gameOver',{winner:me.name, message:`🐔 CHICKEN HAND! ${me.name} HU SENDIRI!`, hand:me.hand, melds:me.melds});
-    room.phase='ended';
+
+  socket.on('claim', ({ code, action, chowNums })=>{
+    let room = rooms[(code||'').toUpperCase()];
+    if(!room || room.phase!=='playing') return;
+    if(!room.waitingClaim || !room.currentClaim) return;
+    let p = room.players.find(x=>x.id===socket.id);
+    if(!p) return;
+    let { tile, from } = room.currentClaim;
+    let discarder = room.players.find(x=>x.name===from);
+    if(!discarder) return;
+    // Validasi chow cuma buat next player
+    if(action==='chow'){
+      let discarderIdx = room.players.findIndex(x=>x.name===from);
+      let nextIdx = (discarderIdx+1)%room.players.length;
+      if(room.players[nextIdx].name!==p.name) return;
+    }
+    // Validasi pong
+    if(action==='pong'){
+      let c = p.hand.filter(t=>t.key===tile.key).length;
+      if(c<2) return;
+    }
+    doClaim(room, p, action, chowNums, tile, discarder);
   });
-  socket.on('playAgain', ({code})=>{
-    let room=ROOMS[code]; if(!room) return;
-    if(room.waitingClaim && room.waitingClaim.timeout) clearTimeout(room.waitingClaim.timeout);
-    room.phase='lobby'; room.wall=[]; room.lastDiscard=null; room.waitingClaim=null;
-    room.players.forEach(p=>{ p.hand=[]; p.melds=[]; p.flowers=[]; p.discards=[]; });
-    io.to(code).emit('playAgainReady',{code}); io.to(code).emit('updateLobby', room);
+
+  socket.on('passClaim', ({ code })=>{
+    // Manusia pass, biar bot lain tetep bisa claim di handleAfterDiscard (udah ada timeout)
+    // Kita ga perlu apa-apa, timeout akan jalan
   });
+
+  socket.on('tableChat', ({ code, msg })=>{
+    let room = rooms[(code||'').toUpperCase()];
+    if(!room) return;
+    let p = room.players.find(x=>x.id===socket.id);
+    let sender = p ? p.name : 'Player';
+    emitToRoom(room, 'chatMsg', { sender, msg });
+  });
+
   socket.on('disconnect', ()=>{
-    for(let code in ROOMS){
-      let room=ROOMS[code]; let was=room.players.some(p=>p.id===socket.id && !p.isBot); if(!was) continue;
-      room.players=room.players.filter(p=>p.id!==socket.id);
-      if(room.players.length===0){ delete ROOMS[code]; continue; }
-      let humans = room.players.filter(p=>!p.isBot);
-      if(room.hostId===socket.id && humans.length>0) room.hostId=humans[0].id;
-      io.to(code).emit('updateLobby', room);
-      if(room.phase==='playing' && !room.waitingClaim){ let cur = room.players[room.turnIdx]; if(cur && cur.id===socket.id){ advanceTurn(room, {name:'__left__'}); } }
+    // Cari room yang ada player ini
+    for(let code in rooms){
+      let room = rooms[code];
+      let idx = room.players.findIndex(p=>p.id===socket.id);
+      if(idx>=0){
+        let left = room.players[idx];
+        room.players.splice(idx,1);
+        if(room.players.length===0){
+          delete rooms[code];
+        } else {
+          // Kalau host keluar, host pindah
+          if(left.isHost && room.players.length>0) room.players[0].isHost = true;
+          emitToRoom(room, 'lobbyUpdate', { players:publicPlayers(room) });
+          addLog(room, `👋 ${left.name} keluar!`);
+          // Kalau game lagi jalan dan yang keluar lagi giliran, skip
+          if(room.phase==='playing'){
+            if(room.players[room.turnIdx] && room.players[room.turnIdx].name===left.name){
+              advanceTurn(room, left);
+            }
+          }
+        }
+        break;
+      }
     }
   });
 });
-const PORT=process.env.PORT||3000;
-server.listen(PORT,'0.0.0.0',()=>console.log('🀄 MAHJONG ONLINE + BOT di port '+PORT));
+
+server.listen(PORT, ()=>{
+  console.log(`🀄 MAHJONG ONLINE + BOT di port ${PORT}`);
+});
