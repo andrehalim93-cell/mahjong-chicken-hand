@@ -299,7 +299,7 @@ function resolveClaimTimeout(room, discarder, tile){
   for(let i=0;i<room.players.length;i++){
     let p=room.players[i];
     if(p.name===discarder.name) continue;
-    if(p.isBot && canHuWithTileAndMelds(p.hand, p.melds, tile)){ endGameWin(room, p.name, `${p.name} HU dari buangan ${discarder.name}!`); return; }
+    if(p.isBot && canHuWithTileAndMelds(p.hand, p.melds, tile)){ endGameWin(room, p.name, `${p.name} HU dari buangan ${discarder.name}!`, tile); return; }
   }
   // 2. Bot PONG
   for(let i=0;i<room.players.length;i++){
@@ -359,7 +359,7 @@ function handleAfterDiscard(room, discarder, tile){
 function doClaim(room, claimer, action, chowNums, tile, discarder){
   clearTurnTimer(room);
   clearClaimTimer(room);
-  if(action==='hu'){ endGameWin(room, claimer.name, `${claimer.name} HU!`); return; }
+  if(action==='hu'){ endGameWin(room, claimer.name, `${claimer.name} HU!`, tile); return; }
   let dIdx = discarder.discards.findIndex(t=>t.id===tile.id);
   if(dIdx>=0) discarder.discards.splice(dIdx,1);
   let need=[];
@@ -418,11 +418,13 @@ function endGameDraw(room){
   emitToRoom(room, 'gameOver', { winner:null, message:'Tembok habis! Seri!', reason:'draw', msg:'Tembok habis! Seri!' });
   addLog(room, '🏳️ Tembok habis, seri!');
 }
-function endGameWin(room, winnerName, msg){
+function endGameWin(room, winnerName, msg, winningTile){
   clearTurnTimer(room);
   room.phase='finished'; room.waitingClaim=false;
   let winner = room.players.find(p=>p.name===winnerName);
-  emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: winner?winner.hand:[] });
+  let fullHand=[];
+  if(winner){ (winner.melds||[]).forEach(function(m){ (m.tiles||[]).forEach(function(tt){ fullHand.push(tt); }); }); (winner.hand||[]).forEach(function(tt){ fullHand.push(tt); }); if(winningTile && !fullHand.some(function(tt){ return tt.id===winningTile.id; })) fullHand.push(winningTile); }
+  emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: fullHand, melds: winner?winner.melds:[], flowers: winner?winner.flowers:[] });
   addLog(room, '🏆 '+msg);
 }
 
