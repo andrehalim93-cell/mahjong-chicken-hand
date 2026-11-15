@@ -327,6 +327,41 @@ input{font-family:inherit}
   .myMelds .meld .t, .meldsRow .meld .t{ width:44px !important; height:60px !important; }
   .centerBox{ top:52% !important; bottom:auto !important; left:50% !important; transform:translate(-50%,-50%) !important; }
 }
+/* ===== FINAL FIX V12 - BALIKIN GILIRAN + CHAT/BUANGAN YANG KEHAPUS DI V11 ===== */
+/* 1. Panah giliran: balik ke tengah meja */
+.turnArrow{
+  position:absolute !important; left:50% !important; top:50% !important;
+  transform:translate(-50%,-50%) !important;
+  width:300px !important; height:300px !important;
+  z-index:1 !important; pointer-events:none !important; opacity:.55 !important;
+}
+.turnArrowTxt{
+  position:absolute !important; left:50% !important; top:108% !important;
+  transform:translateX(-50%) !important; white-space:nowrap !important;
+  font-size:10px !important; font-weight:800 !important; letter-spacing:.5px !important;
+  color:#fde68a !important; background:rgba(0,0,0,.45) !important;
+  padding:3px 8px !important; border-radius:999px !important;
+}
+/* 2. Chat + buangan: balik mini di pojok kanan atas frame tangan kamu, bukan di kanan meja */
+.myTools{
+  position:absolute !important; top:6px !important; right:6px !important;
+  display:flex !important; gap:6px !important; z-index:30 !important;
+}
+#chatFab, #discardFab{
+  position:static !important; width:30px !important; height:30px !important;
+  min-width:30px !important; font-size:15px !important; border-radius:50% !important;
+  right:auto !important; top:auto !important; bottom:auto !important; left:auto !important;
+  display:none !important; align-items:center !important; justify-content:center !important;
+}
+#chatFab.showInLobby, #chatFab.showInGame, #discardFab.showInGame{ display:flex !important; }
+#chatFab #chatBadge{ min-width:15px !important; height:15px !important; line-height:15px !important; font-size:9px !important; top:-3px !important; right:-3px !important; }
+#chatPanel{ position:fixed !important; right:10px !important; bottom:80px !important; top:auto !important; }
+/* 3. Matikan aturan landscape lama yang mindahin chat ke kanan meja */
+@media (orientation:landscape) and (max-height:500px){
+  .turnArrow{ width:210px !important; height:210px !important; }
+  #chatFab, #discardFab{ width:30px !important; height:30px !important; right:auto !important; bottom:auto !important; }
+  #chatPanel{ right:10px !important; bottom:80px !important; }
+}
 </style>
 </head>
 <body>
