@@ -170,6 +170,10 @@ input{font-family:inherit}
   .actionBar button{padding:8px 12px;font-size:12px}
   .log{display:none}
   #chatFab{width:46px;height:46px;font-size:20px;right:10px;bottom:10px}
+  #fullFab{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.6);border:1px solid rgba(250,204,21,.6);color:#fde68a;font-size:20px;font-weight:900;z-index:600;display:flex;align-items:center;justify-content:center}
+#fullFab:active{transform:scale(.92)}
+#chatFab{display:none}
+#chatFab.showInGame{display:flex}
   #chatPanel{right:10px;bottom:62px;width:300px;height:300px}
   .poolAllBottom{padding:3px;bottom:4px}
   .poolAllBottom .mTile{width:26px;height:36px}
@@ -182,6 +186,7 @@ input{font-family:inherit}
 </style>
 </head>
 <body>
+<button id="fullFab" onclick="toggleFull()" title="Fullscreen">⛶</button>
 <div id="homeScreen">
   <div class="topLogo"><div class="crown">👑🀄👑</div><h1>MAHJONG<br>CHICKEN HAND</h1><p></p></div>
   <div class="card">
@@ -257,7 +262,15 @@ function showErr(m){ let e=el('homeErr'); e.style.display='block'; e.innerText=m
 function toast(m){ let t=el('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 function esc(s){ let d=document.createElement('div'); d.innerText=String(s||''); return d.innerHTML; }
 function toggleSound(){ soundOn=!soundOn; el('soundBtn').innerText=soundOn?'ON':'OFF'; toast(soundOn?'🔊 Suara ON':'🔇 Suara OFF'); }
-function toggleFull(){ if(!document.fullscreenElement){ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); } else{ document.exitFullscreen && document.exitFullscreen(); } }
+function toggleFull(){
+  if(!document.fullscreenElement){ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
+  else{ document.exitFullscreen && document.exitFullscreen(); }
+}
+// Icon berubah kalau udah fullscreen / belum
+document.addEventListener('fullscreenchange', ()=>{
+  let b = el('fullFab');
+  if(b) b.innerText = document.fullscreenElement ? '✕' : '⛶';
+});
 function botDisplayName(p){ if(!p.isBot) return esc(p.name); let lvl=(p.botLevel||'easy').toUpperCase(); return esc(p.name)+' ('+lvl+' BOT)'; }
 function randomBotName(){ let pool=BOT_NAMES.filter(n=>!usedBotNames.includes(n) && n!==myName); if(pool.length===0) pool=BOT_NAMES.slice(); let n=pool[Math.floor(Math.random()*pool.length)]; usedBotNames.push(n); return n; }
 function setTurnTime(sec, btn){ if(!isHost){ toast('Cuma HOST yang bisa ganti waktu!'); return; } turnTimeSec=sec; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); el('timeInfo').innerText = sec===0 ? 'Saat ini: Tanpa batas' : 'Saat ini: '+sec+' detik per giliran'; el('turnTimer').innerText = sec===0 ? '♾️' : sec+'s'; socket.emit('setTurnTime',{code:myCode, seconds:sec}); }
@@ -350,6 +363,7 @@ function removeBot(name){ if(confirm('Hapus '+name+'?')) socket.emit('removeBot'
 socket.on('errorMsg', m=>{ showErr(m); toast(m); });
 socket.on('gameStarted', d=>{
   el('lobbyScreen').classList.add('hidden'); el('gameScreen').classList.remove('hidden');
+  el('chatFab').classList.add('showInGame');
   el('gCode').innerText=myCode; el('wallLeft').innerText=d.wallLeft;
   if(d.turnTimeSec!==undefined) turnTimeSec=d.turnTimeSec;
   el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s';
@@ -366,7 +380,7 @@ socket.on('turnChanged', d=>{ el('turnName').innerText=d.turn; isMyTurn = (d.tur
 socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); toast('⚡ Kamu bisa PONG / CHOW / HU! Cepet claim!'); } });
 socket.on('meldMade', d=>{ if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); });
 socket.on('gameOver', d=>{ clearInterval(turnTimerInt); playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🐔🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message + (d.hand ? `\nTangan pemenang: ${d.hand.length} tile` : ''); el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
-socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); myHand=[]; myMelds=[]; myFlowers=[]; usedBotNames=[]; renderMyHand(); });
+socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden');   el('chatFab').classList.remove('showInGame'); el('chatPanel').classList.remove('show'); chatOpen=false; myHand=[]; myMelds=[]; myFlowers=[]; usedBotNames=[]; renderMyHand(); });
 function addLog(m){ let l=el('gameLog'); l.innerHTML = m + '<br>' + l.innerHTML; }
 function renderSeats(players, turn){
   let others = players.filter(p=>p.name!==myName);
