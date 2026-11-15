@@ -268,8 +268,8 @@ input{font-family:inherit}
   <div class="topLogo"><div class="crown">👑🀄👑</div><h1>MAHJONG<br>CHICKEN HAND</h1><p></p></div>
   <div class="card">
     <h2>👋<span>Selamat Datang</span></h2>
-    <div class="lbl">NAMA KAMU</div><input id="nameInput" class="inp" placeholder="Input nama kamu" maxlength="15">
-    <div class="lbl">KODE MEJA (KALAU MAU JOIN)</div><input id="codeInput" class="inp" placeholder="Input kode meja" maxlength="4" style="text-transform:uppercase">
+    <div class="lbl">NAMA KAMU</div><input id="nameInput" class="inp" placeholder="Input nama kamu" maxlength="15" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <div class="lbl">KODE MEJA (KALAU MAU JOIN)</div><input id="codeInput" class="inp" placeholder="Input kode meja" maxlength="4" style="text-transform:uppercase" autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false">
     <button class="btn btn-gold" onclick="createRoom()">🀄 BUAT MEJA BARU</button>
     <button class="btn btn-green" onclick="joinRoom()">🚪 JOIN MEJA</button>
     <button class="btn btn-dark" onclick="document.getElementById('howtoBox').classList.toggle('hidden')">📖 CARA MAIN - KLIK</button>
