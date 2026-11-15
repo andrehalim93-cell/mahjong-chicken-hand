@@ -14,7 +14,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET","POST"] } });
 const PORT = process.env.PORT || 3000;
 
-app.get('/health', (req, res) => res.send('OK'));
+app.get('/health', (req, res) => res.send('OK'))
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 let rooms = {};
@@ -245,6 +245,9 @@ function getClaimsFor(room, tile, fromName){
     let canHu = canHuWithTileAndMelds(p.hand, p.melds, tile);
     let pong = p.hand.filter(t=>t.key===tile.key).length>=2;
     let chow=[];
+    // ATURAN REAL: CHOW cuma boleh ambil buangan pemain SEBELUMNYA (yang baru buang).
+    // Artinya: cuma pemain yang gilirannya persis SETELAH yang buang yang boleh CHOW.
+    // PONG / HU boleh dari siapa aja.
     let isNext = ((fromIdx+1)%room.players.length)===idx;
     if(isNext && tile.type==='suit'){
       let nums = p.hand.filter(t=>t.type==='suit' && t.suit===tile.suit).map(t=>t.num);
@@ -350,7 +353,7 @@ function handleAfterDiscard(room, discarder, tile){
     return;
   }
   // JALUR CEPET 2: gak ada manusia bisa claim, cuma BOT yang bisa -> BOT langsung claim, gak usah nunggu timer giliran
-  if(humanClaims.length===0 && botCanClaim){
+  if(humanClaims.length==0 && botCanClaim){
     resolveClaimTimeout(room, discarder, tile);
     return;
   }
@@ -361,6 +364,18 @@ function doClaim(room, claimer, action, chowNums, tile, discarder){
   clearTurnTimer(room);
   clearClaimTimer(room);
   if(action==='hu'){ endGameWin(room, claimer.name, `${claimer.name} HU!`, tile); return; }
+  // ===== KUNCI ATURAN REAL CHOW DI SINI (pintu terakhir, semua jalur lewat sini) =====
+  if(action==='chow'){
+    // 1. Harus pemain setelah yang buang (pemain sebelumnya yang buang)
+    let discarderIdx = room.players.findIndex(p=>p.name===discarder.name);
+    let nextIdx = (discarderIdx+1)%room.players.length;
+    if(room.players[nextIdx].name!==claimer.name) return;
+    // 2. Harus tile suit, dan chowNums harus 2 angka yang + tile buangan = urut 3
+    if(!chowNums || chowNums.length!==2) return;
+    if(tile.type!=='suit') return;
+    let all = [...chowNums, tile.num].sort((a,b)=>a-b);
+    if(!(all[1]===all[0]+1 && all[2]===all[1]+1)) return;
+  }
   let dIdx = discarder.discards.findIndex(t=>t.id===tile.id);
   if(dIdx>=0) discarder.discards.splice(dIdx,1);
   let need=[];
@@ -610,9 +625,14 @@ io.on('connection', (socket)=>{
     }
     if(action==='hu'){ doClaim(room, p, 'hu', null, tile, discarder); return; }
     if(action==='chow'){
+      // ATURAN REAL: CHOW cuma dari pemain sebelumnya (yang baru buang)
       let discarderIdx = room.players.findIndex(x=>x.name===from);
       let nextIdx = (discarderIdx+1)%room.players.length;
       if(room.players[nextIdx].name!==p.name) return;
+      // chowNums harus 2 angka, dan bareng tile buangan harus jadi urut 3
+      if(!chowNums || chowNums.length!==2) return;
+      let all = [...chowNums, tile.num].sort((a,b)=>a-b);
+      if(!(all[1]===all[0]+1 && all[2]===all[1]+1)) return;
     }
     if(action==='pong'){
       let c = p.hand.filter(t=>t.key===tile.key).length;
