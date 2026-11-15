@@ -170,10 +170,14 @@ input{font-family:inherit}
   .actionBar button{padding:8px 12px;font-size:12px}
   .log{display:none}
   #chatFab{width:46px;height:46px;font-size:20px;right:10px;bottom:10px}
-  #fullFab{position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.6);border:1px solid rgba(250,204,21,.6);color:#fde68a;font-size:20px;font-weight:900;z-index:600;display:flex;align-items:center;justify-content:center}
-#fullFab:active{transform:scale(.92)}
-#chatFab{display:none}
-#chatFab.showInGame{display:flex}
+  #fullFab{position:fixed;top:12px;right:12px;z-index:600;display:flex;align-items:center;gap:7px;padding:9px 14px 9px 11px;border-radius:999px;background:linear-gradient(180deg,#fde047,#f59e0b);color:#422006;font-size:11px;font-weight:900;letter-spacing:.8px;box-shadow:0 8px 20px rgba(245,158,11,.5),0 0 0 2px rgba(255,255,255,.25) inset;transition:.15s}
+#fullFab:active{transform:scale(.94)}
+#fullFab .fsIcon{font-size:16px;line-height:1}
+#fullFab.isFull{background:linear-gradient(180deg,#22c55e,#15803d);color:#fff;box-shadow:0 8px 20px rgba(34,197,94,.5)}
+#fullFab.isFull .fsTxt::after{content:' ✓'}
+@media(max-width:640px){ #fullFab{padding:8px 10px} #fullFab .fsTxt{display:none} #fullFab .fsIcon{font-size:18px} }
+#chatFab{display:none!important}
+#chatFab.showInLobby,#chatFab.showInGame{display:flex!important}
   #chatPanel{right:10px;bottom:62px;width:300px;height:300px}
   .poolAllBottom{padding:3px;bottom:4px}
   .poolAllBottom .mTile{width:26px;height:36px}
@@ -186,7 +190,7 @@ input{font-family:inherit}
 </style>
 </head>
 <body>
-<button id="fullFab" onclick="toggleFull()" title="Fullscreen">⛶</button>
+<button id="fullFab" onclick="toggleFull()"><span class="fsIcon">⛶</span><span class="fsTxt">LAYAR PENUH</span></button>
 <div id="homeScreen">
   <div class="topLogo"><div class="crown">👑🀄👑</div><h1>MAHJONG<br>CHICKEN HAND</h1><p></p></div>
   <div class="card">
@@ -210,7 +214,7 @@ input{font-family:inherit}
   <div class="smallNote">💡 Tips: Kalau sendirian, pencet <b>ISI FULL BOT</b> biar langsung main lawan 3 bot!<br>Host bisa klik bot buat ngehapus bot.</div>
 </div>
 <div id="gameScreen" class="hidden">
-  <div class="gameTop"><div class="pill">🀄 <b id="gCode">----</b> • 🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div><div class="pill">⛶ <button onclick="toggleFull()" style="background:none;color:#fff;font-weight:900">FULL</button></div></div>
+  <div class="gameTop"><div class="pill">🀄 <b id="gCode">----</b> • 🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div></div>
   <div class="table" id="tableEl">
    <div class="centerBox" id="centerBox">
   <div class="poolCenter" id="lastTileEl">Belum ada buangan</div>
@@ -268,8 +272,10 @@ function toggleFull(){
 }
 // Icon berubah kalau udah fullscreen / belum
 document.addEventListener('fullscreenchange', ()=>{
-  let b = el('fullFab');
-  if(b) b.innerText = document.fullscreenElement ? '✕' : '⛶';
+  let b = el('fullFab'); if(!b) return;
+  b.classList.toggle('isFull', !!document.fullscreenElement);
+  let t = b.querySelector('.fsTxt'); if(t) t.innerText = document.fullscreenElement ? 'KELUAR FULL' : 'LAYAR PENUH';
+  let ic = b.querySelector('.fsIcon'); if(ic) ic.innerText = document.fullscreenElement ? '✕' : '⛶';
 });
 function botDisplayName(p){ if(!p.isBot) return esc(p.name); let lvl=(p.botLevel||'easy').toUpperCase(); return esc(p.name)+' ('+lvl+' BOT)'; }
 function randomBotName(){ let pool=BOT_NAMES.filter(n=>!usedBotNames.includes(n) && n!==myName); if(pool.length===0) pool=BOT_NAMES.slice(); let n=pool[Math.floor(Math.random()*pool.length)]; usedBotNames.push(n); return n; }
@@ -343,8 +349,8 @@ function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:
 function fillBots(){ let need=4 - (currentPlayers.length||0); if(need<=0) need=3; for(let i=0;i<need;i++){ setTimeout(()=>addBot('normal'), i*150); } }
 function startGame(){ socket.emit('startGame',{code:myCode, turnTimeSec}); }
 function playAgain(){ socket.emit('playAgain',{code:myCode}); el('winModal').classList.remove('show'); }
-socket.on('roomCreated', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('roomCodeBig').innerText=d.code; });
-socket.on('joinedRoom', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('roomCodeBig').innerText=d.code; });
+socket.on('roomCreated', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('roomCodeBig').innerText=d.code; el('chatFab').classList.add('showInLobby'); });
+socket.on('joinedRoom', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('roomCodeBig').innerText=d.code; el('chatFab').classList.add('showInLobby'); });
 socket.on('updateLobby', room=>{
   myCode=room.code; currentPlayers=room.players; if(room.turnTimeSec!==undefined && room.turnTimeSec!==null){ turnTimeSec=room.turnTimeSec; el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s'; el('timeInfo').innerText = turnTimeSec===0?'Saat ini: Tanpa batas':'Saat ini: '+turnTimeSec+' detik per giliran'; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec)); }
   isHost = room.players.some(p=>p.name===myName && !p.isBot && p.id===room.hostId);
