@@ -650,7 +650,7 @@ function renderActionBar(actions){
 function doClaim(action){ if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
 function doClaimChow(chowNums){ if(claimTimeoutInt) clearTimeout(claimTimeoutInt); console.log('KLIK CHOW, kirim ke server:', chowNums); socket.emit('claim',{code:myCode, action:'chow', chowNums}); el('actionBar').innerHTML=''; }
 function doClaimChowByIdx(idx){ let chowNums = (window._lastChows||[])[idx]; console.log('KLIK CHOW idx:', idx, 'isi:', chowNums); doClaimChow(chowNums); }
-function selfHu(){ socket.emit('selfHu',{code:myCode}); }
+function selfHu(){ console.log('KLIK HU, hand:', myHand, 'melds:', myMelds); socket.emit('selfHu',{code:myCode}); }
 function openDiscards(){ let pool=document.querySelector('.poolAllBottom'); let body=document.getElementById('discardModalBody'); if(pool && body){ body.innerHTML=pool.innerHTML; body.querySelectorAll('.mTile').forEach(function(el2){ el2.style.width='32px'; el2.style.height='44px'; }); } document.getElementById('discardModal').classList.add('open'); }
 function closeDiscards(){ document.getElementById('discardModal').classList.remove('open'); }
 let claimTimeoutInt=null;
