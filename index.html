@@ -388,18 +388,23 @@ function tileLabel(t){
   return {sub:'BUNGA', num:'✿', cls:'red'};
 }
 function tileFace(t){
-  let CN=['','一','二','三','四','五','六','七','八','九'];
-  let WINDS=['東','南','西','北'];
-  let DRAGONS=['中','發','白'];
-  let FLOWERS=['梅','蘭','菊','竹','春','夏','秋','冬'];
-  if(t.type==='suit' && t.suit===0){
-    if(t.num===1) return '<div class="face"><div class="bigChar" style="color:#15803d;font-size:26px">🦚</div><div class="lbl">BAMBU 1</div></div>';
-    let colors=['cB','cR','cG'];
-    let rows=[]; let perRow = t.num<=3 ? t.num : (t.num<=6 ? 3 : 3);
-    let left=t.num;
-    while(left>0){ let c=Math.min(perRow,left); let row='<div class="rowDots">'; for(let i=0;i<c;i++) row+='<div class="stick '+colors[(rows.length+i)%3]+'"></div>'; row+='</div>'; rows.push(row); left-=c; }
-    return '<div class="face">'+rows.join('')+'<div class="lbl">BAMBU '+t.num+'</div></div>';
+  // Bunga tetep pake gambar lama, karena set Riichi gak ada Bunga
+  if(t.type==='flower'){
+    let FLOWERS=['梅','蘭','菊','竹','春','夏','秋','冬'];
+    return '<div class="face"><div class="bigChar" style="color:#db2777">'+FLOWERS[t.num%8]+'</div><div class="lbl">BUNGA</div></div>';
   }
+  // Mapping nama file di ZIP FluffyStuff -> tile game kamu
+  let file='';
+  if(t.type==='suit'){
+    if(t.suit===2) file='Man'+t.num;      // Karakter
+    if(t.suit===1) file='Pin'+t.num;      // Dot
+    if(t.suit===0) file='Sou'+t.num;      // Bambu
+  }
+  if(t.type==='wind') file=['Ton','Nan','Sha','Pei'][t.num];
+  if(t.type==='dragon') file=['Chun','Hatsu','Haku'][t.num];
+  // Kalau nama file di ZIP kamu beda, ubah di baris file= di atas aja
+  return '<img src="'+file+'.svg" style="width:100%;height:100%;display:block" alt="">';
+}
   if(t.type==='suit' && t.suit===1){
     let colors=['cB','cR','cG'];
     let rows=[]; let perRow = t.num<=3 ? t.num : 3; let left=t.num;
@@ -566,7 +571,7 @@ function renderSeats(players, turn){
     let pos = posMap[idx] || 'top';
     let slot = slots[pos];
     let isTurn = p.name===turn;
-    slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':''}${botDisplayName(p)} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<div class="mTile back">🀄</div>').join('')}</div>${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`;
+    slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':''}${botDisplayName(p)} • ${p.handCount} tile</div><div class="miniHand">${Array(Math.min(p.handCount,13)).fill('<img src="Back.svg" style="width:100%;height:100%">').join('')}</div>${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`;
     let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join('');
     if(meldHtml && meldSlots[pos]) meldSlots[pos].innerHTML = meldHtml;
   });
