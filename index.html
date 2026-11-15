@@ -131,7 +131,7 @@ input{font-family:inherit}
 #winHand{gap:10px!important}
 .huGroup{display:flex;gap:3px;background:rgba(255,255,255,.65);border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:4px}
 #toast{position:fixed;left:50%;top:68px;bottom:auto;pointer-events:none;transform:translateX(-50%);background:#111827;border:1px solid #facc15;color:#fde68a;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:800;z-index:200;display:none;max-width:92%;text-align:center}
-#turnPopup{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.8);background:rgba(0,0,0,.85);border:3px solid #facc15;border-radius:20px;padding:18px 28px;text-align:center;z-index:300;display:none;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:.2s}
+#turnPopup{position:fixed;left:50%;top:12%;transform:translate(-50%,-50%) scale(.8);background:rgba(0,0,0,.85);border:3px solid #facc15;border-radius:20px;padding:10px 18px;text-align:center;z-index:300;display:none;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:.2s;pointer-events:none}
 #turnPopup.show{display:block;transform:translate(-50%,-50%) scale(1)}
 #turnPopup .tpName{font-size:24px;font-weight:900;color:#facc15;margin-top:6px}
 #turnPopup .tpSub{font-size:12px;color:#a7f3d0;margin-top:4px}
@@ -283,7 +283,7 @@ input{font-family:inherit}
     width:auto!important; max-width:180px!important;
     max-height:none!important;
   }
-  .meldTopRight{ top:70px!important; }
+  .meldTopRight{ top:115px!important; }
 }
 /* FIX: Tangan lawan jangan ke-lipet ke bawah, meld balik ke samping */
 .miniHand{
@@ -431,7 +431,7 @@ document.addEventListener('fullscreenchange', ()=>{
 function botDisplayName(p){ return esc(p.name); }
 function randomBotName(){ let pool=BOT_NAMES.filter(n=>!usedBotNames.includes(n) && n!==myName); if(pool.length===0) pool=BOT_NAMES.slice(); let n=pool[Math.floor(Math.random()*pool.length)]; usedBotNames.push(n); return n; }
 function setTurnTime(sec, btn){ if(!isHost){ toast('Cuma HOST yang bisa ganti waktu!'); return; } turnTimeSec=sec; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); el('timeInfo').innerText = sec===0 ? 'Saat ini: Tanpa batas' : 'Saat ini: '+sec+' detik per giliran'; el('turnTimer').innerText = sec===0 ? '♾️' : sec+'s'; socket.emit('setTurnTime',{code:myCode, seconds:sec}); }
-function showTurnPopup(name){ let p=el('turnPopup'); el('turnPopupName').innerText = name===myName ? 'KAMU! 🔥' : name; el('turnPopupSub').innerText = name===myName ? 'Giliran kamu! Buang 1 tile!' : 'Tunggu '+name+' buang tile...'; p.classList.add('show'); setTimeout(()=>p.classList.remove('show'), 1600); }
+let turnPopupTimer=null; function showTurnPopup(name){ let p=el('turnPopup'); el('turnPopupName').innerText = name===myName ? 'KAMU! 🔥' : name; el('turnPopupSub').innerText = name===myName ? 'Giliran kamu! Buang 1 tile!' : 'Tunggu '+name+' buang tile...'; p.classList.add('show'); if(turnPopupTimer) clearTimeout(turnPopupTimer); turnPopupTimer=setTimeout(()=>p.classList.remove('show'), 900); }
 function startTurnTimer(){ clearInterval(turnTimerInt); if(turnTimeSec===0){ el('turnTimer').innerText='♾️'; return; } turnLeft=turnTimeSec; el('turnTimer').innerText=turnLeft+'s'; turnTimerInt=setInterval(()=>{ turnLeft--; if(turnLeft<=0){ clearInterval(turnTimerInt); el('turnTimer').innerText='0s'; } else { el('turnTimer').innerText=turnLeft+'s'; } },1000); }
 function showDiceRoll(firstPlayer, serverDice){ let m=el('diceModal'); m.classList.add('show'); let d1=el('dice1'), d2=el('dice2'); d1.classList.add('rolling'); d2.classList.add('rolling'); el('diceText').innerText='Menentukan siapa yang mulai duluan...'; el('diceTotal').innerText='Total: -'; el('diceWinner').innerText=''; let ticks=0; let iv=setInterval(()=>{ let a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6); d1.innerText=DICE_FACES[a]; d2.innerText=DICE_FACES[b]; ticks++; if(ticks>12){ clearInterval(iv); d1.classList.remove('rolling'); d2.classList.remove('rolling'); let finalA = serverDice ? serverDice.d1 : a; let finalB = serverDice ? serverDice.d2 : b; d1.innerText=DICE_FACES[finalA]; d2.innerText=DICE_FACES[finalB]; let total=finalA+finalB; el('diceTotal').innerText='Total: '+total+' ('+finalA+' + '+finalB+')'; el('diceWinner').innerText = firstPlayer ? '🎯 '+firstPlayer+' jalan duluan!' : '🎯 Giliran pertama dimulai!'; setTimeout(()=>m.classList.remove('show'), 1400); } },140); }
 let mjAudio = null;
