@@ -648,7 +648,7 @@ io.on('connection', (socket)=>{
     if(!room || room.phase!=='playing') return;
     let p = room.players.find(x=>x.id===socket.id);
     if(!p) return;
-    if(canHuWithMelds(p.hand, p.melds)){ endGameWin(room, p.name, `${p.name} HU! Chicken Hand!`); }
+    if(canHuWithMelds(p.hand, p.melds)){ endGameWin(room, p.name, `${p.name} HU! Chicken Hand!`); } else { console.log('SELF-HU DITOLAK', p.name, 'hand:', p.hand.map(t=>t.key), 'melds:', JSON.stringify(p.melds)); socket.emit('errorMsg', 'Server bilang BUKAN HU. Hand: '+p.hand.length+' tile, meld: '+p.melds.length+' set'); }
   });
 
   socket.on('tableChat', ({ code, msg })=>{
