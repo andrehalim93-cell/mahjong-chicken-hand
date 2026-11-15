@@ -1,37 +1,42 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="140" viewBox="0 0 100 140">
   <rect x="2" y="2" width="96" height="136" rx="10" fill="#fffef0" stroke="#1c1917" stroke-width="2"/>
   <rect x="7" y="7" width="86" height="126" rx="7" fill="none" stroke="#d6d3d1" stroke-width="1"/>
-  <!-- bambu belakang -->
-  <rect x="22" y="20" width="6" height="90" rx="3" fill="#16a34a"/>
-  <rect x="72" y="20" width="6" height="90" rx="3" fill="#16a34a"/>
-  <circle cx="25" cy="18" r="7" fill="#22c55e"/>
-  <circle cx="75" cy="18" r="7" fill="#22c55e"/>
-  <!-- badan burung merak -->
-  <ellipse cx="50" cy="78" rx="18" ry="24" fill="#0ea5e9"/>
-  <ellipse cx="50" cy="82" rx="12" ry="16" fill="#e0f2fe"/>
-  <!-- leher + kepala -->
-  <path d="M50 58 Q50 38 62 32 Q70 28 70 36 Q70 44 58 48" fill="none" stroke="#0ea5e9" stroke-width="7" stroke-linecap="round"/>
-  <circle cx="68" cy="33" r="7" fill="#0ea5e9"/>
-  <circle cx="70" cy="31" r="1.8" fill="#fff"/>
-  <path d="M74 32 L82 34 L74 36 Z" fill="#f59e0b"/>
-  <!-- jambul -->
-  <path d="M64 26 Q62 16 66 14 M68 26 Q70 16 72 15" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-linecap="round"/>
-  <circle cx="66" cy="13" r="2.5" fill="#f59e0b"/>
-  <circle cx="72" cy="14" r="2.5" fill="#f59e0b"/>
-  <!-- ekor merak mekar -->
-  <g stroke="#16a34a" stroke-width="3" fill="none" stroke-linecap="round">
-    <path d="M42 98 Q30 112 22 118"/>
-    <path d="M50 100 Q50 118 50 124"/>
-    <path d="M58 98 Q70 112 78 118"/>
+  <text x="50" y="18" text-anchor="middle" font-size="13" font-weight="900" fill="#1c1917" font-family="sans-serif">1</text>
+
+  <!-- daun bambu kiri -->
+  <g fill="#15803d">
+    <path d="M42 52 Q20 42 12 38 Q28 48 42 56 Z"/>
+    <path d="M42 58 Q30 62 26 76 Q36 66 43 62 Z"/>
+    <path d="M40 84 Q18 78 10 70 Q26 82 40 88 Z"/>
+    <path d="M40 90 Q28 96 24 112 Q36 100 41 94 Z"/>
+    <path d="M38 112 Q20 110 12 116 Q28 118 38 115 Z"/>
+    <path d="M38 116 Q28 126 24 138 Q36 128 39 119 Z"/>
   </g>
-  <circle cx="22" cy="118" r="6" fill="#22c55e"/>
-  <circle cx="50" cy="124" r="6" fill="#22c55e"/>
-  <circle cx="78" cy="118" r="6" fill="#22c55e"/>
-  <circle cx="22" cy="118" r="2" fill="#facc15"/>
-  <circle cx="50" cy="124" r="2" fill="#facc15"/>
-  <circle cx="78" cy="118" r="2" fill="#facc15"/>
-  <!-- kaki -->
-  <path d="M44 100 L44 112 M56 100 L56 112" stroke="#f59e0b" stroke-width="2.5"/>
-  <!-- tulisan 1 -->
-  <text x="50" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#15803d" font-family="sans-serif">1</text>
+  <!-- daun bambu kanan -->
+  <g fill="#15803d">
+    <path d="M58 52 Q78 42 86 36 Q74 48 58 56 Z"/>
+    <path d="M58 60 Q74 58 84 66 Q70 66 58 64 Z"/>
+    <path d="M60 78 Q78 76 88 86 Q72 84 60 82 Z"/>
+    <path d="M60 96 Q74 100 80 116 Q68 104 60 100 Z"/>
+    <path d="M62 110 Q78 110 88 114 Q74 118 62 114 Z"/>
+    <path d="M62 116 Q74 124 78 136 Q66 128 61 120 Z"/>
+  </g>
+
+  <!-- batang bambu gede -->
+  <rect x="42" y="40" width="16" height="92" rx="4" fill="#16a34a"/>
+  <rect x="42" y="40" width="16" height="92" rx="4" fill="none" stroke="#14532d" stroke-width="1"/>
+  <rect x="45" y="40" width="4" height="92" fill="#4ade80" opacity="0.7"/>
+  <rect x="40" y="62" width="20" height="4" rx="2" fill="#bbf7d0"/>
+  <rect x="40" y="88" width="20" height="4" rx="2" fill="#bbf7d0"/>
+  <rect x="40" y="114" width="20" height="4" rx="2" fill="#bbf7d0"/>
+  <ellipse cx="50" cy="40" rx="8" ry="3" fill="#22c55e"/>
+
+  <!-- burung kecil di atas -->
+  <ellipse cx="52" cy="30" rx="9" ry="6" fill="#a3a32e"/>
+  <ellipse cx="53" cy="32" rx="6" ry="4" fill="#fef9c3"/>
+  <circle cx="58" cy="26" r="4.5" fill="#a3a32e"/>
+  <circle cx="59.5" cy="25" r="1" fill="#1c1917"/>
+  <path d="M62 26 L67 27 L62 28.5 Z" fill="#f97316"/>
+  <path d="M44 31 Q40 32 38 34 Q42 34 45 33 Z" fill="#a3a32e"/>
+  <path d="M50 36 L50 39 M54 36 L54 39" stroke="#1c1917" stroke-width="1"/>
 </svg>
