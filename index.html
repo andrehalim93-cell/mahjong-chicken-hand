@@ -320,15 +320,6 @@ input{font-family:inherit}
   pointer-events:none;
   opacity:.55;
 }
-.turnArrow svg{
-  width:100%; height:100%;
-  filter:drop-shadow(0 0 8px rgba(250,204,21,.9)) drop-shadow(0 0 16px rgba(250,204,21,.5));
-  animation:turnSpin 14s linear infinite;
-}
-@keyframes turnSpin{
-  from{ transform:rotate(0deg); }
-  to{ transform:rotate(-360deg); } /* minus = berlawanan jarum jam */
-}
 .turnArrowTxt{
   position:absolute; left:50%; top:108%;
   transform:translateX(-50%);
@@ -372,15 +363,6 @@ input{font-family:inherit}
   <div class="gameTop"><div class="pill">🀄 <b id="gCode">----</b> • 🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div><div class="pill fsPill"><button id="fullBtnInGame" onclick="toggleFull()" class="fsBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">FULL</span></button></div></div>
   <div class="table" id="tableEl">
   <div class="turnArrow" title="Arah giliran: berlawanan jarum jam">
-  <svg viewBox="0 0 100 100">
-    <defs>
-      <marker id="arrowHead" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
-        <path d="M0,0 L8,4 L0,8 Z" fill="#facc15"></path>
-      </marker>
-    </defs>
-    <!-- Panah melingkar berlawanan jarum jam: Bawah -> Kanan -> Atas -> Kiri -> Bawah -->
-    <path d="M 50 88 A 38 38 0 1 1 88 50" fill="none" stroke="#facc15" stroke-width="5" stroke-linecap="round" marker-end="url(#arrowHead)"></path>
-  </svg>
   <div class="turnArrowTxt">🔄 Giliran: berlawanan jarum jam</div>
 </div>
    <div class="centerBox" id="centerBox">
