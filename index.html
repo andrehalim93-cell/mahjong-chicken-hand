@@ -572,6 +572,77 @@ input{font-family:inherit}
 .seatPos.left > div:last-child{ display: inline-block !important; font-size: 9px !important; white-space: nowrap !important; transform: rotate(90deg) !important; transform-origin: left center !important; margin-top: 10px !important; margin-left: 8px !important; }
 .seatPos.right > div:last-child{ display: inline-block !important; font-size: 9px !important; white-space: nowrap !important; transform: rotate(-90deg) !important; transform-origin: right center !important; margin-top: 10px !important; margin-right: 8px !important; }
 .myArea .flowersRow, .seatPos.top > div:last-child{ transform: none !important; }
+/* === BLOK 5: NAMA + BUNGA KIRI-KANAN DI TENGAH, GILIRAN WRAP === */
+/* Kiri-kanan jadi baris: nama - tile - bunga, semuanya ketengah */
+.seatPos.left, .seatPos.right{
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 2px !important;
+  width: 110px !important;
+  height: 300px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+.seatPos.left{ left: 0 !important; }
+.seatPos.right{ right: 0 !important; }
+/* Nama diputer 90°, jadi kebaca dari pinggir, posisinya di tengah */
+.seatPos.left .playerChip{
+  transform: rotate(-90deg) !important;
+  transform-origin: center !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+  font-size: 10px !important;
+  order: 1 !important;
+}
+.seatPos.right .playerChip{
+  transform: rotate(90deg) !important;
+  transform-origin: center !important;
+  white-space: nowrap !important;
+  max-width: none !important;
+  font-size: 10px !important;
+  order: 3 !important;
+}
+/* Tile tetep di tengah */
+.seatPos.left .miniHand, .seatPos.right .miniHand{
+  order: 2 !important;
+  margin-top: 0 !important;
+}
+/* Bunga juga diputer + di tengah, bukan di bawah lagi */
+.seatPos.left > div:last-child, .seatPos.right > div:last-child{
+  order: 3 !important;
+  margin: 0 !important;
+  transform: rotate(-90deg) !important;
+  transform-origin: center !important;
+  white-space: nowrap !important;
+}
+.seatPos.right > div:last-child{
+  order: 1 !important;
+  transform: rotate(90deg) !important;
+}
+/* Bunga kamu + atas jangan ikut keputer */
+.myArea .flowersRow, .seatPos.top > div:last-child{ transform: none !important; }
+
+/* Giliran di atas: boleh wrap ke bawah, jangan ke-cut */
+.gameTop{
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+}
+.gameTop .pill{
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: 100% !important;
+  line-height: 1.2 !important;
+  height: auto !important;
+  min-height: 28px !important;
+}
+/* Khusus pill Giliran, namanya turun ke baris 2 kalau kepanjangan */
+.gameTop .pill:nth-child(2){
+  flex: 1 1 140px !important;
+  text-align: center !important;
+}
 </style>
 </head>
 <body>
