@@ -584,7 +584,7 @@ let jiaTile = myHand.find(t=>myMelds.some(m=>m.type==='pong' && m.tiles[0].key==
 let acts = [];
 // KONG sendiri HANYA pas giliran sendiri, bukan pas nunggu
 if(turnName===myName){
-  if(d.canHu || canHuLocal()) acts.push({type:'selfHu'});
+  if(d.canHu) acts.push({type:'selfHu'});
   if(anKongKey) acts.push({type:'anKong', key:anKongKey});
   if(jiaTile) acts.push({type:'jiaKong', tile:jiaTile});
 }
