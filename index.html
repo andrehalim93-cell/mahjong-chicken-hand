@@ -323,6 +323,39 @@ input{font-family:inherit}
   .seatPos.left, .seatPos.right{ top:50% !important; }
   .meldLeftBottom, .meldRightBottom{ top:50% !important; bottom:auto !important; }
 }
+/* ===== FINAL FIX V3 - NAMA OVAL HIJAU + MELD HP ANTI-TIMPA + BUANGAN KECIL ===== */
+/* A. Nama bot kiri-kanan: pisah dari tile merah, paten di oval hijau, panah ke pemainnya */
+.seatPos.left{ left:40px !important; width:72px !important; }
+.seatPos.right{ right:40px !important; width:72px !important; }
+.seatPos.left .playerChip{ position:absolute !important; left:-38px !important; top:50% !important; transform:translateY(-50%) rotate(-90deg) !important; transform-origin:center !important; font-size:12px !important; padding:6px 10px !important; max-width:none !important; white-space:nowrap !important; text-align:center !important; z-index:5 !important; }
+.seatPos.right .playerChip{ position:absolute !important; right:-38px !important; top:50% !important; transform:translateY(-50%) rotate(90deg) !important; transform-origin:center !important; font-size:12px !important; padding:6px 10px !important; max-width:none !important; white-space:nowrap !important; text-align:center !important; z-index:5 !important; }
+.seatPos.left .playerChip .nm, .seatPos.right .playerChip .nm{ display:inline !important; font-size:12px !important; white-space:nowrap !important; }
+.seatPos.left .playerChip small, .seatPos.right .playerChip small{ display:inline !important; font-size:10px !important; margin-left:4px !important; }
+.seatPos.left .playerChip::after{ content:" ▶" !important; color:#facc15 !important; }
+.seatPos.right .playerChip::after{ content:" ◀" !important; color:#facc15 !important; }
+/* B. Meld HP: kotak 24x17, isi 17x24 diputer, gap 3 - kotak & isi PAS, gak nimpa */
+@media (max-width:768px){
+  .meldTopRight .meld{ gap:3px !important; padding:2px !important; }
+  .meldTopRight .meld .mTile, .meldTopRight .meld .t{ width:20px !important; height:28px !important; transform:none !important; flex:none !important; }
+  .meldTopRight .meld .mTile img, .meldTopRight .meld .mTile .face, .meldTopRight .meld .t img, .meldTopRight .meld .t .face{ width:100% !important; height:100% !important; transform:none !important; }
+  .meldLeftBottom .meld .mTile, .meldRightBottom .meld .mTile, .meldLeftBottom .meld .t, .meldRightBottom .meld .t{ width:24px !important; height:17px !important; transform:none !important; overflow:hidden !important; display:flex !important; align-items:center !important; justify-content:center !important; }
+  .meldLeftBottom .meld .mTile img, .meldLeftBottom .meld .mTile .face, .meldLeftBottom .meld .t img, .meldLeftBottom .meld .t .face{ width:17px !important; height:24px !important; flex:none !important; transform:rotate(90deg) !important; }
+  .meldRightBottom .meld .mTile img, .meldRightBottom .meld .mTile .face, .meldRightBottom .meld .t img, .meldRightBottom .meld .t .face{ width:17px !important; height:24px !important; flex:none !important; transform:rotate(-90deg) !important; }
+  .meldLeftBottom .meld, .meldRightBottom .meld{ gap:3px !important; padding:2px !important; }
+  .meldLeftBottom, .meldRightBottom{ gap:6px !important; }
+  /* C. Buangan dikecilin */
+  .centerBox{ width:150px !important; padding:4px !important; }
+  .centerBox .t, .poolCenter .t, .poolTop .mTile, .poolBottom .mTile, .poolSide .mTile{ width:28px !important; height:38px !important; font-size:9px !important; }
+  .poolAllBottom{ padding:3px !important; }
+  .poolAllBottom .mTile{ width:22px !important; height:30px !important; }
+  .poolAllBottom .mTile .bigChar{ font-size:13px !important; }
+  .centerBox .t .bigChar, .poolCenter .t .bigChar{ font-size:16px !important; }
+  /* D. Tangan kamu tetep 40x56, biar tombol CHOW muat */
+  .myHand .t{ width:40px !important; height:56px !important; }
+  /* E. Chat + buangan tetep mini di pojok kanan atas frame tangan kamu */
+  .myTools{ position:absolute !important; top:6px !important; right:6px !important; }
+  #chatFab, #discardFab{ width:30px !important; height:30px !important; font-size:15px !important; }
+}
 </style>
 </head>
 <body>
@@ -505,7 +538,7 @@ socket.on('gameStarted', d=>{
   addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!');
   renderSeats(d.players, d.turn); renderCentralPool(d.players);
 });
-socket.on('youDrew', d=>{ if(d.tile){ lastDrawnTileId=d.tile.id; } renderMyHand(); });
+socket.on('youDrew', d=>{ if(d.tile){ lastDrawnTileId=d.tile.id; if(!myHand.some(x=>x.id===d.tile.id)){ myHand.push(d.tile); } } renderMyHand(); });
 function canHuLocal(){
   let tiles=[...myHand];
   let needSets=4-myMelds.length; // kamu butuh 1 set lagi dari tangan
@@ -540,7 +573,7 @@ function canHuLocal(){
   }
   return false;
 }
-socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); // An Kong: cari 4 sama di tangan
+socket.on('yourHand', d=>{ myHand=[...new Map((d.hand||[]).map(x=>[x.id,x])).values()]; selectedTile=null; renderMyHand(); // An Kong: cari 4 sama di tangan
 let anKongKey = null;
 { let cnt={}; myHand.forEach(t=>{ cnt[t.key]=(cnt[t.key]||0)+1; if(cnt[t.key]>=4) anKongKey=t.key; }); }
 // Jia Kong: cari tile di tangan yang sama kayak PONG yang udah kebuka
