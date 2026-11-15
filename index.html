@@ -285,6 +285,32 @@ input{font-family:inherit}
   }
   .meldTopRight{ top:70px!important; }
 }
+/* FIX: Tangan lawan jangan ke-lipet ke bawah, meld balik ke samping */
+.miniHand{
+  flex-wrap:nowrap!important;
+  gap:1px!important;
+  justify-content:center!important;
+}
+.miniHand img{
+  width:14px!important;
+  height:20px!important;
+}
+.seatPos.top{ width:260px!important; }
+.seatPos.right, .seatPos.left{ width:210px!important; }
+
+/* Meld lawan balik ke samping tengah, bukan di bawah */
+.meldRightBottom{
+  top:50%!important; bottom:auto!important;
+  right:6px!important; left:auto!important;
+  transform:translateY(-50%)!important;
+  width:auto!important; max-width:120px!important;
+}
+.meldLeftBottom{
+  top:50%!important; bottom:auto!important;
+  left:6px!important; right:auto!important;
+  transform:translateY(-50%)!important;
+  width:auto!important; max-width:120px!important;
+}
 </style>
 </head>
 <body>
