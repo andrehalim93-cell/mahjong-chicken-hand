@@ -70,6 +70,11 @@ input{font-family:inherit}
 .poolSide{display:flex;flex-direction:column;flex-wrap:wrap;gap:2px;justify-content:flex-start;min-width:28px;max-height:120px}
 .poolCenter{min-width:90px;text-align:center}
 .poolTop .mTile,.poolBottom .mTile,.poolSide .mTile{width:36px;height:50px;font-size:10px}
+#discardFab{position:fixed;right:16px;bottom:130px;width:52px;height:52px;border-radius:50%;border:2px solid #d4a017;background:#1a3a2a;color:#fff;font-size:22px;z-index:480;box-shadow:0 4px 12px rgba(0,0,0,.5);cursor:pointer;display:none}
+#discardFab.showInGame{display:block}
+#discardModal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:490;display:none;align-items:center;justify-content:center}
+#discardModal.open{display:flex}
+.poolAllBottom{display:none!important}
 .poolAllBottom{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);z-index:2;width:92%;max-width:520px;text-align:center;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:6px 6px 4px}
 .poolAllBottom .mTile{width:32px;height:44px}
 .poolAllBottom .mTile .dot{width:5px;height:5px}
@@ -174,7 +179,6 @@ input{font-family:inherit}
   .poolCenter .t{width:36px!important;height:50px!important}
   .seatPos.left,.seatPos.right{width:88px} .seatPos.top{width:150px} .centerBox{width:170px!important}
   .gameTop{flex-wrap:nowrap} .gameTop .pill{padding:5px 8px;font-size:11px} .gameTop .pill:nth-child(1){flex:1}
-    /* LOBBY HP - dibikin padet biar tombol MULAI keliatan tanpa scroll jauh */
   #lobbyScreen{padding:10px 10px 110px}
   .roomTop .code{font-size:32px!important;letter-spacing:4px}
   .roomTop small{font-size:11px}
@@ -191,6 +195,29 @@ input{font-family:inherit}
   .timeBox h3{font-size:13px}
   .timeBtns button{padding:7px 10px!important;font-size:11px}
   #startBtn{padding:13px!important;font-size:14px}
+  .meld{padding:2px!important;gap:2px!important}
+  .meldsRow{gap:4px!important;margin-top:4px!important}
+  .meldsRow .meld .t{width:26px!important;height:36px!important}
+  .myMelds .meld .t{width:26px!important;height:36px!important}
+  .meld .t .face .bigChar{font-size:14px!important}
+  .meld .t .face .lbl{display:none!important}
+  .meldZone{max-width:110px!important;gap:2px!important}
+  .meldZone .meld{padding:2px!important;gap:1px!important}
+  .meldZone .meld .t{width:20px!important;height:28px!important}
+  .meldZone .meld .mTile{width:20px!important;height:28px!important}
+  .meldZone .meld .face .bigChar{font-size:11px!important}
+  .meldZone .meld .face .lbl{display:none!important}
+  .meldTopRight{top:44px!important;right:4px!important}
+  .meldLeftBottom{left:4px!important;bottom:4px!important}
+  .meldRightBottom{right:4px!important;bottom:4px!important}
+  .flowersRow .t{width:24px!important;height:32px!important}
+  #chatFab{width:42px!important;height:42px!important;font-size:18px!important;right:10px!important;bottom:66px!important}
+  #chatFab #chatBadge{min-width:16px!important;height:16px!important;line-height:16px!important;font-size:9px!important}
+  #chatFab #chatFabDot{width:7px!important;height:7px!important;top:4px!important;right:4px!important}
+  #chatPanel{right:10px!important;bottom:114px!important;width:300px!important;height:340px!important}
+  #discardFab{width:42px!important;height:42px!important;font-size:18px!important;right:10px!important;bottom:116px!important}
+  #discardModal > div{max-width:100%!important;margin:0!important;border-radius:16px 16px 0 0!important}
+  .playerChip .nm{font-size:12px!important}
 }
 @media(max-width:400px){
   .t{width:32px!important;height:46px!important}
@@ -255,7 +282,7 @@ input{font-family:inherit}
   <div class="gameTop"><div class="pill">🀄 <b id="gCode">----</b> • 🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div><div class="pill fsPill"><button id="fullBtnInGame" onclick="toggleFull()" class="fsBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">FULL</span></button></div></div>
   <div class="table" id="tableEl">
    <div class="centerBox" id="centerBox">
-  <div class="poolCenter" id="lastTileEl">Belum ada buangan</div>
+  <div class="poolCenter" id="lastTileEl" onclick="openDiscards()" title="Klik buat liat semua buangan" style="cursor:pointer">Belum ada buangan</div>
 </div>
 <div class="poolAllBottom" id="poolAll">
   <div style="font-size:10px;color:#fde68a;font-weight:800;letter-spacing:1px;margin-bottom:4px">🃏 BUANGAN</div>
@@ -277,6 +304,8 @@ input{font-family:inherit}
   </div>
   <div class="log" id="gameLog">🀄 Game dimulai! Semoga HU! 🐔</div>
 </div>
+<button id="discardFab" onclick="openDiscards()" title="Lihat semua buangan">🗑️</button>
+<div id="discardModal" onclick="if(event.target===this) closeDiscards()"><div style="background:#1a2a1e;width:100%;max-width:640px;max-height:75vh;border-radius:16px;padding:14px;display:flex;flex-direction:column;margin:20px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="color:#ffd700">🗑️ SEMUA BUANGAN</b><button onclick="closeDiscards()" style="background:#c33;color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px">✕</button></div><div id="discardModalBody" style="overflow-y:auto;display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start"></div><div style="text-align:center;color:#aaa;font-size:11px;margin-top:10px">Klik di luar buat nutup • Buangan terakhir ada di tengah meja</div></div></div>
 <button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button>
 <div id="chatPanel">
   <div class="chatHead"><b>💬 CHAT MEJA</b><button onclick="toggleChat()" style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:4px 10px;font-weight:900">✕</button></div>
@@ -304,17 +333,18 @@ function showErr(m){ let e=el('homeErr'); e.style.display='block'; e.innerText=m
 function toast(m){ let t=el('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 function esc(s){ let d=document.createElement('div'); d.innerText=String(s||''); return d.innerHTML; }
 function toggleSound(){ soundOn=!soundOn; el('soundBtn').innerText=soundOn?'ON':'OFF'; toast(soundOn?'🔊 Suara ON':'🔇 Suara OFF'); }
-function toggleFull(){
-  if(!document.fullscreenElement){ document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
-  else{ document.exitFullscreen && document.exitFullscreen(); }
+async function toggleFull(){
+  if(!document.fullscreenElement){ try{ await document.documentElement.requestFullscreen(); }catch(e){} try{ if(screen.orientation && screen.orientation.lock){ await screen.orientation.lock('landscape'); } }catch(e){ toast('🔄 Puter HP kamu ke landscape ya!'); } }
+  else{ try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){} try{ document.exitFullscreen && document.exitFullscreen(); }catch(e){} }
 }
 document.addEventListener('fullscreenchange', ()=>{
   let isFull = !!document.fullscreenElement;
+  if(!isFull){ try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){} }
   document.querySelectorAll('.fsPill').forEach(p=>p.classList.toggle('isFull', isFull));
   document.querySelectorAll('.fsTopBtn').forEach(b=>{ b.classList.toggle('isFull', isFull); let t=b.querySelector('.fsTxt'); if(t) t.innerText = isFull ? 'KELUAR FULL' : 'LAYAR PENUH'; let ic=b.querySelector('.fsIcon'); if(ic) ic.innerText = isFull ? '✕' : '⛶'; });
   let p = document.querySelector('.fsPill'); if(p){ let t=p.querySelector('.fsTxt'); if(t) t.innerText = isFull ? 'KELUAR' : 'FULL'; let ic=p.querySelector('.fsIcon'); if(ic) ic.innerText = isFull ? '✕' : '⛶'; }
 });
-function botDisplayName(p){ if(!p.isBot) return esc(p.name); let lvl=(p.botLevel||'easy').toUpperCase(); return esc(p.name)+' ('+lvl+' BOT)'; }
+function botDisplayName(p){ return esc(p.name); }
 function randomBotName(){ let pool=BOT_NAMES.filter(n=>!usedBotNames.includes(n) && n!==myName); if(pool.length===0) pool=BOT_NAMES.slice(); let n=pool[Math.floor(Math.random()*pool.length)]; usedBotNames.push(n); return n; }
 function setTurnTime(sec, btn){ if(!isHost){ toast('Cuma HOST yang bisa ganti waktu!'); return; } turnTimeSec=sec; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); el('timeInfo').innerText = sec===0 ? 'Saat ini: Tanpa batas' : 'Saat ini: '+sec+' detik per giliran'; el('turnTimer').innerText = sec===0 ? '♾️' : sec+'s'; socket.emit('setTurnTime',{code:myCode, seconds:sec}); }
 function showTurnPopup(name){ let p=el('turnPopup'); el('turnPopupName').innerText = name===myName ? 'KAMU! 🔥' : name; el('turnPopupSub').innerText = name===myName ? 'Giliran kamu! Buang 1 tile!' : 'Tunggu '+name+' buang tile...'; p.classList.add('show'); setTimeout(()=>p.classList.remove('show'), 1600); }
@@ -395,7 +425,7 @@ socket.on('updateLobby', room=>{
   let wrap=el('seatsWrap'); wrap.innerHTML='';
   room.players.forEach(p=>{
     let isMe=p.name===myName && !p.isBot;
-    wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}" ${p.isBot && isHost?`onclick="removeBot('${esc(p.name)}')" style="cursor:pointer"` :''}><div class="ava">${p.isBot?(p.botLevel==='hard'?'🤖🔴':p.botLevel==='easy'?'🤖🟢':'🤖🟡'):'🧑'}</div><div class="nm">${p.isBot?botDisplayName(p):esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?`BOT ${ (p.botLevel||'').toUpperCase()} - ${isHost?'Klik buat hapus':''}`:(p.id===room.hostId?'👑 HOST':'Pemain')}</div></div>`;
+    wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}" ${p.isBot && isHost?`onclick="removeBot('${esc(p.name)}')"` :''}><div class="ava">${p.isBot?'🤖':'🧑'}</div><div class="nm">${p.isBot?botDisplayName(p):esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?('🤖 BOT'+(isHost?' - Klik buat hapus':'')):(p.id===room.hostId?'👑 HOST':'Pemain')}</div></div>`;
   });
   for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty">💺 Kursi Kosong<br><small>Menunggu pemain...</small></div>`;
   el('startBtn').disabled = room.players.length<2;
@@ -442,7 +472,7 @@ function renderSeats(players, turn){
   });
   let me = players.find(p=>p.name===myName); if(me){ myMelds=me.melds; myFlowers=me.flowers; renderMyHand(); }
 }
-function renderCentralPool(players){
+function renderCentralPool(players){ let df=document.getElementById('discardFab'); if(df) df.classList.add('showInGame');
   let all = [];
   players.forEach(p=>{ (p.discards||[]).forEach(t=> all.push(t)); });
   let box = el('poolAllTiles');
@@ -468,6 +498,8 @@ function renderActionBar(actions){
 function doClaim(action){ socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
 function doClaimChow(chowNums){ socket.emit('claim',{code:myCode, action:'chow', chowNums}); el('actionBar').innerHTML=''; }
 function selfHu(){ socket.emit('selfHu',{code:myCode}); }
+function openDiscards(){ let pool=document.querySelector('.poolAllBottom'); let body=document.getElementById('discardModalBody'); if(pool && body){ body.innerHTML=pool.innerHTML; body.querySelectorAll('.mTile').forEach(function(el2){ el2.style.width='32px'; el2.style.height='44px'; }); } document.getElementById('discardModal').classList.add('open'); }
+function closeDiscards(){ document.getElementById('discardModal').classList.remove('open'); }
 let chatOpen=false, chatUnread=0;
 function toggleChat(){
   chatOpen=!chatOpen;
