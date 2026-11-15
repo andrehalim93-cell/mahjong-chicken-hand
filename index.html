@@ -255,7 +255,7 @@ input{font-family:inherit}
   <div class="myArea">
     <div class="myTop"><div><b id="myNameLabel">Kamu</b> <span id="myStatus">• Menunggu giliran...</span></div><div><span id="myCount">13 tile</span> • <span id="myMeldCount">0 set</span></div></div>
     <div class="meldsRow" id="myMelds"></div><div class="flowersRow" id="myFlowers"></div><div class="myHand" id="myHand"></div><div class="actionBar" id="actionBar"></div>
-    <div style="text-align:center;font-size:11px;color:#a7f3d0;margin-top:8px">💡 Klik tile kamu buat BUANG (kalau giliran kamu). Tile yang keangkat = yang mau dibuang.</div>
+    <div style="text-align:center;font-size:11px;color:#a7f3d0;margin-top:8px">💡 Double klik untuk membuang tile.</div>
   </div>
   <div class="log" id="gameLog">🀄 Game dimulai! Semoga HU! 🐔</div>
 </div>
@@ -435,7 +435,7 @@ function renderMyHand(){
   let sorted=[...myHand].sort((a,b)=>{ let order=t=> t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); if(order(a)!==order(b)) return order(a)-order(b); if(a.type==='suit' && b.type==='suit'){ if(a.suit!==b.suit) return a.suit-b.suit; return a.num-b.num; } return (a.num||0)-(b.num||0); });
   let handEl=el('myHand');
   handEl.innerHTML = sorted.map(t=>tileHTML(t, (selectedTile===t.id?'sel':'') + (isMyTurn?' myTurn':''))).join('');
-  handEl.querySelectorAll('.t').forEach(div=>{ div.onclick=()=>{ if(!isMyTurn) return toast('Bukan giliran kamu! Tunggu dulu...'); let id=div.dataset.id; if(selectedTile===id){ socket.emit('discard',{code:myCode, tileId:id}); selectedTile=null; renderMyHand(); } else { selectedTile=id; renderMyHand(); toast('Klik lagi tile yang sama buat BUANG!'); } }; });
+  handEl.querySelectorAll('.t').forEach(div=>{ div.onclick=()=>{ if(!isMyTurn) return toast('Bukan giliran kamu! Tunggu dulu...'); let id=div.dataset.id; if(selectedTile===id){ socket.emit('discard',{code:myCode, tileId:id}); selectedTile=null; renderMyHand(); } else { selectedTile=id; renderMyHand(); } }; });
   el('myCount').innerText = myHand.length+' tile'; el('myMeldCount').innerText = myMelds.length+' set';
   el('myMelds').innerHTML = myMelds.map(m=>`<div class="meld">${m.tiles.map(t=>tileHTML(t)).join('')}</div>`).join('');
   el('myFlowers').innerHTML = myFlowers.length ? `<div style="font-size:11px;color:#fbcfe8;width:100%;text-align:center">🌸 Bunga kamu: ${myFlowers.length}</div>` + myFlowers.map(t=>tileHTML(t)).join('') : '';
