@@ -480,6 +480,64 @@ input{font-family:inherit}
     left:50% !important; transform:translate(-50%,-50%) !important;
   }
 }
+/* ===== FINAL FIX V9 - KHUSUS HP: BUNGA NEMPEL NAMA + TILE MERAH BERDIRI ===== */
+@media (max-width:768px){
+  /* 1. UDIN (atas): 3 bunga persis di bawah UDIN, hadap UDIN (kebalik 180°) */
+  .seatPos.top{ display:flex !important; flex-direction:column !important; align-items:center !important; }
+  .seatPos.top .playerChip{ order:1 !important; }
+  .seatPos.top .oppFlower{
+    order:2 !important; transform:rotate(180deg) !important;
+    margin:2px auto 2px !important; text-align:center !important;
+    font-size:11px !important; white-space:nowrap !important;
+  }
+  .seatPos.top .miniHand{ order:3 !important; margin-top:0 !important; }
+  /* 3 bunga UDIN: tile bunganya ikut kebalik, biar hadap UDIN juga */
+  .seatPos.top .oppFlower img, .seatPos.top .oppFlower .t, .seatPos.top .oppFlower .mTile{
+    transform:rotate(180deg) !important;
+  }
+
+  /* 2. MAMA (kiri): bunga di sebelah nama, hadap MAMA (tulisan tegak dari kiri) */
+  .seatPos.left{ position:absolute !important; }
+  .seatPos.left .oppFlower{
+    position:absolute !important; left:32px !important; top:50% !important;
+    writing-mode:vertical-rl !important;
+    transform:translateY(-50%) rotate(180deg) !important;
+    margin:0 !important; font-size:11px !important; white-space:nowrap !important;
+    text-align:center !important;
+  }
+  /* 3. aaa (kanan): bunga di sebelah nama, hadap aaa (tulisan tegak dari kanan) */
+  .seatPos.right{ position:absolute !important; }
+  .seatPos.right .oppFlower{
+    position:absolute !important; right:32px !important; top:50% !important;
+    writing-mode:vertical-rl !important;
+    transform:translateY(-50%) !important;
+    margin:0 !important; font-size:11px !important; white-space:nowrap !important;
+    text-align:center !important;
+  }
+
+  /* 4. Tile merah kiri-kanan: BERDIRI (tegak), jangan tiduran */
+  .seatPos.left .miniHand, .seatPos.right .miniHand{
+    display:flex !important; flex-direction:column !important;
+    flex-wrap:nowrap !important; gap:2px !important;
+    align-items:center !important; justify-content:flex-start !important;
+  }
+  .seatPos.left .miniHand > div, .seatPos.right .miniHand > div{
+    width:18px !important; height:26px !important; flex:none !important;
+    transform:none !important; overflow:hidden !important;
+  }
+  .seatPos.left .miniHand > div img, .seatPos.right .miniHand > div img{
+    width:100% !important; height:100% !important;
+    object-fit:cover !important; transform:none !important;
+  }
+  /* Atas: tile merahnya biarin tiduran horizontal, kayak sekarang */
+  .seatPos.top .miniHand{
+    display:flex !important; flex-direction:row !important;
+    flex-wrap:nowrap !important; justify-content:center !important;
+  }
+  .seatPos.top .miniHand > div{
+    width:16px !important; height:24px !important; flex:none !important;
+  }
+}
 </style>
 </head>
 <body>
