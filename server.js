@@ -299,7 +299,7 @@ function resolveClaimTimeout(room, discarder, tile){
   for(let i=0;i<room.players.length;i++){
     let p=room.players[i];
     if(p.name===discarder.name) continue;
-    if(p.isBot && canHuWithTileAndMelds(p.hand, p.melds, tile)){ endGameWin(room, p.name, `${p.name} HU dari buangan ${discarder.name}!`, tile); return; }
+    if(p.isBot && canHuWithTileAndMelds(p.hand, p.melds, tile)){ endGameWin(room, p.name, `${p.name} HU dari buangan ${discarder.name}!`); return; }
   }
   // 2. Bot PONG
   for(let i=0;i<room.players.length;i++){
@@ -331,7 +331,7 @@ function handleAfterDiscard(room, discarder, tile){
   room.passCount = 0;
   room.passNeeded = humanClaims.length;
   room.passedNames = [];
-  emitToRoom(room, 'claimAvailable', { tile, from:discarder.name, claims: humanClaims });
+  emitToRoom(room, 'claimAvailable', { tile, from:discarder.name, claims: humanClaims, claimTimeSec: room.turnTimeSec||0 });
   // Cek BOT bisa claim atau tidak
   let discarderIdx = room.players.findIndex(p=>p.name===discarder.name);
   let botCanClaim = false;
@@ -341,25 +341,26 @@ function handleAfterDiscard(room, discarder, tile){
     let isNext = ((discarderIdx+1)%room.players.length)===i;
     if(botDecideClaim(b, tile, isNext)){ botCanClaim = true; break; }
   }
-  // JALUR CEPET 1: gak ada manusia bisa claim + gak ada BOT bisa claim -> LANGSUNG next, gak usah nunggu 7 detik
+  // JALUR CEPET 1: gak ada manusia bisa claim + gak ada BOT bisa claim -> LANGSUNG next, gak usah nunggu timer giliran
   if(humanClaims.length===0 && !botCanClaim){
     room.waitingClaim=false; room.lastDiscard=null; room.currentClaim=null;
     advanceTurn(room, discarder);
     return;
   }
-  // JALUR CEPET 2: gak ada manusia bisa claim, cuma BOT yang bisa -> BOT langsung claim, gak usah nunggu 7 detik
+  // JALUR CEPET 2: gak ada manusia bisa claim, cuma BOT yang bisa -> BOT langsung claim, gak usah nunggu timer giliran
   if(humanClaims.length===0 && botCanClaim){
     resolveClaimTimeout(room, discarder, tile);
     return;
   }
-  // Ada manusia yang bisa claim -> kasih waktu 7 DETIK aja buat PONG / CHOW / HU / PASS.
-  // Bukan nunggu timer giliran (30 detik). Kalau 7 detik habis / semua udah PASS, langsung next.
-  room.claimTimer = setTimeout(()=>{ resolveClaimTimeout(room, discarder, tile); }, 7000);
+  // PONG / CHOW / HU gak punya timer sendiri lagi - ngikutin waktu giliran (room.turnTimeSec).
+  // turnTimeSec 0 = tanpa batas: gak auto-PASS, nunggu sampe semua yang bisa claim pencet PASS / PONG / CHOW / HU.
+  // Kalau waktunya habis / semua udah PASS, langsung next.
+  if(room.turnTimeSec && room.turnTimeSec>0){ room.claimTimer = setTimeout(()=>{ resolveClaimTimeout(room, discarder, tile); }, room.turnTimeSec*1000); }
 }
 function doClaim(room, claimer, action, chowNums, tile, discarder){
   clearTurnTimer(room);
   clearClaimTimer(room);
-  if(action==='hu'){ endGameWin(room, claimer.name, `${claimer.name} HU!`, tile); return; }
+  if(action==='hu'){ endGameWin(room, claimer.name, `${claimer.name} HU!`); return; }
   let dIdx = discarder.discards.findIndex(t=>t.id===tile.id);
   if(dIdx>=0) discarder.discards.splice(dIdx,1);
   let need=[];
@@ -418,13 +419,11 @@ function endGameDraw(room){
   emitToRoom(room, 'gameOver', { winner:null, message:'Tembok habis! Seri!', reason:'draw', msg:'Tembok habis! Seri!' });
   addLog(room, '🏳️ Tembok habis, seri!');
 }
-function endGameWin(room, winnerName, msg, winningTile){
+function endGameWin(room, winnerName, msg){
   clearTurnTimer(room);
   room.phase='finished'; room.waitingClaim=false;
   let winner = room.players.find(p=>p.name===winnerName);
-  let fullHand=[];
-  if(winner){ (winner.melds||[]).forEach(function(m){ (m.tiles||[]).forEach(function(tt){ fullHand.push(tt); }); }); (winner.hand||[]).forEach(function(tt){ fullHand.push(tt); }); if(winningTile && !fullHand.some(function(tt){ return tt.id===winningTile.id; })) fullHand.push(winningTile); }
-  emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: fullHand, melds: winner?winner.melds:[], flowers: winner?winner.flowers:[] });
+  emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: winner?winner.hand:[] });
   addLog(room, '🏆 '+msg);
 }
 
@@ -575,7 +574,7 @@ io.on('connection', (socket)=>{
     let tile = p.hand.splice(idx,1)[0];
     p.discards.push(tile);
     room.lastDiscard = { tile, from:p.name };
-    emitToRoom(room, 'discarded', { from:p.name, tile, tileName:tileName(tile), wallLeft:room.wall.length, players:publicPlayers(room), claims: getClaimsFor(room, tile, p.name) });
+    emitToRoom(room, 'discarded', { from:p.name, tile, tileName:tileName(tile), wallLeft:room.wall.length, players:publicPlayers(room), claims: getClaimsFor(room, tile, p.name), claimTimeSec: room.turnTimeSec||0 });
     emitToRoom(room, 'playerDiscarded', { player:p.name, tile, wallLeft:room.wall.length });
     room.players.forEach(x=>sendHand(room,x));
     handleAfterDiscard(room, p, tile);
@@ -594,7 +593,7 @@ io.on('connection', (socket)=>{
     if(action==='pass'){
       if(!room.passedNames) room.passedNames=[];
       if(!room.passedNames.includes(p.name)){ room.passedNames.push(p.name); room.passCount = (room.passCount||0)+1; }
-      // Kalau semua manusia yang BISA claim udah PASS -> langsung putusin detik itu juga, gak nunggu sisa 7 detik
+      // Kalau semua manusia yang BISA claim udah PASS -> langsung putusin detik itu juga, gak nunggu sisa waktu giliran
       if((room.passCount||0) >= (room.passNeeded||0)){
         // resolveClaimTimeout udah ngurus: BOT HU/PONG/CHOW langsung claim, kalau gak ada langsung next
         resolveClaimTimeout(room, discarder, tile);
