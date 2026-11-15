@@ -270,13 +270,14 @@ function startGame(room, turnTimeSec){
   let dealerIdx = (total-1) % room.players.length;
   room.turnIdx = dealerIdx;
   room.lastDice = { d1, d2, total, dealer: room.players[dealerIdx].name };
+  let dealerDrawnTile = null;
   room.players.forEach((p, idx)=>{
     p.hand=[]; p.melds=[]; p.discards=[]; p.flowers=[];
     let count = idx===dealerIdx ? 14 : 13;
     for(let i=0;i<count;i++){
       let t = room.wall.pop();
       while(t && t.type==='flower'){ p.flowers.push(t); t=room.wall.pop(); }
-      if(t) p.hand.push(t);
+      if(t){ p.hand.push(t); if(idx===dealerIdx) dealerDrawnTile = t; }
     }
     p.hand = sortHand(p.hand);
   });
@@ -284,6 +285,7 @@ function startGame(room, turnTimeSec){
   emitToRoom(room, 'diceRolled', { d1, d2, total, dealer: dealer.name });
   emitToRoom(room, 'gameStarted', { players:publicPlayers(room), wallLeft:room.wall.length, turn:dealer.name, turnTimeSec:room.turnTimeSec, dice:{d1,d2,total,dealer:dealer.name} });
   room.players.forEach(p=>sendHand(room,p));
+  if(dealer && !dealer.isBot && dealerDrawnTile){ io.to(dealer.id).emit('youDrew', { tile: dealerDrawnTile, wallLeft: room.wall.length }); }
   addLog(room, `🎲 Dadu: ${d1} + ${d2} = ${total}! Dealer: ${dealer.name}. Rebutan HU!`);
   setTimeout(()=>{ emitToRoom(room, 'turnChanged', { turn:dealer.name, wallLeft:room.wall.length }); }, 500);
   startTurnTimer(room);
