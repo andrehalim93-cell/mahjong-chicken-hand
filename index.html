@@ -388,40 +388,21 @@ function tileLabel(t){
   return {sub:'BUNGA', num:'✿', cls:'red'};
 }
 function tileFace(t){
-  // Bunga tetep pake gambar lama, karena set Riichi gak ada Bunga
   if(t.type==='flower'){
     let FLOWERS=['梅','蘭','菊','竹','春','夏','秋','冬'];
     return '<div class="face"><div class="bigChar" style="color:#db2777">'+FLOWERS[t.num%8]+'</div><div class="lbl">BUNGA</div></div>';
   }
-  // Mapping nama file di ZIP FluffyStuff -> tile game kamu
   let file='';
   if(t.type==='suit'){
-    if(t.suit===2) file='Man'+t.num;      // Karakter
-    if(t.suit===1) file='Pin'+t.num;      // Dot
-    if(t.suit===0) file='Sou'+t.num;      // Bambu
+    if(t.suit===2) file='Man'+t.num;
+    if(t.suit===1) file='Pin'+t.num;
+    if(t.suit===0) file='Sou'+t.num;
   }
   if(t.type==='wind') file=['Ton','Nan','Shaa','Pei'][t.num];
   if(t.type==='dragon') file=['Chun','Hatsu','Haku'][t.num];
   return '<img src="'+file+'.svg" style="width:100%;height:100%;display:block" alt="">';
 }
-  if(t.type==='suit' && t.suit===1){
-    let colors=['cB','cR','cG'];
-    let rows=[]; let perRow = t.num<=3 ? t.num : 3; let left=t.num;
-    while(left>0){ let c=Math.min(perRow,left); let row='<div class="rowDots">'; for(let i=0;i<c;i++) row+='<div class="dot '+colors[(rows.length+i)%3]+'"></div>'; row+='</div>'; rows.push(row); left-=c; }
-    return '<div class="face">'+rows.join('')+'<div class="lbl">DOT '+t.num+'</div></div>';
-  }
-  if(t.type==='suit' && t.suit===2){
-    return '<div class="face"><div class="charTop" style="color:#1c1917">'+CN[t.num]+'</div><div class="charWan">萬</div><div class="lbl">KARAKTER '+t.num+'</div></div>';
-  }
-  if(t.type==='wind') return '<div class="face"><div class="bigChar" style="color:#1d4ed8">'+WINDS[t.num]+'</div><div class="lbl">'+['TIMUR','SELATAN','BARAT','UTARA'][t.num]+'</div></div>';
-  if(t.type==='dragon'){
-    let col = t.num===0 ? '#dc2626' : (t.num===1 ? '#15803d' : '#1c1917');
-    let ch = DRAGONS[t.num];
-    if(t.num===2) return '<div class="face"><div class="bigChar" style="color:#1d4ed8;border:2px solid #1d4ed8;border-radius:4px;padding:1px 4px">'+ch+'</div><div class="lbl">NAGA PUTIH</div></div>';
-    return '<div class="face"><div class="bigChar" style="color:'+col+'">'+ch+'</div><div class="lbl">'+['NAGA MERAH','NAGA HIJAU'][t.num]+'</div></div>';
-  }
-  return '<div class="face"><div class="bigChar" style="color:#db2777">'+FLOWERS[t.num%8]+'</div><div class="lbl">BUNGA</div></div>';
-}
+function tileHTML(t, extraClass){ ...
 function tileHTML(t, extraClass){ let l=tileLabel(t); return '<div class="t '+(t.type==='flower'?'flower':'')+' '+(extraClass||'')+'" data-id="'+t.id+'">'+tileFace(t)+'</div>'; }
 function tileMini(t){ return '<div class="mTile">'+tileFace(t)+'</div>'; }
 function createRoom(){ myName=el('nameInput').value.trim(); if(!myName) return showErr('Isi nama dulu!'); socket.emit('createRoom',{name:myName}); }
