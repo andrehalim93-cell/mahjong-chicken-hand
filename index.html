@@ -413,6 +413,30 @@ input{font-family:inherit}
   /* Atas: tile merah + meld atas biarin tiduran, gak diputer */
   .seatPos.top .miniHand > div img{ transform:none !important; }
 }
+/* ===== FINAL FIX V14 - TONI HADAP SAYA + BUNGA KIRI-KANAN KE LINGKAR HIJAU ===== */
+/* 1. TONI (atas): balik tegak, hadap ke saya (bawah), bukan kebalik lagi */
+.seatPos.top .playerChip{
+  transform:none !important;
+  margin:0 auto !important;
+}
+/* 2. Bunga kiri (BUDI): ke celah kosong antara pill BUDI sama tile merah kiri */
+.seatPos.left .oppFlower{
+  position:absolute !important;
+  left:2px !important; top:50% !important;
+  writing-mode:vertical-rl !important;
+  transform:translateY(-50%) rotate(180deg) !important;
+  margin:0 !important; font-size:11px !important; white-space:nowrap !important;
+  text-align:center !important; z-index:5 !important;
+}
+/* 3. Bunga kanan (aaaa): ke celah kosong antara tile merah kanan sama pill aaaa */
+.seatPos.right .oppFlower{
+  position:absolute !important;
+  right:2px !important; top:50% !important;
+  writing-mode:vertical-rl !important;
+  transform:translateY(-50%) !important;
+  margin:0 !important; font-size:11px !important; white-space:nowrap !important;
+  text-align:center !important; z-index:5 !important;
+}
 </style>
 </head>
 <body>
