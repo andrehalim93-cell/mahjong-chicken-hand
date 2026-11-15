@@ -131,7 +131,7 @@ input{font-family:inherit}
 #winHand{gap:10px!important}
 .huGroup{display:flex;gap:3px;background:rgba(255,255,255,.65);border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:4px}
 #toast{position:fixed;left:50%;top:68px;bottom:auto;pointer-events:none;transform:translateX(-50%);background:#111827;border:1px solid #facc15;color:#fde68a;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:800;z-index:200;display:none;max-width:92%;text-align:center}
-#turnPopup{position:fixed;left:50%;top:12%;transform:translate(-50%,-50%) scale(.8);background:rgba(0,0,0,.85);border:3px solid #facc15;border-radius:20px;padding:10px 18px;text-align:center;z-index:300;display:none;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:.2s;pointer-events:none}
+#turnPopup{position:fixed;left:50%;top:4%;transform:translate(-50%,-50%) scale(.8);background:rgba(0,0,0,.85);border:3px solid #facc15;border-radius:20px;padding:10px 18px;text-align:center;z-index:300;display:none;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:.2s;pointer-events:none}
 #turnPopup.show{display:block;transform:translate(-50%,-50%) scale(1)}
 #turnPopup .tpName{font-size:24px;font-weight:900;color:#facc15;margin-top:6px}
 #turnPopup .tpSub{font-size:12px;color:#a7f3d0;margin-top:4px}
@@ -158,7 +158,9 @@ input{font-family:inherit}
 .meldZone .meld{background:rgba(250,204,21,.15);border:1px solid rgba(250,204,21,.5);padding:3px;gap:2px}
 .meldZone .meld .t{width:30px;height:40px}
 .meldZone .meld .mTile{width:28px;height:38px}
-.meldTopRight{top:118px;left:50%;right:auto;transform:translateX(-50%);width:360px;max-width:60%;justify-content:center;align-items:center}
+.meldTopRight{ top:82px!important; left:50%!important; transform:translateX(-50%)!important; width:auto!important; max-width:520px!important; flex-wrap:nowrap!important; gap:4px!important; justify-content:center!important; }
+.meldTopRight .meld{ flex:none!important; padding:2px!important; gap:1px!important; }
+.meldTopRight .meld .t, .meldTopRight .meld .mTile{ width:20px!important; height:28px!important; }
 .meldLeftBottom{left:12px;top:285px;bottom:auto;width:260px;max-height:145px;justify-content:flex-start;flex-direction:column;flex-wrap:wrap;align-content:flex-start;overflow:hidden}
 .meldRightBottom{left:auto!important;right:12px!important;top:285px!important;bottom:auto!important;width:260px!important;max-width:260px;max-height:145px!important;justify-content:flex-start!important;align-items:flex-end!important;align-content:flex-start!important;flex-direction:column!important;flex-wrap:wrap-reverse!important;overflow:hidden}
 #chatFab{position:fixed;right:10px;top:160px;bottom:auto;width:44px;height:44px;border-radius:50%;background:linear-gradient(180deg,#fde047,#f59e0b);color:#422006;font-size:24px;font-weight:900;box-shadow:0 10px 24px rgba(0,0,0,.5),0 0 0 3px rgba(250,204,21,.4);z-index:500;display:flex;align-items:center;justify-content:center}
@@ -332,6 +334,29 @@ input{font-family:inherit}
 /* Pas Fullscreen / Landscape, panahnya dikecilin biar gak nutupin */
 @media (orientation:landscape) and (max-height:500px){
   .turnArrow{ width:210px!important; height:210px!important; }
+}
+/* FIX: Meld kiri + kanan jangan numpuk ke tengah */
+.meldLeftBottom, .meldRightBottom{
+  top:50%!important; bottom:auto!important;
+  transform:translateY(-50%)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  flex-wrap:nowrap!important;
+  gap:4px!important;
+  width:auto!important; max-width:90px!important;
+  max-height:320px!important;
+  overflow:hidden!important;
+  justify-content:flex-start!important;
+  align-content:flex-start!important;
+}
+.meldLeftBottom{ left:6px!important; right:auto!important; align-items:flex-start!important; }
+.meldRightBottom{ right:6px!important; left:auto!important; align-items:flex-end!important; }
+.meldLeftBottom .meld, .meldRightBottom .meld{
+  flex:none!important; padding:2px!important; gap:1px!important;
+}
+.meldLeftBottom .meld .t, .meldLeftBottom .meld .mTile,
+.meldRightBottom .meld .t, .meldRightBottom .meld .mTile{
+  width:20px!important; height:28px!important;
 }
 </style>
 </head>
