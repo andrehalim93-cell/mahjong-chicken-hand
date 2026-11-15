@@ -371,7 +371,8 @@ function doClaim(room, claimer, action, chowNums, tile, discarder){
     let nextIdx = (discarderIdx+1)%room.players.length;
     if(room.players[nextIdx].name!==claimer.name) return;
     // 2. Harus tile suit, dan chowNums harus 2 angka yang + tile buangan = urut 3
-    if(!chowNums || chowNums.length!==2) return;
+    if(!chowNums || (chowNums.length!==2 && chowNums.length!==3)) return;
+    if(chowNums.length===3) chowNums = chowNums.filter(n=>n!==tile.num);
     if(tile.type!=='suit') return;
     let all = [...chowNums, tile.num].sort((a,b)=>a-b);
     if(!(all[1]===all[0]+1 && all[2]===all[1]+1)) return;
@@ -630,7 +631,8 @@ io.on('connection', (socket)=>{
       let nextIdx = (discarderIdx+1)%room.players.length;
       if(room.players[nextIdx].name!==p.name) return;
       // chowNums harus 2 angka, dan bareng tile buangan harus jadi urut 3
-      if(!chowNums || chowNums.length!==2) return;
+      if(!chowNums || (chowNums.length!==2 && chowNums.length!==3)) return;
+      if(chowNums.length===3) chowNums = chowNums.filter(n=>n!==tile.num);
       let all = [...chowNums, tile.num].sort((a,b)=>a-b);
       if(!(all[1]===all[0]+1 && all[2]===all[1]+1)) return;
     }
