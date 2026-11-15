@@ -447,6 +447,39 @@ input{font-family:inherit}
     font-size:20px !important;
   }
 }
+/* ===== FINAL FIX V8 - BUANGAN HP KE BAWAH TENGAH + DEWI KE TENGAH ===== */
+/* A. DEWI / pemain atas: ke tengah, buat DESKTOP + HP. Chip-nya cuma di-rotate, gak di-translate */
+.seatPos.top{
+  top:2px !important; left:50% !important;
+  transform:translateX(-50%) !important;
+  display:flex !important; flex-direction:column !important;
+  align-items:center !important; justify-content:flex-start !important;
+  width:260px !important;
+}
+.seatPos.top .playerChip{
+  transform:rotate(180deg) !important;
+  margin:0 auto !important;
+}
+.seatPos.top .miniHand{
+  margin-top:4px !important; justify-content:center !important;
+}
+/* B. Buangan KHUSUS HP: pindah ke paling bawah tengah ujung meja, biar gak ketemu meld atas */
+@media (max-width:768px){
+  .centerBox{
+    top:auto !important; bottom:2px !important;
+    left:50% !important; transform:translateX(-50%) !important;
+    width:150px !important; padding:4px !important; z-index:4 !important;
+  }
+  /* Meld atas HP: biarin di atas, jangan turun, biar jauh dari buangan bawah */
+  .meldTopRight{ top:78px !important; }
+}
+/* C. Buangan DESKTOP: biarin di tengah, gak gua ubah */
+@media (min-width:769px){
+  .centerBox{
+    top:52% !important; bottom:auto !important;
+    left:50% !important; transform:translate(-50%,-50%) !important;
+  }
+}
 </style>
 </head>
 <body>
