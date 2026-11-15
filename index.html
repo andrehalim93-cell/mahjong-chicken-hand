@@ -447,6 +447,24 @@ input{font-family:inherit}
 button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   display:none !important;
 }
+<!-- FINAL FIX V17 - HAPUS TOMBOL LAYAR PENUH (CARI DARI TULISANNYA) -->
+<script>
+(function(){
+  function hideFS(){
+    document.querySelectorAll('button, a, div').forEach(function(el){
+      if(el.textContent && el.textContent.trim().toUpperCase().includes('LAYAR PENUH')){
+        // cuma yang paling kecil (tombolnya), jangan induknya
+        if(el.children.length === 0 || el.tagName === 'BUTTON'){
+          el.style.setProperty('display','none','important');
+        }
+      }
+    });
+  }
+  hideFS();
+  // jaga-jaga kalau tombolnya muncul lagi pas pindah Home -> Game
+  new MutationObserver(hideFS).observe(document.body, {childList:true, subtree:true});
+})();
+</script>
 </style>
 </head>
 <body>
