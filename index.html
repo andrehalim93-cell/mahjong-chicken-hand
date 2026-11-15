@@ -504,12 +504,6 @@ socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); if(
 socket.on('turnChanged', d=>{ if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
 socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName);
 if(myClaim){
-  // Pengaman CHOW: cuma pemain setelah yang buang yang boleh CHOW
-  let order = currentPlayers.map(p=>p.name);
-  let fromIdx = order.indexOf(d.from);
-  let myIdx = order.indexOf(myName);
-  let iAmNext = fromIdx !== -1 && myIdx === (fromIdx + 1) % order.length;
-  if(!iAmNext) myClaim.chow = []; // buang opsi CHOW kalau bukan giliran setelah yang buang
   if(myClaim.canHu || myClaim.pong || myClaim.chow.length){
     renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]);
   }
