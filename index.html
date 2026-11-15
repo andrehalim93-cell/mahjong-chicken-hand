@@ -358,136 +358,22 @@ input{font-family:inherit}
 .meldRightBottom .meld .t, .meldRightBottom .meld .mTile{
   width:20px!important; height:28px!important;
 }
-#myArea, .player-bottom, #bottomArea{
-  height: 280px !important;
-  min-height: 280px !important;
-  max-height: 280px !important;
-  overflow: hidden !important;
-  position: relative !important;
-}
-#myMelds, .meld-row, #meldRow{
-  height: 64px !important;
-  min-height: 64px !important;
-  max-height: 64px !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  overflow: hidden !important;
-}
-#myHand, .hand-row, #handRow{
-  height: 90px !important;
-  min-height: 90px !important;
-  margin-top: 10px !important;
-}
-/* KHUSUS HP - JANGAN DIPAKE DI PC */
-@media (max-width: 768px){
-  body{ overflow-x: hidden !important; }
-  /* Bar atas jadi kecil, gak makan tempat */
-  #topBar, .top-bar{
-    flex-wrap: wrap !important;
-    gap: 4px !important;
-    padding: 4px !important;
-    font-size: 11px !important;
-  }
-  /* Banner giliran jangan numpuk lawan */
-  #turnBanner, .turn-banner, #giliranBanner{
-    position: static !important;
-    transform: none !important;
-    margin: 4px auto !important;
-    padding: 6px 10px !important;
-    font-size: 13px !important;
-    max-width: 90% !important;
-    text-align: center !important;
-  }
-  /* Papan tengah dikecilin, jangan geser */
-  #board, .board, #table{
-    min-height: 260px !important;
-    height: 260px !important;
-    padding: 6px !important;
-    overflow: hidden !important;
-    position: relative !important;
-  }
-  /* Tile lawan atas / kiri / kanan dikecilin */
-  .opp-tiles img, .opp-hand .tile, .mini-tile{
-    width: 18px !important;
-    height: 26px !important;
-    font-size: 9px !important;
-  }
-  /* Label lawan jangan nimpa buangan */
-  .opp-label, #oppTop, #oppLeft, #oppRight{
-    position: static !important;
-    margin: 2px auto !important;
-    font-size: 11px !important;
-  }
-  /* Buangan tengah di tengah beneran */
-  #discardPile, .discard-area, #centerDiscard{
-    max-width: 78% !important;
-    margin: 6px auto !important;
-    gap: 2px !important;
-  }
-  #discardPile .tile, .discard-area .tile{
-    width: 24px !important;
-    height: 34px !important;
-    font-size: 10px !important;
-  }
-  /* AREA BAWAH - INI YANG PALING PENTING */
-  #myArea, .player-bottom, #bottomArea{
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    padding: 6px !important;
-    overflow: visible !important;
-  }
-  /* Meld jangan makan 2 baris */
-  #myMelds, .meld-row, #meldRow{
-    height: auto !important;
-    min-height: 38px !important;
-    flex-wrap: wrap !important;
-    gap: 4px !important;
-  }
-  #myMelds .tile, .meld-row .tile{
-    width: 30px !important;
-    height: 42px !important;
-  }
-  /* Tangan kamu 1 BARIS, bisa di-scroll, gak kepotong */
-  #myHand, .hand-row, #handRow{
-    display: flex !important;
+  @media (max-width: 768px){
+  .myArea{ padding: 4px !important; }
+  .myHand{
     flex-wrap: nowrap !important;
     overflow-x: auto !important;
-    overflow-y: hidden !important;
     justify-content: flex-start !important;
     gap: 3px !important;
-    padding: 4px 4px 10px 4px !important;
-    height: 58px !important;
-    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 8px !important;
   }
-  #myHand .tile, .hand-row .tile{
+  .myHand .t{
     width: 36px !important;
     min-width: 36px !important;
     height: 50px !important;
-    font-size: 11px !important;
     flex-shrink: 0 !important;
   }
-  /* Bunga jangan dorong tangan */
-  #myFlower, .flower-row{
-    margin: 2px auto !important;
-    font-size: 11px !important;
-  }
-  /* Tombol HU / PONG jangan ketutup */
-  #actionBar{
-    display: flex !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    padding: 6px !important;
-    position: sticky !important;
-    bottom: 0 !important;
-    z-index: 50 !important;
-  }
-  #actionBar button{
-    font-size: 13px !important;
-    padding: 8px 12px !important;
-  }
+  .meld .t{ width: 30px !important; height: 42px !important; }
 }
 </style>
 </head>
