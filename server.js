@@ -243,6 +243,7 @@ function getClaimsFor(room, tile, fromName){
     if(p.name===fromName) return;
     if(p.isBot) return;
     let canHu = canHuWithTileAndMelds(p.hand, p.melds, tile);
+    let kong = p.hand.filter(t=>t.key===tile.key).length>=3;
     let pong = p.hand.filter(t=>t.key===tile.key).length>=2;
     let chow=[];
     // ATURAN REAL: CHOW cuma boleh ambil buangan pemain SEBELUMNYA (yang baru buang).
@@ -255,7 +256,7 @@ function getClaimsFor(room, tile, fromName){
       if(nums.includes(tile.num-1)&&nums.includes(tile.num+1)) chow.push([tile.num-1,tile.num,tile.num+1]);
       if(nums.includes(tile.num+1)&&nums.includes(tile.num+2)) chow.push([tile.num,tile.num+1,tile.num+2]);
     }
-    if(canHu||pong||chow.length>0) claims.push({ name:p.name, canHu, pong, chow });
+    if(canHu||pong||kong||chow.length>0) claims.push({ name:p.name, canHu, pong, kong, chow });
   });
   return claims;
 }
@@ -380,10 +381,19 @@ function doClaim(room, claimer, action, chowNums, tile, discarder){
   let dIdx = discarder.discards.findIndex(t=>t.id===tile.id);
   if(dIdx>=0) discarder.discards.splice(dIdx,1);
   let need=[];
+  if(action==='kong'){
+  let c = p.hand.filter(t=>t.key===tile.key).length;
+  if(c<3) return;
+}
   if(action==='pong'){
     need = claimer.hand.filter(t=>t.key===tile.key).slice(0,2);
     if(need.length<2) return;
-  } else if(action==='chow' && chowNums){
+  } 
+  else if(action==='kong'){
+  need = claimer.hand.filter(t=>t.key===tile.key).slice(0,3);
+  if(need.length<3) return;
+}
+  else if(action==='chow' && chowNums){
     chowNums.forEach(n=>{
       if(n===tile.num) return;
       let found = claimer.hand.find(t=>t.type==='suit' && t.suit===tile.suit && t.num===n);
@@ -392,7 +402,7 @@ function doClaim(room, claimer, action, chowNums, tile, discarder){
     if(need.length<2) return;
   }
   need.forEach(t=>{ let i=claimer.hand.findIndex(x=>x.id===t.id); if(i>=0) claimer.hand.splice(i,1); });
-  claimer.melds.push({ type:action, tiles:[tile, ...need] });
+  claimer.melds.push({ type:action, tiles:[tile, ...need], kongType: action==='kong' ? 'ming' : action });
   room.waitingClaim=false; room.lastDiscard=null; room.currentClaim=null;
   room.turnIdx = room.players.findIndex(p=>p.name===claimer.name);
   emitToRoom(room, 'meldMade', { by:claimer.name, meld:{type:action, tiles:[tile, ...need]}, players:publicPlayers(room) });
@@ -400,6 +410,13 @@ function doClaim(room, claimer, action, chowNums, tile, discarder){
   emitToRoom(room, 'turnChanged', { turn:claimer.name, wallLeft:room.wall.length });
   room.players.forEach(p=>sendHand(room,p));
   addLog(room, `⚡ ${claimer.name} ${action.toUpperCase()} ${tileName(tile)} dari ${discarder.name}!`);
+  // Tile ganti habis KONG
+if(action==='kong' && room.wall.length>0){
+  let rep = room.wall.pop();
+  while(rep && rep.type==='flower'){ claimer.flowers.push(rep); if(room.wall.length===0) break; rep=room.wall.pop(); }
+  if(rep) claimer.hand.push(rep);
+  room.players.forEach(p2=>sendHand(room,p2));
+}
   startTurnTimer(room);
   if(claimer.isBot){ setTimeout(()=>{ botDiscard(room, claimer); }, 1500); }
 }
@@ -650,7 +667,40 @@ io.on('connection', (socket)=>{
     if(!p) return;
     if(canHuWithMelds(p.hand, p.melds)){ endGameWin(room, p.name, `${p.name} HU! Chicken Hand!`); } else { console.log('SELF-HU DITOLAK', p.name, 'hand:', p.hand.map(t=>t.key), 'melds:', JSON.stringify(p.melds)); socket.emit('errorMsg', 'Server bilang BUKAN HU. Hand: '+p.hand.length+' tile, meld: '+p.melds.length+' set'); }
   });
+  // An Kong: 4 sama di tangan sendiri habis draw
+socket.on('anKong', ({ code, tileKey })=>{
+  let room = rooms[(code||'').toUpperCase()];
+  if(!room || room.phase!=='playing') return;
+  let p = room.players.find(x=>x.id===socket.id);
+  if(!p) return;
+  if(room.players[room.turnIdx].name!==p.name) return;
+  let four = p.hand.filter(t=>t.key===tileKey).slice(0,4);
+  if(four.length<4) return;
+  four.forEach(t=>{ let i=p.hand.findIndex(x=>x.id===t.id); if(i>=0) p.hand.splice(i,1); });
+  p.melds.push({ type:'kong', tiles:four, kongType:'an', concealed:true });
+  // Tile ganti
+  if(room.wall.length>0){ let rep=room.wall.pop(); while(rep && rep.type==='flower'){ p.flowers.push(rep); if(room.wall.length===0) break; rep=room.wall.pop(); } if(rep) p.hand.push(rep); }
+  emitToRoom(room, 'meldMade', { by:p.name, meld:{type:'kong', tiles:four}, players:publicPlayers(room) });
+  room.players.forEach(x=>sendHand(room,x));
+});
 
+// Jia Kong: PONG yang udah kebuka + dapet tile ke-4 pas draw
+socket.on('jiaKong', ({ code, tileId })=>{
+  let room = rooms[(code||'').toUpperCase()];
+  if(!room || room.phase!=='playing') return;
+  let p = room.players.find(x=>x.id===socket.id);
+  if(!p) return;
+  if(room.players[room.turnIdx].name!==p.name) return;
+  let tile = p.hand.find(t=>t.id==tileId);
+  if(!tile) return;
+  let meld = p.melds.find(m=>m.type==='pong' && m.tiles[0].key===tile.key);
+  if(!meld) return;
+  let i=p.hand.findIndex(x=>x.id===tile.id); p.hand.splice(i,1);
+  meld.tiles.push(tile); meld.type='kong'; meld.kongType='jia';
+  if(room.wall.length>0){ let rep=room.wall.pop(); while(rep && rep.type==='flower'){ p.flowers.push(rep); if(room.wall.length===0) break; rep=room.wall.pop(); } if(rep) p.hand.push(rep); }
+  emitToRoom(room, 'meldMade', { by:p.name, meld:{type:'kong', tiles:meld.tiles}, players:publicPlayers(room) });
+  room.players.forEach(x=>sendHand(room,x));
+});
   socket.on('tableChat', ({ code, msg })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
