@@ -442,6 +442,11 @@ input{font-family:inherit}
   transform:none !important;
   margin:2px auto !important; text-align:center !important;
 }
+/* ===== FINAL FIX V16 - HAPUS TOMBOL FULLSCREEN AJA ===== */
+#fullscreenBtn, .fullscreenBtn, button[title="Fullscreen"], button[title="Layar Penuh"],
+button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
+  display:none !important;
+}
 </style>
 </head>
 <body>
