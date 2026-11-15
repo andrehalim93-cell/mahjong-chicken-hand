@@ -444,7 +444,7 @@ function renderActionBar(actions){
   let bar=el('actionBar'); bar.innerHTML=''; if(!actions || actions.length===0) return;
   actions.forEach(a=>{
     if(a.type==='selfHu'){ bar.innerHTML+=`<button class="aSelfHu" onclick="selfHu()">🐔 HU! SAYA MENANG!</button>`; }
-    if(a.type==='claim'){ let c=a.claim; if(c.canHu) bar.innerHTML+=`<button class="aHu" onclick="doClaim('hu')">🐔 HU! MENANG!</button>`; if(c.pong) bar.innerHTML+=`<button class="aPong" onclick="doClaim('pong')">🃏 PONG!</button>`; c.chow.forEach((ch, idx)=>{ bar.innerHTML+=`<button class="aChow" onclick="doClaimChow(${JSON.stringify(ch).replace(/"/g,'&quot;')})">🃏 CHOW ${ch.join('-')}</button>`; }); bar.innerHTML+=`<button class="aPass" onclick="doClaim('pass')">⏭️ PASS</button>`; setTimeout(()=>{ if(bar.innerHTML.includes('PASS')) bar.innerHTML=''; }, 7000); }
+    if(a.type==='claim'){ let c=a.claim; if(c.canHu) bar.innerHTML+=`<button class="aHu" onclick="doClaim('hu')">🐔 HU! MENANG!</button>`; if(c.pong) bar.innerHTML+=`<button class="aPong" onclick="doClaim('pong')">🃏 PONG!</button>`; c.chow.forEach((ch, idx)=>{ bar.innerHTML+=`<button class="aChow" onclick="doClaimChow(${JSON.stringify(ch).replace(/"/g,'&quot;')})">🃏 CHOW ${ch.join('-')}</button>`; }); bar.innerHTML+=`<button class="aPass" onclick="doClaim('pass')">⏭️ PASS</button>`; setTimeout(()=>{ if(bar.innerHTML.includes('PASS')){ bar.innerHTML=''; socket.emit('claim',{code:myCode, action:'pass'}); } }, 7000); }
   });
 }
 function doClaim(action){ socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
