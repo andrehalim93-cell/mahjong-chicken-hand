@@ -375,6 +375,59 @@ input{font-family:inherit}
   }
   .meld .t{ width: 30px !important; height: 42px !important; }
 }
+  /* LAWAN KIRI-KANAN JADI VERTIKAL KAYAK MAHJONG BENERAN */
+.seatPos.left{
+  left: 4px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 64px !important;
+}
+.seatPos.right{
+  right: 4px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 64px !important;
+}
+/* Chip nama tetep tiduran di atas, tile-nya yang berdiri */
+.seatPos.left .playerChip,
+.seatPos.right .playerChip{
+  font-size: 9px !important;
+  padding: 4px 5px !important;
+  max-width: 64px !important;
+}
+/* INI KUNCINYA: miniHand kiri-kanan jadi kolom, bukan baris */
+.seatPos.left .miniHand,
+.seatPos.right .miniHand{
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  gap: 1px !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  margin-top: 4px !important;
+}
+/* Tile punggungnya dikecilin biar 13 tile muat vertikal */
+.seatPos.left .miniHand > div,
+.seatPos.right .miniHand > div{
+  width: 18px !important;
+  height: 22px !important;
+  flex: none !important;
+}
+.seatPos.left .miniHand img,
+.seatPos.right .miniHand img{
+  width: 100% !important;
+  height: 100% !important;
+}
+/* Lawan atas tetep tiduran, jangan ikut berubah */
+.seatPos.top .miniHand{
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+}
+/* Buangan tengah dikasih jalan, jangan sampe kena kiri-kanan lagi */
+.table{
+  padding-left: 72px !important;
+  padding-right: 72px !important;
+}
 </style>
 </head>
 <body>
