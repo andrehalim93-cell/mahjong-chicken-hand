@@ -589,7 +589,6 @@ if(turnName===myName){
   if(jiaTile) acts.push({type:'jiaKong', tile:jiaTile});
 }
 if(acts.length) renderActionBar(acts);
-let acts = [];
 if(d.canHu || canHuLocal()) acts.push({type:'selfHu'});
 if(anKongKey) acts.push({type:'anKong', key:anKongKey});
 if(jiaTile) acts.push({type:'jiaKong', tile:jiaTile});
