@@ -365,6 +365,29 @@ input{font-family:inherit}
 .seatPos.right .playerChip{ right:-46px !important; }
 /* Atas: mentok ke pinggir coklat atas */
 .seatPos.top{ top:2px !important; }
+/* ===== FINAL FIX V5 - NAMA BENERAN MENTOK KE UJUNG ===== */
+.seatPos.left{ left:30px !important; width:72px !important; }
+.seatPos.right{ right:30px !important; width:72px !important; }
+.seatPos.left .playerChip{
+  position:absolute !important; left:-30px !important; top:50% !important;
+  writing-mode:vertical-rl !important;
+  transform:translateY(-50%) rotate(180deg) !important;
+  width:30px !important; max-width:30px !important; height:auto !important;
+  padding:10px 6px !important; white-space:nowrap !important; text-align:center !important;
+}
+.seatPos.right .playerChip{
+  position:absolute !important; right:-30px !important; top:50% !important;
+  writing-mode:vertical-rl !important;
+  transform:translateY(-50%) !important;
+  width:30px !important; max-width:30px !important; height:auto !important;
+  padding:10px 6px !important; white-space:nowrap !important; text-align:center !important;
+}
+.seatPos.left .playerChip .nm, .seatPos.right .playerChip .nm{ display:inline !important; }
+.seatPos.left .playerChip small, .seatPos.right .playerChip small{ display:inline !important; margin-left:4px !important; }
+/* Panah tetep tiduran, biar gak ikut vertikal */
+.seatPos.left .playerChip::after, .seatPos.right .playerChip::after{ writing-mode:horizontal-tb !important; }
+.seatPos.left .playerChip::after{ content:" ▶" !important; color:#facc15 !important; }
+.seatPos.right .playerChip::after{ content:" ◀" !important; color:#facc15 !important; }
 </style>
 </head>
 <body>
