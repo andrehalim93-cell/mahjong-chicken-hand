@@ -420,6 +420,7 @@ function toggleChat(){
 function sendChat(){ let inp = el('chatInput'); let m = inp.value.trim(); if(!m) return; socket.emit('tableChat', {code:myCode, msg:m}); inp.value=''; inp.focus(); }
 function quickChat(m){ socket.emit('tableChat', {code:myCode, msg:m}); }
 socket.on('tableChatMsg', d=>{ let list = el('chatList'); if(list.innerHTML.includes('Belum ada chat')) list.innerHTML=''; let isMe = d.name===myName; list.innerHTML += `<div style="margin-bottom:4px"><b style="color:${isMe?'#facc15':'#a7f3d0'}">${isMe?'Kamu':esc(d.name)}</b> <span style="color:#94a3b8;font-size:10px">${d.time}</span><br>${esc(d.msg)}</div>`; list.scrollTop = list.scrollHeight; if(!chatOpen && !isMe){ chatUnread++; let b=el('chatBadge'); b.innerText=chatUnread; b.style.display='block'; el('chatFabDot').style.display='block'; } });
+socket.on('gameLog', d=>addLog(d.msg));
 document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.activeElement && document.activeElement.id==='chatInput'){ sendChat(); } });
 </script>
 </body>
