@@ -576,7 +576,16 @@ function canHuLocal(){
   }
   return false;
 }
-socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); if(d.canHu || canHuLocal()){ renderActionBar([{type:'selfHu'}]); } });
+socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); // An Kong: cari 4 sama di tangan
+let anKongKey = null;
+{ let cnt={}; myHand.forEach(t=>{ cnt[t.key]=(cnt[t.key]||0)+1; if(cnt[t.key]>=4) anKongKey=t.key; }); }
+// Jia Kong: cari tile di tangan yang sama kayak PONG yang udah kebuka
+let jiaTile = myHand.find(t=>myMelds.some(m=>m.type==='pong' && m.tiles[0].key===t.key));
+let acts = [];
+if(d.canHu || canHuLocal()) acts.push({type:'selfHu'});
+if(anKongKey) acts.push({type:'anKong', key:anKongKey});
+if(jiaTile) acts.push({type:'jiaKong', tile:jiaTile});
+if(acts.length) renderActionBar(acts); });
 socket.on('turnChanged', d=>{ if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
 socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); console.log('DEBUG CHOW dari server:', d.from, 'ke saya:', myClaim, 'semua claims:', d.claims);
 if(myClaim){
@@ -669,13 +678,17 @@ function renderActionBar(actions){
   let bar=el('actionBar'); bar.innerHTML=''; if(!actions || actions.length===0) return;
   actions.forEach(a=>{
     if(a.type==='selfHu'){ bar.innerHTML+=`<button class="aSelfHu" onclick="selfHu()">🐔 HU! SAYA MENANG!</button>`; }
-    if(a.type==='claim'){ let c=a.claim; if(c.canHu) bar.innerHTML+=`<button class="aHu" onclick="doClaim('hu')">🐔 HU! MENANG!</button>`; if(c.pong) bar.innerHTML+=`<button class="aPong" onclick="doClaim('pong')">🃏 PONG!</button>`; window._lastChows = c.chow||[]; (c.chow||[]).forEach((ch, idx)=>{ bar.innerHTML+=`<button class="aChow" onclick="doClaimChowByIdx(${idx})">🃏 CHOW ${ch.join('-')}</button>`; }); bar.innerHTML+=`<button class="aPass" onclick="doClaim('pass')">⏭️ PASS</button>`; if(claimTimeoutInt) clearTimeout(claimTimeoutInt); if(turnTimeSec && turnTimeSec>0){ claimTimeoutInt=setTimeout(()=>{ if(bar.innerHTML.includes('PASS')){ bar.innerHTML=''; socket.emit('claim',{code:myCode, action:'pass'}); } }, turnTimeSec*1000); } }
+    if(a.type==='anKong'){ bar.innerHTML+=`<button class="aPong" onclick="doAnKong('${a.key}')">🀄 KONG TERTUTUP!</button>`; }
+if(a.type==='jiaKong'){ bar.innerHTML+=`<button class="aPong" onclick="doJiaKong('${a.tile.id}')">🀄 KONG TAMBAHAN!</button>`; }
+    if(a.type==='claim'){ let c=a.claim; if(c.canHu) bar.innerHTML+=`<button class="aHu" onclick="doClaim('hu')">🐔 HU! MENANG!</button>`; if(c.pong) bar.innerHTML+=`<button class="aPong" onclick="doClaim('pong')">🃏 PONG!</button>`; if(c.pong) bar.innerHTML+=`<button class="aPong" onclick="doClaim('pong')">🃏 PONG!</button>`; window._lastChows = c.chow||[]; (c.chow||[]).forEach((ch, idx)=>{ bar.innerHTML+=`<button class="aChow" onclick="doClaimChowByIdx(${idx})">🃏 CHOW ${ch.join('-')}</button>`; }); bar.innerHTML+=`<button class="aPass" onclick="doClaim('pass')">⏭️ PASS</button>`; if(claimTimeoutInt) clearTimeout(claimTimeoutInt); if(turnTimeSec && turnTimeSec>0){ claimTimeoutInt=setTimeout(()=>{ if(bar.innerHTML.includes('PASS')){ bar.innerHTML=''; socket.emit('claim',{code:myCode, action:'pass'}); } }, turnTimeSec*1000); } }
   });
 }
 function doClaim(action){ if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
 function doClaimChow(chowNums){ if(claimTimeoutInt) clearTimeout(claimTimeoutInt); console.log('KLIK CHOW, kirim ke server:', chowNums); socket.emit('claim',{code:myCode, action:'chow', chowNums}); el('actionBar').innerHTML=''; }
 function doClaimChowByIdx(idx){ let chowNums = (window._lastChows||[])[idx]; console.log('KLIK CHOW idx:', idx, 'isi:', chowNums); doClaimChow(chowNums); }
 function selfHu(){ console.log('KLIK HU, hand:', myHand, 'melds:', myMelds); socket.emit('selfHu',{code:myCode}); }
+function doAnKong(key){ socket.emit('anKong',{code:myCode, tileKey:key}); }
+function doJiaKong(tileId){ socket.emit('jiaKong',{code:myCode, tileId}); }
 function openDiscards(){ let pool=document.querySelector('.poolAllBottom'); let body=document.getElementById('discardModalBody'); if(pool && body){ body.innerHTML=pool.innerHTML; body.querySelectorAll('.mTile').forEach(function(el2){ el2.style.width='32px'; el2.style.height='44px'; }); } document.getElementById('discardModal').classList.add('open'); }
 function closeDiscards(){ document.getElementById('discardModal').classList.remove('open'); }
 let claimTimeoutInt=null;
