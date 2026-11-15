@@ -264,6 +264,27 @@ input{font-family:inherit}
 }
 .miniHand{display:flex;gap:2px;justify-content:center;flex-wrap:wrap}
 .miniHand img{width:16px!important;height:24px!important;flex:none;object-fit:cover}
+/* FIX: Meld lawan ketimpa pas Fullscreen / Landscape */
+@media (orientation:landscape){
+  .seatPos.right{ top:30%!important; }
+  .seatPos.left{ top:30%!important; }
+  .meldZone{ z-index:4!important; }
+
+  /* Meld kanan/kiri pindah ke pojok bawah meja, jauh dari tangan merah */
+  .meldRightBottom{
+    top:auto!important; bottom:8px!important;
+    right:8px!important; left:auto!important;
+    width:auto!important; max-width:180px!important;
+    max-height:none!important;
+  }
+  .meldLeftBottom{
+    top:auto!important; bottom:8px!important;
+    left:8px!important; right:auto!important;
+    width:auto!important; max-width:180px!important;
+    max-height:none!important;
+  }
+  .meldTopRight{ top:70px!important; }
+}
 </style>
 </head>
 <body>
