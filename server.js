@@ -256,7 +256,7 @@ function getClaimsFor(room, tile, fromName){
       if(nums.includes(tile.num-1)&&nums.includes(tile.num+1)) chow.push([tile.num-1,tile.num,tile.num+1]);
       if(nums.includes(tile.num+1)&&nums.includes(tile.num+2)) chow.push([tile.num,tile.num+1,tile.num+2]);
     }
-    if(canHu||pong||kong||chow.length>0) claims.push({ name:p.name, canHu, pong, kong, chow });
+    if(canHu||pong||kong||chow.length>0) claims.push({ name:p.name, canHu, pong: pong && !kong, kong, chow });
   });
   return claims;
 }
