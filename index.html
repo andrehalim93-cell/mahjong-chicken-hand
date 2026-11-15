@@ -388,6 +388,65 @@ input{font-family:inherit}
 .seatPos.left .playerChip::after, .seatPos.right .playerChip::after{ writing-mode:horizontal-tb !important; }
 .seatPos.left .playerChip::after{ content:" ▶" !important; color:#facc15 !important; }
 .seatPos.right .playerChip::after{ content:" ◀" !important; color:#facc15 !important; }
+/* ===== FINAL FIX V6 - BUANG SEGITIGA + NAMA NGADAP PEMAINNYA ===== */
+/* 1. Buang segitiga, bersih */
+.seatPos.left .playerChip::after,
+.seatPos.right .playerChip::after,
+.seatPos.top .playerChip::after{
+  content:none !important; display:none !important;
+}
+/* 2. Atas: kebalik 180°, biar kebaca dari pemain atas, bukan dari kamu */
+.seatPos.top .playerChip{
+  transform:translateX(-50%) rotate(180deg) !important;
+}
+/* 3. Kiri-kanan: ditegasin lagi, biar gak ke-ubah V5 */
+.seatPos.left .playerChip{
+  writing-mode:vertical-rl !important;
+  transform:translateY(-50%) rotate(180deg) !important;
+}
+.seatPos.right .playerChip{
+  writing-mode:vertical-rl !important;
+  transform:translateY(-50%) !important;
+}
+/* ===== FINAL FIX V7 - MELD DESKTOP GEDEAN DIKIT, HP BIARIN ===== */
+@media (min-width:769px){
+  /* Meld lawan atas: dari 20x28 jadi 26x36 */
+  .meldTopRight .meld{ gap:4px !important; padding:3px !important; }
+  .meldTopRight .meld .mTile, .meldTopRight .meld .t{
+    width:26px !important; height:36px !important;
+    transform:none !important; flex:none !important;
+  }
+  .meldTopRight .meld .mTile img, .meldTopRight .meld .mTile .face,
+  .meldTopRight .meld .t img, .meldTopRight .meld .t .face{
+    width:100% !important; height:100% !important; transform:none !important;
+  }
+  /* Meld lawan kiri-kanan: kotak 28x20 jadi 36x26, isi 20x28 jadi 26x36 */
+  .meldLeftBottom .meld .mTile, .meldRightBottom .meld .mTile,
+  .meldLeftBottom .meld .t, .meldRightBottom .meld .t{
+    width:36px !important; height:26px !important;
+    transform:none !important; overflow:hidden !important;
+    display:flex !important; align-items:center !important; justify-content:center !important;
+  }
+  .meldLeftBottom .meld .mTile img, .meldLeftBottom .meld .mTile .face,
+  .meldLeftBottom .meld .t img, .meldLeftBottom .meld .t .face{
+    width:26px !important; height:36px !important; flex:none !important;
+    transform:rotate(90deg) !important;
+  }
+  .meldRightBottom .meld .mTile img, .meldRightBottom .meld .mTile .face,
+  .meldRightBottom .meld .t img, .meldRightBottom .meld .t .face{
+    width:26px !important; height:36px !important; flex:none !important;
+    transform:rotate(-90deg) !important;
+  }
+  .meldLeftBottom .meld, .meldRightBottom .meld{ gap:3px !important; padding:3px !important; }
+  .meldLeftBottom, .meldRightBottom{ width:84px !important; max-width:84px !important; }
+  /* Meld kamu (yang 3 tile biru di bawah itu): dari 36x50 jadi 44x60, biar seimbang sama tangan kamu */
+  .myMelds .meld .t, .meldsRow .meld .t, #myMelds .meld .t{
+    width:44px !important; height:60px !important;
+  }
+  .myMelds .meld .t .face .bigChar, .meldsRow .meld .t .face .bigChar{
+    font-size:20px !important;
+  }
+}
 </style>
 </head>
 <body>
