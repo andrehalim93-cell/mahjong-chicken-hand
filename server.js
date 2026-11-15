@@ -299,7 +299,7 @@ function resolveClaimTimeout(room, discarder, tile){
   for(let i=0;i<room.players.length;i++){
     let p=room.players[i];
     if(p.name===discarder.name) continue;
-    if(p.isBot && canHuWithTileAndMelds(p.hand, p.melds, tile)){ endGameWin(room, p.name, `${p.name} HU dari buangan ${discarder.name}!`); return; }
+    if(p.isBot && canHuWithTileAndMelds(p.hand, p.melds, tile)){ endGameWin(room, p.name, `${p.name} HU dari buangan ${discarder.name}!`, tile); return; }
   }
   // 2. Bot PONG
   for(let i=0;i<room.players.length;i++){
@@ -352,15 +352,13 @@ function handleAfterDiscard(room, discarder, tile){
     resolveClaimTimeout(room, discarder, tile);
     return;
   }
-  // PONG / CHOW / HU gak punya timer sendiri lagi - ngikutin waktu giliran (room.turnTimeSec).
-  // turnTimeSec 0 = tanpa batas: gak auto-PASS, nunggu sampe semua yang bisa claim pencet PASS / PONG / CHOW / HU.
-  // Kalau waktunya habis / semua udah PASS, langsung next.
+  // PONG / CHOW / HU ngikutin waktu giliran. Kalau habis / semua udah PASS, langsung next.
   if(room.turnTimeSec && room.turnTimeSec>0){ room.claimTimer = setTimeout(()=>{ resolveClaimTimeout(room, discarder, tile); }, room.turnTimeSec*1000); }
 }
 function doClaim(room, claimer, action, chowNums, tile, discarder){
   clearTurnTimer(room);
   clearClaimTimer(room);
-  if(action==='hu'){ endGameWin(room, claimer.name, `${claimer.name} HU!`); return; }
+  if(action==='hu'){ endGameWin(room, claimer.name, `${claimer.name} HU!`, tile); return; }
   let dIdx = discarder.discards.findIndex(t=>t.id===tile.id);
   if(dIdx>=0) discarder.discards.splice(dIdx,1);
   let need=[];
@@ -419,11 +417,19 @@ function endGameDraw(room){
   emitToRoom(room, 'gameOver', { winner:null, message:'Tembok habis! Seri!', reason:'draw', msg:'Tembok habis! Seri!' });
   addLog(room, '🏳️ Tembok habis, seri!');
 }
-function endGameWin(room, winnerName, msg){
-  clearTurnTimer(room);
+function endGameWin(room, winnerName, msg, winningTile){
+  clearTurnTimer(room); clearClaimTimer(room);
   room.phase='finished'; room.waitingClaim=false;
   let winner = room.players.find(p=>p.name===winnerName);
-  emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: winner?winner.hand:[] });
+  // FIX HU 14 TILE: jangan cuma kirim winner.hand (sisa tangan, bisa cuma 4 tile kalau udah ada meld).
+  // Full = semua meld PONG/CHOW yang udah kebuka + sisa tangan + tile HU (kalau HU dari buangan orang, tile itu belum masuk tangan).
+  let fullHand = [];
+  if(winner){
+    (winner.melds||[]).forEach(m=>{ (m.tiles||[]).forEach(t=>fullHand.push(t)); });
+    (winner.hand||[]).forEach(t=>fullHand.push(t));
+    if(winningTile && !fullHand.some(t=>t.id===winningTile.id)) fullHand.push(winningTile);
+  }
+  emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: fullHand, melds: winner?winner.melds:[], winningTile: winningTile||null });
   addLog(room, '🏆 '+msg);
 }
 
