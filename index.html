@@ -362,6 +362,57 @@ input{font-family:inherit}
   #chatFab, #discardFab{ width:30px !important; height:30px !important; right:auto !important; bottom:auto !important; }
   #chatPanel{ right:10px !important; bottom:80px !important; }
 }
+/* ===== FINAL FIX V13 - ICON BALIK KE FRAME TANGAN + TILE MERAH SAMA KAYAK MELD ===== */
+/* 1. Balikin induknya, biar icon gak lompat ke atas */
+.myArea{ position:relative !important; }
+.myTools{
+  position:absolute !important; top:6px !important; right:6px !important;
+  display:flex !important; gap:6px !important; z-index:30 !important;
+}
+#chatFab, #discardFab{
+  position:static !important; width:30px !important; height:30px !important;
+  min-width:30px !important; font-size:15px !important; border-radius:50% !important;
+  right:auto !important; top:auto !important; bottom:auto !important; left:auto !important;
+  display:none !important; align-items:center !important; justify-content:center !important;
+}
+#chatFab.showInLobby, #chatFab.showInGame, #discardFab.showInGame{ display:flex !important; }
+/* Matikan aturan lama yang naruh icon di gameTop / kanan layar */
+.gameTop #chatFab, .gameTop #discardFab{ position:static !important; }
+/* 2. Tile merah kiri-kanan: puter kayak meld, jangan berdiri lagi */
+/* HP: kotak 26x18, isinya 18x26 diputer */
+@media (max-width:768px){
+  .seatPos.left .miniHand > div, .seatPos.right .miniHand > div{
+    width:26px !important; height:18px !important; flex:none !important;
+    overflow:hidden !important; display:flex !important;
+    align-items:center !important; justify-content:center !important; transform:none !important;
+  }
+  .seatPos.left .miniHand > div img{
+    width:18px !important; height:26px !important; flex:none !important;
+    object-fit:cover !important; transform:rotate(90deg) !important;
+  }
+  .seatPos.right .miniHand > div img{
+    width:18px !important; height:26px !important; flex:none !important;
+    object-fit:cover !important; transform:rotate(-90deg) !important;
+  }
+}
+/* DESKTOP: kotak 34x24, isinya 24x34 diputer */
+@media (min-width:769px){
+  .seatPos.left .miniHand > div, .seatPos.right .miniHand > div{
+    width:34px !important; height:24px !important; flex:none !important;
+    overflow:hidden !important; display:flex !important;
+    align-items:center !important; justify-content:center !important; transform:none !important;
+  }
+  .seatPos.left .miniHand > div img{
+    width:24px !important; height:34px !important; flex:none !important;
+    object-fit:cover !important; transform:rotate(90deg) !important;
+  }
+  .seatPos.right .miniHand > div img{
+    width:24px !important; height:34px !important; flex:none !important;
+    object-fit:cover !important; transform:rotate(-90deg) !important;
+  }
+  /* Atas: tile merah + meld atas biarin tiduran, gak diputer */
+  .seatPos.top .miniHand > div img{ transform:none !important; }
+}
 </style>
 </head>
 <body>
