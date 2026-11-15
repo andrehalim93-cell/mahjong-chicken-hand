@@ -311,6 +311,37 @@ input{font-family:inherit}
   transform:translateY(-50%)!important;
   width:auto!important; max-width:120px!important;
 }
+/* PANAH GILIRAN MELINGKAR - DI TENGAH MEJA, DI BELAKANG BUANGAN */
+.turnArrow{
+  position:absolute; left:50%; top:52%;
+  transform:translate(-50%,-50%);
+  width:300px; height:300px;
+  z-index:1; /* di belakang centerBox yang z-index:4 */
+  pointer-events:none;
+  opacity:.55;
+}
+.turnArrow svg{
+  width:100%; height:100%;
+  filter:drop-shadow(0 0 8px rgba(250,204,21,.9)) drop-shadow(0 0 16px rgba(250,204,21,.5));
+  animation:turnSpin 14s linear infinite;
+}
+@keyframes turnSpin{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(-360deg); } /* minus = berlawanan jarum jam */
+}
+.turnArrowTxt{
+  position:absolute; left:50%; top:108%;
+  transform:translateX(-50%);
+  white-space:nowrap;
+  font-size:10px; font-weight:800; letter-spacing:.5px;
+  color:#fde68a; background:rgba(0,0,0,.45);
+  padding:3px 8px; border-radius:999px;
+}
+
+/* Pas Fullscreen / Landscape, panahnya dikecilin biar gak nutupin */
+@media (orientation:landscape) and (max-height:500px){
+  .turnArrow{ width:210px!important; height:210px!important; }
+}
 </style>
 </head>
 <body>
@@ -340,6 +371,18 @@ input{font-family:inherit}
 <div id="gameScreen" class="hidden">
   <div class="gameTop"><div class="pill">🀄 <b id="gCode">----</b> • 🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div><div class="pill fsPill"><button id="fullBtnInGame" onclick="toggleFull()" class="fsBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">FULL</span></button></div></div>
   <div class="table" id="tableEl">
+  <div class="turnArrow" title="Arah giliran: berlawanan jarum jam">
+  <svg viewBox="0 0 100 100">
+    <defs>
+      <marker id="arrowHead" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 Z" fill="#facc15"></path>
+      </marker>
+    </defs>
+    <!-- Panah melingkar berlawanan jarum jam: Bawah -> Kanan -> Atas -> Kiri -> Bawah -->
+    <path d="M 50 88 A 38 38 0 1 1 88 50" fill="none" stroke="#facc15" stroke-width="5" stroke-linecap="round" marker-end="url(#arrowHead)"></path>
+  </svg>
+  <div class="turnArrowTxt">🔄 Giliran: berlawanan jarum jam</div>
+</div>
    <div class="centerBox" id="centerBox">
   <div class="poolCenter" id="lastTileEl" onclick="openDiscards()" title="Klik buat liat semua buangan" style="cursor:pointer">Belum ada buangan</div>
 </div>
@@ -528,9 +571,9 @@ function canHuLocal(){
 }
 socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); if(d.canHu || canHuLocal()){ renderActionBar([{type:'selfHu'}]); } });
 socket.on('turnChanged', d=>{ if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
-socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName);
+socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); console.log('DEBUG CHOW dari server:', d.from, 'ke saya:', myClaim, 'semua claims:', d.claims);
 if(myClaim){
-  if(myClaim.canHu || myClaim.pong || myClaim.chow.length){
+  if(myClaim.canHu || myClaim.pong || (myClaim.chow||[]).length){
     renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]);
   }
 } });
@@ -619,7 +662,7 @@ function renderActionBar(actions){
   let bar=el('actionBar'); bar.innerHTML=''; if(!actions || actions.length===0) return;
   actions.forEach(a=>{
     if(a.type==='selfHu'){ bar.innerHTML+=`<button class="aSelfHu" onclick="selfHu()">🐔 HU! SAYA MENANG!</button>`; }
-    if(a.type==='claim'){ let c=a.claim; if(c.canHu) bar.innerHTML+=`<button class="aHu" onclick="doClaim('hu')">🐔 HU! MENANG!</button>`; if(c.pong) bar.innerHTML+=`<button class="aPong" onclick="doClaim('pong')">🃏 PONG!</button>`; c.chow.forEach((ch, idx)=>{ bar.innerHTML+=`<button class="aChow" onclick="doClaimChow(${JSON.stringify(ch).replace(/"/g,'&quot;')})">🃏 CHOW ${ch.join('-')}</button>`; }); bar.innerHTML+=`<button class="aPass" onclick="doClaim('pass')">⏭️ PASS</button>`; if(claimTimeoutInt) clearTimeout(claimTimeoutInt); if(turnTimeSec && turnTimeSec>0){ claimTimeoutInt=setTimeout(()=>{ if(bar.innerHTML.includes('PASS')){ bar.innerHTML=''; socket.emit('claim',{code:myCode, action:'pass'}); } }, turnTimeSec*1000); } }
+    if(a.type==='claim'){ let c=a.claim; if(c.canHu) bar.innerHTML+=`<button class="aHu" onclick="doClaim('hu')">🐔 HU! MENANG!</button>`; if(c.pong) bar.innerHTML+=`<button class="aPong" onclick="doClaim('pong')">🃏 PONG!</button>`; (c.chow||[]).forEach((ch, idx)=>{ bar.innerHTML+=`<button class="aChow" onclick="doClaimChow(${JSON.stringify(ch).replace(/"/g,'&quot;')})">🃏 CHOW ${ch.join('-')}</button>`; }); bar.innerHTML+=`<button class="aPass" onclick="doClaim('pass')">⏭️ PASS</button>`; if(claimTimeoutInt) clearTimeout(claimTimeoutInt); if(turnTimeSec && turnTimeSec>0){ claimTimeoutInt=setTimeout(()=>{ if(bar.innerHTML.includes('PASS')){ bar.innerHTML=''; socket.emit('claim',{code:myCode, action:'pass'}); } }, turnTimeSec*1000); } }
   });
 }
 function doClaim(action){ if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
