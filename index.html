@@ -107,8 +107,8 @@ input{font-family:inherit}
 .meld .t{width:38px;height:50px;cursor:default}
 .flowersRow{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:6px}
 .flowersRow .t{width:36px;height:46px;cursor:default}
-.actionBar{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
-.actionBar button{padding:13px 18px;border-radius:14px;font-weight:900;font-size:14px;color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.actionBar{display:flex;position:relative;z-index:20;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.actionBar button{position:relative;z-index:21;padding:13px 18px;border-radius:14px;font-weight:900;font-size:14px;color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.35)}
 .aPong{background:linear-gradient(180deg,#f97316,#ea580c)}
 .aChow{background:linear-gradient(180deg,#3b82f6,#1d4ed8)}
 .aHu{background:linear-gradient(180deg,#facc15,#f59e0b);color:#422006!important;animation:huShake .6s infinite;font-size:16px!important}
@@ -120,7 +120,7 @@ input{font-family:inherit}
 #winModal.show{display:flex}
 .winBox{background:linear-gradient(180deg,#fef3c7,#fde68a);color:#422006;border-radius:22px;padding:22px;text-align:center;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.6)}
 .winBox h2{font-size:26px}.winBox p{margin-top:8px;font-size:14px;line-height:1.5}.winBox .btn{margin-top:14px}
-#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111827;border:1px solid #facc15;color:#fde68a;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:800;z-index:200;display:none;max-width:92%;text-align:center}
+#toast{position:fixed;left:50%;top:68px;bottom:auto;transform:translateX(-50%);background:#111827;border:1px solid #facc15;color:#fde68a;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:800;z-index:200;display:none;max-width:92%;text-align:center;pointer-events:none}
 #turnPopup{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.8);background:rgba(0,0,0,.85);border:3px solid #facc15;border-radius:20px;padding:18px 28px;text-align:center;z-index:300;display:none;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:.2s}
 #turnPopup.show{display:block;transform:translate(-50%,-50%) scale(1)}
 #turnPopup .tpName{font-size:24px;font-weight:900;color:#facc15;margin-top:6px}
@@ -165,6 +165,12 @@ input{font-family:inherit}
 #chatPanel.show{display:flex}
 #chatPanel .chatHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(250,204,21,.15);border-bottom:1px solid rgba(250,204,21,.3);font-size:13px}
 #chatPanel .qc{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.15);color:#fff;font-size:11px}
+#winHand .t{width:36px!important;height:50px!important}
+#winHand .t .face .bigChar{font-size:18px!important}
+#winHand .t .face .charTop,#winHand .t .face .charWan{font-size:13px!important}
+#winHand .t .face .lbl{font-size:5px!important}
+#winHand .t .face .dot{width:6px!important;height:6px!important}
+#winHand .t .face .stick{width:3px!important;height:10px!important}
 @media(max-width:640px){
   .topLogo h1{font-size:30px}
   .t{width:36px!important;height:50px!important}
@@ -318,7 +324,7 @@ input{font-family:inherit}
   </div>
   <div style="display:flex;gap:6px;padding:8px;border-top:1px solid rgba(255,255,255,.15)"><input id="chatInput" placeholder="Silahkan chat disini" style="flex:1;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:13px;outline:none"><button onclick="sendChat()" style="padding:11px 16px;border-radius:10px;background:#facc15;color:#422006;font-weight:900;font-size:13px">KIRIM ➡️</button></div>
 </div>
-<div id="winModal"><div class="winBox"><div style="font-size:48px">🐔🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2><p id="winMsg">...</p><button class="btn btn-gold" onclick="playAgain()">🔁 MAIN LAGI (MEJA SAMA)</button><button class="btn btn-dark" onclick="location.reload()">🏠 BALIK KE HOME</button></div></div>
+<div id="winModal"><div class="winBox"><div style="font-size:48px">🐔🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2><p id="winMsg">...</p><div id="winHand" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:12px 0 4px"></div><div id="winMeldLabel" style="font-size:11px;color:#92400e;font-weight:800"></div><button class="btn btn-gold" onclick="playAgain()">🔁 MAIN LAGI (MEJA SAMA)</button><button class="btn btn-dark" onclick="location.reload()">🏠 BALIK KE HOME</button></div></div>
 <div id="toast"></div>
 <div id="turnPopup"><div style="font-size:28px">🎯</div><div style="font-size:11px;letter-spacing:2px;color:#fde68a;font-weight:800">GILIRAN SEKARANG</div><div class="tpName" id="turnPopupName">-</div><div class="tpSub" id="turnPopupSub">Siap-siap buang tile!</div></div>
 <div id="diceModal"><div class="diceBox"><div style="font-size:28px">🎲</div><h2 style="margin-top:6px">LEMPAR DADU!</h2><p style="font-size:12px;color:#92400e;margin-top:4px" id="diceText">Menentukan siapa yang mulai duluan...</p><div class="diceRow"><div class="dice" id="dice1">⚀</div><div class="dice" id="dice2">⚀</div></div><p id="diceTotal" style="font-weight:900;font-size:16px">Total: -</p><p id="diceWinner" style="font-size:13px;margin-top:6px;color:#15803d;font-weight:800"></p></div></div>
@@ -450,9 +456,9 @@ socket.on('gameStarted', d=>{
 });
 socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); if(d.canHu){ renderActionBar([{type:'selfHu'}]); } });
 socket.on('turnChanged', d=>{ el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
-socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); toast('⚡ Kamu bisa PONG / CHOW / HU! Cepet claim!'); } });
+socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); } });
 socket.on('meldMade', d=>{ if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); });
-socket.on('gameOver', d=>{ clearInterval(turnTimerInt); playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🐔🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message + (d.hand ? `\nTangan pemenang: ${d.hand.length} tile` : ''); el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
+socket.on('gameOver', d=>{ clearInterval(turnTimerInt); playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🐔🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message; let wh=el('winHand'); let wl=el('winMeldLabel'); if(d.hand && d.hand.length){ wh.innerHTML = d.hand.map(function(tt){ return tileHTML(tt); }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = d.hand.length+' tile • '+(d.winner||'')+' • '+(d.melds && d.melds.length ? d.melds.length+' set PONG/CHOW + sisa tangan' : 'Chicken Hand'); } else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; } el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
 socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden');   el('chatFab').classList.remove('showInGame'); el('chatPanel').classList.remove('show'); chatOpen=false; myHand=[]; myMelds=[]; myFlowers=[]; usedBotNames=[]; renderMyHand(); });
 function addLog(m){ let l=el('gameLog'); l.innerHTML = m + '<br>' + l.innerHTML; }
 function renderSeats(players, turn){
