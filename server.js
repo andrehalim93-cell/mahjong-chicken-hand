@@ -1,4 +1,4 @@
-// server.js - MAHJONG CHICKEN HAND ONLINE - FULL FIX + DADU + TIMER + NAMA BOT
+// server.js - MAHJONG CHICKEN HAND ONLINE - FULL FIX + DADU + TIMER + NAMA BOT + PASS + HOST CHECK + DUPLIKAT NAMA
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -101,9 +101,10 @@ function sendHand(room, p){
     io.to(p.id).emit('yourHand', { hand:sortHand([...p.hand]), melds:p.melds, flowers:p.flowers, discards:p.discards, canHu });
   }
 }
+// FIX 1: normal tetep normal, jangan jadi medium - index ngecek 'normal'
 function normalizeLevel(level){
-  if(level==='normal') return 'medium';
-  if(level==='medium') return 'medium';
+  if(level==='normal') return 'normal';
+  if(level==='medium') return 'normal';
   if(level==='hard') return 'hard';
   if(level==='easy') return 'easy';
   return 'easy';
@@ -261,7 +262,7 @@ function startGame(room, turnTimeSec){
   if(turnTimeSec!==undefined && turnTimeSec!==null) room.turnTimeSec = turnTimeSec;
   let tiles = shuffle(createTiles());
   room.wall = tiles;
-  room.phase='playing'; room.lastDiscard=null; room.waitingClaim=false; room.currentClaim=null;
+  room.phase='playing'; room.lastDiscard=null; room.waitingClaim=false; room.currentClaim=null; room.passCount=0; room.passNeeded=0;
   // FITUR 2: LEMPAR DADU - tentukan dealer dari dadu
   let d1 = 1+Math.floor(Math.random()*6);
   let d2 = 1+Math.floor(Math.random()*6);
@@ -292,6 +293,10 @@ function handleAfterDiscard(room, discarder, tile){
   clearTurnTimer(room);
   room.waitingClaim=true;
   room.currentClaim={ tile, from:discarder.name };
+  // FIX PASS: hitung berapa manusia yang harus PASS
+  room.passCount = 0;
+  room.passNeeded = room.players.filter(p=>!p.isBot && p.name!==discarder.name).length;
+  room.passedNames = [];
   emitToRoom(room, 'claimAvailable', { tile, from:discarder.name, claims: getClaimsFor(room, tile, discarder.name) });
   // FIX: 8000ms biar sama dengan client (7 detik tombol + 1 detik toleransi)
   setTimeout(()=>{
@@ -400,8 +405,9 @@ io.on('connection', (socket)=>{
 
   socket.on('createRoom', ({ name })=>{
     let code = genCode();
-    let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec:30, turnTimer:null, lastDice:null };
-    let p = { id:socket.id, name:name||'Player', isBot:false, isHost:true, hand:[], melds:[], discards:[], flowers:[], level:'' };
+    let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec:30, turnTimer:null, lastDice:null, passCount:0, passNeeded:0, passedNames:[] };
+    let cleanName = (name||'Player').trim() || 'Player';
+    let p = { id:socket.id, name:cleanName, isBot:false, isHost:true, hand:[], melds:[], discards:[], flowers:[], level:'' };
     room.players.push(p);
     rooms[code]=room;
     socket.join(code);
@@ -415,7 +421,10 @@ io.on('connection', (socket)=>{
     if(!room){ socket.emit('errorMsg', 'Room tidak ditemukan! Cek kode!'); return; }
     if(room.players.length>=4){ socket.emit('errorMsg', 'Room penuh!'); return; }
     if(room.phase==='playing'){ socket.emit('errorMsg', 'Game sudah mulai!'); return; }
-    let p = { id:socket.id, name:name||'Player', isBot:false, isHost:false, hand:[], melds:[], discards:[], flowers:[], level:'' };
+    let cleanName = (name||'Player').trim() || 'Player';
+    // FIX 2: tolak nama kembar - index + server identifikasi pemain pake nama
+    if(room.players.some(x=>x.name===cleanName)){ socket.emit('errorMsg','Nama udah dipake! Ganti nama lain!'); return; }
+    let p = { id:socket.id, name:cleanName, isBot:false, isHost:false, hand:[], melds:[], discards:[], flowers:[], level:'' };
     room.players.push(p);
     socket.join(code);
     socket.emit('joinedRoom', { code, players:publicPlayers(room) });
@@ -426,6 +435,9 @@ io.on('connection', (socket)=>{
   socket.on('addBot', ({ code, level, botName })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
+    // FIX 5: cuma HOST yang bisa tambah bot
+    let me = room.players.find(p=>p.id===socket.id);
+    if(!me || !me.isHost){ socket.emit('errorMsg','Cuma HOST yang bisa tambah BOT!'); return; }
     if(room.players.length>=4){ socket.emit('errorMsg', 'Sudah 4 pemain!'); return; }
     level = normalizeLevel(level);
     let base = (botName||'').trim();
@@ -442,6 +454,8 @@ io.on('connection', (socket)=>{
   socket.on('fillBots', ({ code, level })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
+    let me = room.players.find(p=>p.id===socket.id);
+    if(me && !me.isHost){ socket.emit('errorMsg','Cuma HOST!'); return; }
     level = normalizeLevel(level);
     let fallbacks = ['ANDI','BUDI','SARI','DEWI','EKO','FITRI'];
     while(room.players.length < 4){
@@ -456,6 +470,8 @@ io.on('connection', (socket)=>{
   socket.on('removeBot', ({ code, botName })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
+    let me = room.players.find(p=>p.id===socket.id);
+    if(!me || !me.isHost){ socket.emit('errorMsg','Cuma HOST yang bisa hapus BOT!'); return; }
     let idx = room.players.findIndex(p=>p.isBot && p.name===botName);
     if(idx>=0) room.players.splice(idx,1);
     emitLobby(room);
@@ -480,6 +496,9 @@ io.on('connection', (socket)=>{
   socket.on('startGame', ({ code, turnTimeSec })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
+    // FIX 5: cuma HOST yang bisa mulai
+    let me = room.players.find(p=>p.id===socket.id);
+    if(!me || !me.isHost){ socket.emit('errorMsg','Cuma HOST yang bisa mulai game!'); return; }
     if(room.players.length<2){ socket.emit('errorMsg', 'Minimal 2 pemain buat mulai! Tambah bot!'); return; }
     startGame(room, turnTimeSec);
   });
@@ -542,7 +561,30 @@ io.on('connection', (socket)=>{
     let { tile, from } = room.currentClaim;
     let discarder = room.players.find(x=>x.name===from);
     if(!discarder) return;
-    if(action==='pass'){ return; }
+    // FIX 3: PASS beneran jalan
+    if(action==='pass'){
+      if(!room.passedNames) room.passedNames=[];
+      if(!room.passedNames.includes(p.name)){ room.passedNames.push(p.name); room.passCount = (room.passCount||0)+1; }
+      // Kalau semua manusia udah PASS, cek apakah ada BOT yang bisa claim
+      if((room.passCount||0) >= (room.passNeeded||0)){
+        let discarderIdx = room.players.findIndex(x=>x.name===from);
+        let botCanClaim = false;
+        for(let i=0;i<room.players.length;i++){
+          let b = room.players[i];
+          if(b.name===from || !b.isBot) continue;
+          let isNext = ((discarderIdx+1)%room.players.length)===i;
+          let dec = botDecideClaim(b, tile, isNext);
+          if(dec){ botCanClaim = true; break; }
+        }
+        // Kalau gak ada BOT yang bisa claim, langsung lanjut tanpa nunggu 8 detik
+        if(!botCanClaim){
+          room.waitingClaim=false; room.lastDiscard=null; room.currentClaim=null;
+          advanceTurn(room, discarder);
+        }
+        // Kalau ada BOT yang bisa claim, biarin timeout 8 detik yang urus BOT-nya
+      }
+      return;
+    }
     if(action==='hu'){ doClaim(room, p, 'hu', null, tile, discarder); return; }
     if(action==='chow'){
       let discarderIdx = room.players.findIndex(x=>x.name===from);
