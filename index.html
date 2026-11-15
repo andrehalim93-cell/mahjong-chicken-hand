@@ -540,7 +540,7 @@ if(acts.length) renderActionBar(acts); });
 socket.on('turnChanged', d=>{ 
   socket.on('turnChanged', d=>{
   let t=document.getElementById('turnName');
-  if(t) t.textContent = d.current;
+  if(t) t.textContent = d.turn;
   // ... sisanya buat ganti tulisan Giliran: OPA / PUTRI
 });
   if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
@@ -609,7 +609,7 @@ function renderSeats(players, turn){
     let pos = posMap[idx] || 'top';
     let slot = slots[pos];
     let isTurn = p.name===turn;
-    slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':''}${botDisplayName(p)} • ${p.handCount} tile</div><div class="miniHand" style="display:flex;gap:2px;justify-content:center;flex-wrap:wrap">${Array(Math.min(p.handCount,13)).fill('<div style="width:16px;height:24px;flex:none;overflow:hidden;border-radius:2px;background:#fff"><img src="Back.svg" style="width:100%;height:100%;display:block"></div>').join('')}</div>${p.flowers.length?`<div style="font-size:10px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`;
+    slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':''}${botDisplayName(p)} • ${p.handCount} tile</div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill('<div style="width:16px;height:24px;flex:none;overflow:hidden;border-radius:2px;background:#fff"><img src="Back.svg" style="width:100%;height:100%;display:block"></div>').join('')}</div>${p.flowers.length?`<div class="oppFlower" style="font-size:11px;color:#fbcfe8">🌸 ${p.flowers.length} bunga</div>`:''}`;
     let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join('');
     if(meldHtml && meldSlots[pos]) meldSlots[pos].innerHTML = meldHtml;
   });
