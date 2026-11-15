@@ -128,6 +128,8 @@ input{font-family:inherit}
 #winModal.show{display:flex}
 .winBox{background:linear-gradient(180deg,#fef3c7,#fde68a);color:#422006;border-radius:22px;padding:22px;text-align:center;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.6)}
 .winBox h2{font-size:26px}.winBox p{margin-top:8px;font-size:14px;line-height:1.5}.winBox .btn{margin-top:14px}
+#winHand{gap:10px!important}
+.huGroup{display:flex;gap:3px;background:rgba(255,255,255,.65);border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:4px}
 #toast{position:fixed;left:50%;top:68px;bottom:auto;pointer-events:none;transform:translateX(-50%);background:#111827;border:1px solid #facc15;color:#fde68a;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:800;z-index:200;display:none;max-width:92%;text-align:center}
 #turnPopup{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.8);background:rgba(0,0,0,.85);border:3px solid #facc15;border-radius:20px;padding:18px 28px;text-align:center;z-index:300;display:none;box-shadow:0 20px 50px rgba(0,0,0,.6);transition:.2s}
 #turnPopup.show{display:block;transform:translate(-50%,-50%) scale(1)}
@@ -461,7 +463,51 @@ socket.on('yourHand', d=>{ myHand=d.hand; selectedTile=null; renderMyHand(); if(
 socket.on('turnChanged', d=>{ if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
 socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); if(myClaim){ renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]); } });
 socket.on('meldMade', d=>{ if(d.by===myName) lastDrawnTileId=null; if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); });
-socket.on('gameOver', d=>{ clearInterval(turnTimerInt); playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🐔🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message; let wh=el('winHand'); let wl=el('winMeldLabel'); if(d.hand && d.hand.length){ wh.innerHTML = d.hand.map(function(tt){ return tileHTML(tt); }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = d.hand.length+' tile • '+(d.winner||'')+' • '+(d.melds && d.melds.length ? d.melds.length+' set PONG/CHOW + sisa tangan' : 'Chicken Hand'); } else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; } el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
+function groupHuTiles(tiles){
+  function key(t){ return t.type+'|'+(t.suit??'')+'|'+(t.num??''); }
+  function order(t){ return t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); }
+  let a=[...tiles].sort((x,y)=>{
+    if(order(x)!==order(y)) return order(x)-order(y);
+    if((x.suit??0)!==(y.suit??0)) return (x.suit??0)-(y.suit??0);
+    return (x.num??0)-(y.num??0);
+  });
+  let groups=[];
+  // 1. PONG dulu: 3 tile sama persis
+  for(let i=0;i<a.length;){
+    if(a[i+1] && a[i+2] && key(a[i])===key(a[i+1]) && key(a[i])===key(a[i+2])){
+      groups.push(a.splice(i,3)); continue;
+    }
+    i++;
+  }
+  // 2. CHOW: urut 3, cuma suit (Bambu/Dot/Karakter)
+  let found=true;
+  while(found){
+    found=false;
+    for(let i=0;i<a.length;i++){
+      if(a[i].type!=='suit') continue;
+      let j=a.findIndex((t,idx)=>idx!==i && t.type==='suit' && t.suit===a[i].suit && t.num===a[i].num+1);
+      if(j===-1) continue;
+      let k=a.findIndex((t,idx)=>idx!==i && idx!==j && t.type==='suit' && t.suit===a[i].suit && t.num===a[i].num+2);
+      if(k===-1) continue;
+      let g=[a[i],a[j],a[k]].sort((x,y)=>x.num-y.num);
+      [k,j,i].sort((x,y)=>y-x).forEach(idx=>a.splice(idx,1));
+      groups.push(g); found=true; break;
+    }
+  }
+  // 3. PAIR: 2 tile sama persis
+  for(let i=0;i<a.length;){
+    if(a[i+1] && key(a[i])===key(a[i+1])){
+      groups.push(a.splice(i,2)); continue;
+    }
+    i++;
+  }
+  // 4. Sisa (biar 14 tile gak hilang)
+  while(a.length) groups.push(a.splice(0,3));
+  // Pair (2 tile) paling belakang
+  groups.sort((x,y)=>(x.length===2)-(y.length===2));
+  return groups;
+}
+socket.on('gameOver', d=>{ clearInterval(turnTimerInt); playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🐔🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message; let wh=el('winHand'); let wl=el('winMeldLabel'); if(d.hand && d.hand.length){ wh.innerHTML = groupHuTiles(d.hand).map(function(g){ return '<div class="huGroup">'+g.map(function(tt){ return tileHTML(tt); }).join('')+'</div>'; }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = d.hand.length+' tile • '+(d.winner||'')+' • '+(d.melds && d.melds.length ? d.melds.length+' set PONG/CHOW + sisa tangan' : 'Chicken Hand'); } else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; } el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
 socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden');   el('chatFab').classList.remove('showInGame'); el('chatPanel').classList.remove('show'); chatOpen=false; myHand=[]; myMelds=[]; myFlowers=[]; usedBotNames=[]; if(el('winHand')) el('winHand').innerHTML=''; if(el('winMeldLabel')) el('winMeldLabel').innerText=''; renderMyHand(); });
 function addLog(m){ let l=el('gameLog'); l.innerHTML = m + '<br>' + l.innerHTML; }
 function renderSeats(players, turn){
