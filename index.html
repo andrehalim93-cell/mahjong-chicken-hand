@@ -700,40 +700,57 @@ function groupHuTiles(tiles){
     if((x.suit??0)!==(y.suit??0)) return (x.suit??0)-(y.suit??0);
     return (x.num??0)-(y.num??0);
   });
+
+  // Cari set (Pong/Chow) dengan backtracking, bukan rakus
+  function solveSets(arr){
+    if(!arr.length) return [];
+    let first=arr[0];
+    // Coba Pong dulu
+    let same=arr.filter(t=>key(t)===key(first));
+    if(same.length>=3){
+      let rest=[...arr];
+      for(let n=0;n<3;n++){ let i=rest.findIndex(t=>key(t)===key(first)); rest.splice(i,1); }
+      let r=solveSets(rest);
+      if(r) return [[same[0],same[1],same[2]], ...r];
+    }
+    // Coba Chow
+    if(first.type==='suit'){
+      let i2=arr.findIndex(t=>t.type==='suit'&&t.suit===first.suit&&t.num===first.num+1);
+      let i3=arr.findIndex(t=>t.type==='suit'&&t.suit===first.suit&&t.num===first.num+2);
+      if(i2!==-1 && i3!==-1){
+        let rest=[...arr];
+        let g=[first, arr[i2], arr[i3]].sort((x,y)=>x.num-y.num);
+        [i3,i2,0].sort((x,y)=>y-x).forEach(idx=>rest.splice(idx,1));
+        let r=solveSets(rest);
+        if(r) return [g, ...r];
+      }
+    }
+    return null;
+  }
+
+  // Coba semua kemungkinan Pair, satu-satu. Yang ketemu kombinasi valid, itu yang dipakai.
+  let seen={};
+  for(let i=0;i<a.length;i++){
+    let k=key(a[i]);
+    if(seen[k]) continue;
+    seen[k]=true;
+    let count=a.filter(t=>key(t)===k).length;
+    if(count<2) continue;
+    let rest=[...a];
+    for(let n=0;n<2;n++){ let idx=rest.findIndex(t=>key(t)===k); rest.splice(idx,1); }
+    let sets=solveSets(rest);
+    if(sets){
+      let pair=a.filter(t=>key(t)===k).slice(0,2);
+      let groups=[...sets, pair];
+      // Pong/Chow dulu, Pair paling belakang
+      groups.sort((x,y)=>(x.length===2)-(y.length===2));
+      return groups;
+    }
+  }
+
+  // Fallback kalau gak ketemu (biar 14 tile gak hilang)
   let groups=[];
-  // 1. PONG dulu: 3 tile sama persis
-  for(let i=0;i<a.length;){
-    if(a[i+1] && a[i+2] && key(a[i])===key(a[i+1]) && key(a[i])===key(a[i+2])){
-      groups.push(a.splice(i,3)); continue;
-    }
-    i++;
-  }
-  // 2. CHOW: urut 3, cuma suit (Bambu/Dot/Karakter)
-  let found=true;
-  while(found){
-    found=false;
-    for(let i=0;i<a.length;i++){
-      if(a[i].type!=='suit') continue;
-      let j=a.findIndex((t,idx)=>idx!==i && t.type==='suit' && t.suit===a[i].suit && t.num===a[i].num+1);
-      if(j===-1) continue;
-      let k=a.findIndex((t,idx)=>idx!==i && idx!==j && t.type==='suit' && t.suit===a[i].suit && t.num===a[i].num+2);
-      if(k===-1) continue;
-      let g=[a[i],a[j],a[k]].sort((x,y)=>x.num-y.num);
-      [k,j,i].sort((x,y)=>y-x).forEach(idx=>a.splice(idx,1));
-      groups.push(g); found=true; break;
-    }
-  }
-  // 3. PAIR: 2 tile sama persis
-  for(let i=0;i<a.length;){
-    if(a[i+1] && key(a[i])===key(a[i+1])){
-      groups.push(a.splice(i,2)); continue;
-    }
-    i++;
-  }
-  // 4. Sisa (biar 14 tile gak hilang)
   while(a.length) groups.push(a.splice(0,3));
-  // Pair (2 tile) paling belakang
-  groups.sort((x,y)=>(x.length===2)-(y.length===2));
   return groups;
 }
 socket.on('gameOver', d=>{ clearInterval(turnTimerInt); playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message; let wh=el('winHand'); let wl=el('winMeldLabel'); if(d.hand && d.hand.length){ wh.innerHTML = groupHuTiles(d.hand).map(function(g){ return '<div class="huGroup">'+g.map(function(tt){ return tileHTML(tt); }).join('')+'</div>'; }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = ''; } else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; } el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
