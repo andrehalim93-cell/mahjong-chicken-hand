@@ -127,9 +127,10 @@ function checkHu(hand){
 // FIX BUG 5: HU yang bener kalau udah punya meld (set kebuka)
 function canHuWithMelds(hand, melds){
   melds = melds || [];
-  let tiles = hand.filter(t=>t.type!=='flower');
-  let meldTiles = melds.reduce((s,m)=>s + (m.tiles||[]).length, 0);
-  if(tiles.length + meldTiles !== 14) return false;
+let tiles = hand.filter(t=>t.type!=='flower');
+let kongCount = melds.filter(m=>m.type==='kong').length;
+let meldTiles = melds.reduce((s,m)=>s + (m.type==='kong' ? 3 : (m.tiles||[]).length), 0);
+if(tiles.length + meldTiles !== 14) return false;
   let meldCount = melds.length;
   if(meldCount===0) return checkHu(hand);
   // Coba semua pair di tangan
