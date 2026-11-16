@@ -678,7 +678,7 @@ io.on('connection', (socket)=>{
   if(!p) return;
   if(room.waitingClaim) return;
   if(room.players[room.turnIdx].name!==p.name) return;
-  if(canHuWithMelds(p.hand, p.melds)){ endGameWin(...); }
+  if(canHuWithMelds(p.hand, p.melds)){ endGameWin(room, p.name, `${p.name} SELF HU!`, null); }
   else { socket.emit('errorMsg', 'Server bilang BUKAN HU...'); }
 });
   // An Kong: 4 sama di tangan sendiri habis draw
