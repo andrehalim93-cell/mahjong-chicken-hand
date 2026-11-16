@@ -669,25 +669,21 @@ function canHuLocal(){
   }
   return false;
 }
-socket.on('yourHand', d=>{ myHand=[...new Map((d.hand||[]).map(x=>[x.id,x])).values()]; selectedTile=null; renderMyHand(); // An Kong: cari 4 sama di tangan
-let anKongKey = null;
-{ let cnt={}; myHand.forEach(t=>{ cnt[t.key]=(cnt[t.key]||0)+1; if(cnt[t.key]>=4) anKongKey=t.key; }); }
-// Jia Kong: cari tile di tangan yang sama kayak PONG yang udah kebuka
-let jiaTile = myHand.find(t=>myMelds.some(m=>m.type==='pong' && m.tiles[0].key===t.key));
-let acts = [];
-// KONG sendiri HANYA pas giliran sendiri, bukan pas nunggu
-if(turnName===myName){
-  if(d.canHu) acts.push({type:'selfHu'});
-  if(anKongKey) acts.push({type:'anKong', key:anKongKey});
-  if(jiaTile) acts.push({type:'jiaKong', tile:jiaTile});
-}
-if(acts.length) renderActionBar(acts);
-if(d.canHu || canHuLocal()) acts.push({type:'selfHu'});
-if(anKongKey) acts.push({type:'anKong', key:anKongKey});
-if(jiaTile) acts.push({type:'jiaKong', tile:jiaTile});
-if(acts.length) renderActionBar(acts); });
+socket.on('yourHand', d=>{
+  myHand=[...new Map((d.hand||[]).map(x=>[x.id,x])).values()];
+  selectedTile=null; renderMyHand();
+  let anKongKey = null;
+  { let cnt={}; myHand.forEach(t=>{ cnt[t.key]=(cnt[t.key]||0)+1; if(cnt[t.key]>=4) anKongKey=t.key; }); }
+  let jiaTile = myHand.find(t=>myMelds.some(m=>m.type==='pong' && m.tiles[0].key===t.key));
+  let acts = [];
+  if(isMyTurn){
+    if(d.canHu || canHuLocal()) acts.push({type:'selfHu'});
+    if(anKongKey) acts.push({type:'anKong', key:anKongKey});
+    if(jiaTile) acts.push({type:'jiaKong', tile:jiaTile});
+  }
+  if(acts.length) renderActionBar(acts);
+});
 socket.on('turnChanged', d=>{ 
-  socket.on('turnChanged', d=>{
   let t=document.getElementById('turnName');
   if(t) t.textContent = d.turn;
   // ... sisanya buat ganti tulisan Giliran: OPA / PUTRI
@@ -699,7 +695,7 @@ socket.on('turnChanged', d=>{
     renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]);
   }
 } });
-socket.on('meldMade', d=>{ if(d.by===myName) lastDrawnTileId=null; if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); });
+socket.on('meldMade', d=>{ if(d.by===myName) lastDrawnTileId=null; if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); if(d.by===myName && isMyTurn && canHuLocal()){ renderActionBar([{type:'selfHu'}]); } });
 function groupHuTiles(tiles){
   function key(t){ return t.type+'|'+(t.suit??'')+'|'+(t.num??''); }
   function order(t){ return t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); }
