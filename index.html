@@ -683,11 +683,7 @@ socket.on('yourHand', d=>{
   }
   if(acts.length) renderActionBar(acts);
 });
-socket.on('turnChanged', d=>{ 
-  let t=document.getElementById('turnName');
-  if(t) t.textContent = d.turn;
-  // ... sisanya buat ganti tulisan Giliran: OPA / PUTRI
-});
+socket.on('turnChanged', d=>{
   if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
   socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); console.log('DEBUG CHOW dari server:', d.from, 'ke saya:', myClaim, 'semua claims:', d.claims);
   if(myClaim){
