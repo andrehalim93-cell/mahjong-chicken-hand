@@ -127,10 +127,10 @@ function checkHu(hand){
 // FIX BUG 5: HU yang bener kalau udah punya meld (set kebuka)
 function canHuWithMelds(hand, melds){
   melds = melds || [];
-  let meldCount = melds.length;
   let tiles = hand.filter(t=>t.type!=='flower');
-  // Total harus 14: tangan + meld*3 = 14, dan tangan harus bisa jadi (4-meldCount) set + 1 pair
-  if(tiles.length + meldCount*3 !== 14) return false;
+  let meldTiles = melds.reduce((s,m)=>s + (m.tiles||[]).length, 0);
+  if(tiles.length + meldTiles !== 14) return false;
+  let meldCount = melds.length;
   if(meldCount===0) return checkHu(hand);
   // Coba semua pair di tangan
   let counts = {};
@@ -364,8 +364,11 @@ function handleAfterDiscard(room, discarder, tile){
 function doClaim(room, claimer, action, chowNums, tile, discarder){
   clearTurnTimer(room);
   clearClaimTimer(room);
-  if(action==='hu'){ endGameWin(room, claimer.name, `${claimer.name} HU!`, tile); return; }
-  // ===== KUNCI ATURAN REAL CHOW DI SINI (pintu terakhir, semua jalur lewat sini) =====
+  if(action==='hu'){
+    if(!canHuWithTileAndMelds(claimer.hand, claimer.melds, tile)) return;
+    endGameWin(room, claimer.name, `${claimer.name} HU!`, tile);
+    return;
+  }
   if(action==='chow'){
     // 1. Harus pemain setelah yang buang (pemain sebelumnya yang buang)
     let discarderIdx = room.players.findIndex(p=>p.name===discarder.name);
@@ -381,9 +384,17 @@ function doClaim(room, claimer, action, chowNums, tile, discarder){
   let dIdx = discarder.discards.findIndex(t=>t.id===tile.id);
   if(dIdx>=0) discarder.discards.splice(dIdx,1);
   let need=[];
-  if(action==='kong'){
-  let c = p.hand.filter(t=>t.key===tile.key).length;
+if(action==='kong'){
+  let c = claimer.hand.filter(t=>t.key===tile.key).length;
   if(c<3) return;
+}
+if(action==='pong'){
+  need = claimer.hand.filter(t=>t.key===tile.key).slice(0,2);
+  if(need.length<2) return;
+}
+else if(action==='kong'){
+  need = claimer.hand.filter(t=>t.key===tile.key).slice(0,3);
+  if(need.length<3) return;
 }
   if(action==='pong'){
     need = claimer.hand.filter(t=>t.key===tile.key).slice(0,2);
@@ -660,13 +671,16 @@ io.on('connection', (socket)=>{
     doClaim(room, p, action, chowNums, tile, discarder);
   });
 
-  socket.on('selfHu', ({ code })=>{
-    let room = rooms[(code||'').toUpperCase()];
-    if(!room || room.phase!=='playing') return;
-    let p = room.players.find(x=>x.id===socket.id);
-    if(!p) return;
-    if(canHuWithMelds(p.hand, p.melds)){ endGameWin(room, p.name, `${p.name} HU! Chicken Hand!`); } else { console.log('SELF-HU DITOLAK', p.name, 'hand:', p.hand.map(t=>t.key), 'melds:', JSON.stringify(p.melds)); socket.emit('errorMsg', 'Server bilang BUKAN HU. Hand: '+p.hand.length+' tile, meld: '+p.melds.length+' set'); }
-  });
+  socket.on('selfHu', ({code})=>{
+  let room = rooms[(code||'').toUpperCase()];
+  if(!room || room.phase!=='playing') return;
+  let p = room.players.find(x=>x.id===socket.id);
+  if(!p) return;
+  if(room.waitingClaim) return;
+  if(room.players[room.turnIdx].name!==p.name) return;
+  if(canHuWithMelds(p.hand, p.melds)){ endGameWin(...); }
+  else { socket.emit('errorMsg', 'Server bilang BUKAN HU...'); }
+});
   // An Kong: 4 sama di tangan sendiri habis draw
 socket.on('anKong', ({ code, tileKey })=>{
   let room = rooms[(code||'').toUpperCase()];
