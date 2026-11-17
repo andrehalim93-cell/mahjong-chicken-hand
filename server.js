@@ -665,7 +665,7 @@ socket.on('fillBots', ({ code, level })=>{
     emitLobby(room);
   });
   socket.on('getRooms', ()=>{
-  let list = Object.values(rooms).filter(r=>r.phase==='lobby' && !r.isPrivate).map(r=>({
+  let list = Object.values(rooms).filter(r=>r.phase==='lobby').map(r=>({
     code:r.code, 
     roomName:r.roomName, 
     hostName:r.hostName, 
