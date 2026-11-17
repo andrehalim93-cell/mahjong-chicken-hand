@@ -844,6 +844,28 @@ socket.on('jiaKong', ({ code, tileId })=>{
     emitToRoom(room, 'chatMsg', payload);
     emitToRoom(room, 'tableChatMsg', payload);
   });
+  socket.on('leaveRoom', ({ code })=>{
+    code = (code||'').toUpperCase().trim();
+    let room = rooms[code]; if(!room) return;
+    let idx = room.players.findIndex(p=>p.id===socket.id);
+    if(idx>=0){
+      let left = room.players[idx];
+      room.players.splice(idx,1);
+      socket.leave(code);
+      if(room.players.length===0){
+        clearTurnTimer(room);
+        delete rooms[code];
+      } else {
+        if(left.isHost && room.players.length>0) room.players[0].isHost = true;
+        emitLobby(room);
+        addLog(room, `👋 ${left.name} keluar!`);
+        if(room.phase==='playing'){
+          if(room.turnIdx >= room.players.length) room.turnIdx = 0;
+        }
+      }
+      io.emit('roomListUpdated');
+    }
+  });
 
   socket.on('disconnect', ()=>{
     for(let code in rooms){
