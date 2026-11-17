@@ -549,28 +549,42 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   margin:4px auto !important;
   white-space:nowrap !important;
 }
-/* FIX: nama kiri/kanan horizontal + meld selalu horizontal */
+/* FIX: nama kiri/kanan VERTIKAL, nempel di samping tile */
+.seatPos.left, .seatPos.right{
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: none !important;
+}
+.seatPos.left{
+  left: 6px !important;
+  transform: translateY(-50%) !important;
+}
+.seatPos.right{
+  right: 6px !important;
+  transform: translateY(-50%) !important;
+}
 .seatPos.left .playerChip, .seatPos.right .playerChip{
-  writing-mode: horizontal-tb !important;
+  writing-mode: vertical-rl !important;
   transform: none !important;
   position: relative !important;
   left: auto !important;
   right: auto !important;
   top: auto !important;
   width: auto !important;
-  max-width: 100% !important;
-  padding: 5px 8px !important;
+  max-width: none !important;
+  padding: 10px 6px !important;
   white-space: nowrap !important;
 }
-.seatPos.left, .seatPos.right{
-  display: flex !important;
+.seatPos.left .miniHand, .seatPos.right .miniHand{
   flex-direction: column !important;
-  align-items: center !important;
-  gap: 4px !important;
+  flex-wrap: nowrap !important;
 }
 .meldLeftBottom .meld, .meldRightBottom .meld{
   flex-direction: row !important;
-  gap: 2px !important;
 }
 </style>
 </head>
