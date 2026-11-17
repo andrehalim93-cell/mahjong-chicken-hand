@@ -679,6 +679,15 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   <div style="max-width:560px;margin:14px auto 0;position:sticky;bottom:10px;z-index:10"><button class="btn btn-gold" id="startBtn" onclick="startGame()">🚀 MULAI GAME (MIN 2 PEMAIN)</button><button class="btn btn-dark" onclick="backToHome()">⬅️ KELUAR KE HOME</button></div>
   <div class="smallNote">💡 Tips: Kalau sendirian, pencet <b>ISI FULL BOT</b> biar langsung main lawan 3 bot!<br>Host bisa klik bot buat ngehapus bot.</div>
 </div>
+  <div id="startConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:120;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fef3c7;color:#422006;border-radius:22px;padding:22px;text-align:center;max-width:420px;width:100%">
+    <div style="font-size:48px">⚠️</div>
+    <h2 style="font-size:22px">HU TIDAK DIHITUNG!</h2>
+    <p id="startConfirmText" style="margin-top:8px;font-size:14px;line-height:1.5"></p>
+    <button class="btn btn-gold" style="margin-top:14px" onclick="confirmStartAnyway()">✅ YA, TETAP MAIN</button>
+    <button class="btn btn-dark" onclick="closeStartConfirm()">❌ BATAL, TUNGGU FULL 4 ORANG</button>
+  </div>
+</div>
 <div id="gameScreen" class="hidden">
   <div class="gameTop"><div class="pill">🀄 <b id="gCode">----</b> • 🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div><div class="pill fsPill"><button id="fullBtnInGame" onclick="toggleFull()" class="fsBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">FULL</span></button></div></div>
   <div class="table" id="tableEl">
@@ -1036,7 +1045,37 @@ function closeLeaderboard(){ el('leaderboardModal').style.display = 'none'; }
 function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim().toUpperCase(); let password=el('joinPassInput')?el('joinPassInput').value.trim():''; if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName,password,avatar: currentUser?currentUser.avatar:'🧑'}); }
 function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:myCode, level, botName}); }
 function fillBots(){ let need=4 - (currentPlayers.length||0); if(need<=0) need=3; for(let i=0;i<need;i++){ setTimeout(()=>addBot('normal'), i*150); } }
-function startGame(){ socket.emit('startGame',{code:myCode, turnTimeSec}); }
+// Simpen info lobby terakhir, biar startGame tau mode + jumlah pemain
+let lobbyMode = 'latihan';
+let lobbyPlayerCount = 0;
+
+function startGame(){
+  // Kalau TANDING tapi belum full 4 orang asli -> tampilkan konfirmasi dulu, JANGAN langsung start
+  if(lobbyMode==='tanding' && lobbyPlayerCount < 4){
+    document.getElementById('startConfirmText').innerText =
+      'Mode TANDING, tapi baru ' + lobbyPlayerCount + ' orang yang join.\n\nHU di game ini TIDAK AKAN DIHITUNG ke leaderboard.\nHarus full 4 orang baru HU dihitung.\n\nTetap lanjut main?';
+    let m = document.getElementById('startConfirmModal');
+    m.style.display = 'flex';
+    return; // BERHENTI DI SINI, nunggu user pencet YA / BATAL
+  }
+  // Kalau udah full 4 orang, atau mode LATIHAN -> langsung start kayak biasa
+  doStartGame();
+}
+
+function doStartGame(){
+  document.getElementById('startConfirmModal').style.display = 'none';
+  socket.emit('startGame',{code:myCode, turnTimeSec});
+}
+
+function confirmStartAnyway(){
+  // User pencet YA, TETAP MAIN -> baru start, tapi HU tetap gak dihitung (dijaga server)
+  doStartGame();
+}
+
+function closeStartConfirm(){
+  document.getElementById('startConfirmModal').style.display = 'none';
+  // Balik ke lobby, gak jadi start
+}
 function playAgain(){ socket.emit('playAgain',{code:myCode}); el('winModal').classList.remove('show'); }
 let hasConnectedBefore = false;
 let wasInRoom = false;
@@ -1087,6 +1126,8 @@ socket.on('roomListUpdated', ()=>{ refreshRooms(); });
 socket.on('joinedRoom', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
 socket.on('updateLobby', room=>{
   myCode=room.code; currentPlayers=room.players;
+    lobbyMode = room.mode || 'latihan';
+  lobbyPlayerCount = (room.players||[]).filter(p=>!p.isBot).length;
   if(room.turnTimeSec!==undefined && room.turnTimeSec!==null){
     turnTimeSec=room.turnTimeSec;
     el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s';
