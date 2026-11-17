@@ -867,12 +867,41 @@ socket.on('jiaKong', ({ code, tileId })=>{
       io.emit('roomListUpdated');
     }
   });
-
-  socket.on('disconnect', ()=>{
+  socket.on('rejoinRoom', ({ name, code, avatar })=>{
+    code = (code||'').toUpperCase().trim();
+    let room = rooms[code]; if(!room) return socket.emit('rejoinFailed', 'Meja udah bubar!');
+    let cleanName = (name||'').trim();
+    // Cari pemain lama yang namanya sama + lagi putus
+    let p = room.players.find(x=>x.name===cleanName && x.disconnected);
+    if(!p) return socket.emit('rejoinFailed', 'Kursi kamu udah diambil orang / udah kehapus!');
+    // Balikin kursi: ganti socket.id lama ke yang baru
+    if(p.disconnectTimer){ clearTimeout(p.disconnectTimer); p.disconnectTimer = null; }
+    p.id = socket.id;
+    p.disconnected = false;
+    p.disconnectedAt = null;
+    if(avatar) p.avatar = avatar;
+    socket.join(code);
+    socket.emit('rejoinedRoom', { code, phase: room.phase, players: publicPlayers(room) });
+    emitLobby(room);
+    // Kalau lagi main, kirim lagi tangan dia
+    if(room.phase==='playing') sendHand(room, p);
+    addLog(room, `🔄 ${p.name} nyambung lagi!`);
+    io.emit('roomListUpdated');
+  });
+ socket.on('disconnect', ()=>{
     for(let code in rooms){
       let room = rooms[code];
-      let idx = room.players.findIndex(p=>p.id===socket.id);
-      if(idx>=0){
+      let p = room.players.find(x=>x.id===socket.id);
+      if(!p) continue;
+      // JANGAN langsung hapus. Tandain putus, kasih 30 detik buat balik.
+      p.disconnected = true;
+      p.disconnectedAt = Date.now();
+      addLog(room, `📶 ${p.name} putus... nunggu 30 detik buat balik!`);
+      emitLobby(room);
+      // Kalau 30 detik gak balik, baru beneran hapus
+      p.disconnectTimer = setTimeout(()=>{
+        let idx = room.players.findIndex(x=>x.name===p.name && x.disconnected);
+        if(idx<0) return;
         let left = room.players[idx];
         room.players.splice(idx,1);
         if(room.players.length===0){
@@ -881,7 +910,7 @@ socket.on('jiaKong', ({ code, tileId })=>{
         } else {
           if(left.isHost && room.players.length>0) room.players[0].isHost = true;
           emitLobby(room);
-          addLog(room, `👋 ${left.name} keluar!`);
+          addLog(room, `👋 ${left.name} keluar! (gak balik 30 detik)`);
           if(room.phase==='playing'){
             if(room.turnIdx >= room.players.length) room.turnIdx = 0;
             if(room.players[room.turnIdx] && room.players[room.turnIdx].name===left.name){
@@ -889,8 +918,9 @@ socket.on('jiaKong', ({ code, tileId })=>{
             }
           }
         }
-        break;
-      }
+        io.emit('roomListUpdated');
+      }, 30000);
+      break;
     }
   });
 });
