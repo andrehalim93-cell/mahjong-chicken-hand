@@ -105,6 +105,14 @@ app.get('/api/get-hu', async (req,res)=>{
   let { data:u } = await supabase.from('users').select('hu').eq('id', req.query.id).maybeSingle();
   res.json({ok:true, hu: u?.hu||0});
 });
+app.get('/api/leaderboard', async (req,res)=>{
+  try{
+    let { data, error } = await supabase.from('users').select('id, display_name, avatar, hu').order('hu', { ascending:false }).limit(1000);
+    if(error) throw error;
+    let users = (data||[]).map(u=>({ id:u.id, display_name:u.display_name, avatar:u.avatar||'🧑', hu:u.hu||0 }));
+    res.json({ ok:true, users });
+  }catch(e){ console.log('LEADERBOARD EX:', e); res.json({ ok:false, users:[] }); }
+});
 app.post('/api/change-avatar', async (req,res)=>{
   await supabase.from('users').update({ avatar:req.body.avatar }).eq('id', req.body.id);
   res.json({ok:true});
@@ -657,7 +665,7 @@ socket.on('fillBots', ({ code, level })=>{
     emitLobby(room);
   });
   socket.on('getRooms', ()=>{
-  let list = Object.values(rooms).filter(r=>r.phase==='lobby').map(r=>({
+  let list = Object.values(rooms).filter(r=>r.phase==='lobby' && !r.isPrivate).map(r=>({
     code:r.code, 
     roomName:r.roomName, 
     hostName:r.hostName, 
