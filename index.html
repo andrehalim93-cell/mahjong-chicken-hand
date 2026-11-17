@@ -916,7 +916,7 @@ function openCreateModal(){ if(!currentUser) return showErr('Login dulu!'); el('
 function closeCreateModal(){ el('createRoomModal').style.display='none'; }
 function pickMode(m){ selectedMode=m; el('modeLatihan').className=m==='latihan'?'btn btn-gold':'btn btn-dark'; el('modeTanding').className=m==='tanding'?'btn btn-gold':'btn btn-dark'; }
 function pickPrivate(v){ selectedPrivate=v; el('privNo').className=!v?'btn btn-gold':'btn btn-dark'; el('privYes').className=v?'btn btn-gold':'btn btn-dark'; el('passBox').style.display=v?'block':'none'; }
-function submitCreateRoom(){ if(!currentUser) return showErr('Login dulu!'); myName=currentUser.display_name; let roomName=el('inputRoomName').value.trim()||('Meja '+myName); let password=selectedPrivate?el('inputRoomPass').value.trim():''; if(selectedPrivate && !password) return showErr('Isi password meja!'); closeCreateModal(); socket.emit('createRoom',{name:myName, roomName, mode:selectedMode, isPrivate:selectedPrivate, password}); }
+function submitCreateRoom(){ if(!currentUser) return showErr('Login dulu!'); myName=currentUser.display_name; let roomName=el('inputRoomName').value.trim()||('Meja '+myName); let password=selectedPrivate?el('inputRoomPass').value.trim():''; if(selectedPrivate && !password) return showErr('Isi password meja!'); closeCreateModal(); socket.emit('createRoom',{name:myName, roomName, mode:selectedMode, isPrivate:selectedPrivate, password, avatar: currentUser ? currentUser.avatar : '🧑'}); }
 // ===== MEJA PUBLIK + LEADERBOARD =====
 function refreshRooms(){ if(typeof socket!=='undefined' && socket) socket.emit('getRooms'); }
 function joinPublicRoom(code, isPrivate){
