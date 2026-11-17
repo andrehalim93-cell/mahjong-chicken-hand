@@ -662,6 +662,78 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 .meldLeftBottom .meld, .meldRightBottom .meld, .meldTopRight .meld{
   display:flex !important; flex-direction:row !important; gap:2px !important;
 }
+/* ===== FINAL FIX V21 - SESUAI DENAH GAMBAR, JANGAN DITAMBAH LAGI DI ATAS ===== */
+/* KUNCI: .myArea / .myHand / .meldsRow / .flowersRow / .actionBar TIDAK DIUBAH */
+.table{overflow:hidden !important}
+/* --- TILE KECILIN (hanya lawan + meld + buangan di meja, BUKAN tangan kita) --- */
+.seatPos .miniHand > div{width:12px !important;height:18px !important;flex:none !important}
+.seatPos .miniHand > div img{width:100% !important;height:100% !important}
+.meldZone .meld{padding:2px !important;gap:1px !important}
+.meldZone .meld .mTile,.meldZone .meld .t{width:14px !important;height:20px !important;flex:none !important}
+.meldZone .meld .mTile .face,.meldZone .meld .t .face{width:100% !important;height:100% !important}
+.meldZone .meld .face .bigChar{font-size:9px !important}
+.meldZone .meld .face .charTop,.meldZone .meld .face .charWan{font-size:8px !important}
+.meldZone .meld .face .dot{width:3px !important;height:3px !important}
+.meldZone .meld .face .stick{width:2px !important;height:6px !important}
+.meldZone .meld .face .lbl{display:none !important}
+/* --- ATAS: Nama -> Tile -> Bunga -> Meld atas (dari atas ke bawah) --- */
+.seatPos.top{top:2px !important;left:50% !important;transform:translateX(-50%) !important;width:auto !important;max-width:92% !important;display:flex !important;flex-direction:column !important;align-items:center !important;gap:2px !important;z-index:5 !important}
+.seatPos.top .playerChip{order:1 !important;writing-mode:horizontal-tb !important;transform:none !important;position:static !important;max-width:220px !important;padding:4px 10px !important;font-size:11px !important}
+.seatPos.top .miniHand{order:2 !important;display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important;gap:1px !important;margin:0 !important;justify-content:center !important}
+.seatPos.top .oppFlower{order:3 !important;writing-mode:horizontal-tb !important;transform:none !important;position:static !important;margin:0 !important;font-size:10px !important;white-space:nowrap !important}
+/* --- KIRI: dari luar ke dalam = Nama | Tile | Bunga | Meld kiri --- */
+.seatPos.left{left:2px !important;top:50% !important;transform:translateY(-50%) !important;width:auto !important;display:flex !important;flex-direction:row !important;align-items:center !important;gap:3px !important;z-index:5 !important}
+.seatPos.left .playerChip{order:1 !important;writing-mode:vertical-rl !important;transform:none !important;position:static !important;width:24px !important;max-width:24px !important;padding:8px 4px !important;font-size:11px !important;white-space:nowrap !important;justify-content:center !important}
+.seatPos.left .miniHand{order:2 !important;display:flex !important;flex-direction:column !important;flex-wrap:nowrap !important;gap:1px !important;margin:0 !important}
+.seatPos.left .oppFlower{order:3 !important;writing-mode:vertical-rl !important;transform:none !important;position:static !important;margin:0 !important;font-size:10px !important;white-space:nowrap !important}
+/* --- KANAN: cermin kiri, dari luar ke dalam = Nama | Tile | Bunga | Meld kanan --- */
+.seatPos.right{right:2px !important;top:50% !important;transform:translateY(-50%) !important;width:auto !important;display:flex !important;flex-direction:row !important;align-items:center !important;gap:3px !important;z-index:5 !important}
+.seatPos.right .playerChip{order:3 !important;writing-mode:vertical-rl !important;transform:none !important;position:static !important;width:24px !important;max-width:24px !important;padding:8px 4px !important;font-size:11px !important;white-space:nowrap !important;justify-content:center !important}
+.seatPos.right .miniHand{order:2 !important;display:flex !important;flex-direction:column !important;flex-wrap:nowrap !important;gap:1px !important;margin:0 !important}
+.seatPos.right .oppFlower{order:1 !important;writing-mode:vertical-rl !important;transform:none !important;position:static !important;margin:0 !important;font-size:10px !important;white-space:nowrap !important}
+/* --- MELD: wadah numpuk, isi tiap meld jejer horizontal --- */
+.meldZone{z-index:4 !important;display:flex !important;gap:4px !important}
+.meldZone .meld{display:flex !important;flex-direction:row !important;flex-wrap:nowrap !important}
+.meldTopRight{top:66px !important;left:50% !important;transform:translateX(-50%) !important;flex-direction:row !important;flex-wrap:nowrap !important;justify-content:center !important;width:auto !important;max-width:92% !important}
+.meldLeftBottom{left:72px !important;top:50% !important;transform:translateY(-50%) !important;bottom:auto !important;flex-direction:column !important;gap:4px !important;width:auto !important;max-width:110px !important;max-height:300px !important}
+.meldRightBottom{right:72px !important;left:auto !important;top:50% !important;transform:translateY(-50%) !important;bottom:auto !important;flex-direction:column !important;gap:4px !important;width:auto !important;max-width:110px !important;max-height:300px !important;align-items:flex-end !important}
+/* --- TENGAH: buangan PC di tengah, buangan HP tepat di bawahnya --- */
+.centerBox{top:44% !important;left:50% !important;transform:translate(-50%,-50%) !important;width:210px !important;max-width:62% !important;z-index:3 !important}
+.centerBox .poolCenter .mTile,.centerBox .poolCenter .t{width:16px !important;height:22px !important}
+.poolAllBottom{display:block !important;top:54% !important;bottom:auto !important;left:50% !important;transform:translateX(-50%) !important;width:250px !important;max-width:72% !important;max-height:96px !important;overflow:hidden !important;z-index:3 !important;background:rgba(0,0,0,.25) !important;padding:4px !important}
+.poolAllBottom .mTile{width:16px !important;height:22px !important}
+.poolAllBottom .mTile .face .bigChar{font-size:9px !important}
+.poolAllBottom .mTile .face .dot{width:3px !important;height:3px !important}
+.poolAllBottom .mTile .face .stick{width:2px !important;height:6px !important}
+/* ===== V22 - NAMA DILUAR MEJA (atas/kiri/kanan) ===== */
+.gameWrap{padding:34px 38px 6px 38px !important;overflow:visible !important}
+.table{overflow:visible !important}
+/* ATAS: nama di atas meja */
+.seatPos.top{overflow:visible !important}
+.seatPos.top .playerChip{
+  position:absolute !important; left:50% !important; top:-30px !important;
+  transform:translateX(-50%) !important;
+  writing-mode:horizontal-tb !important; white-space:nowrap !important;
+  z-index:20 !important;
+}
+/* KIRI: nama di kiri luar meja, vertikal */
+.seatPos.left{overflow:visible !important}
+.seatPos.left .playerChip{
+  position:absolute !important; left:-32px !important; top:50% !important;
+  transform:translateY(-50%) !important;
+  writing-mode:vertical-rl !important; white-space:nowrap !important;
+  width:24px !important; padding:8px 4px !important;
+  z-index:20 !important;
+}
+/* KANAN: nama di kanan luar meja, vertikal */
+.seatPos.right{overflow:visible !important}
+.seatPos.right .playerChip{
+  position:absolute !important; right:-32px !important; top:50% !important;
+  transform:translateY(-50%) !important;
+  writing-mode:vertical-rl !important; white-space:nowrap !important;
+  width:24px !important; padding:8px 4px !important;
+  z-index:20 !important;
+}
 </style>
 </head>
 <body>
