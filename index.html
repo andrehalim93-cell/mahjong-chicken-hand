@@ -629,8 +629,9 @@ function loginSuccess(user, passwordForSave){
     localStorage.setItem('mahjong_user', JSON.stringify(user));
     localStorage.setItem('mahjong_saved_login', JSON.stringify({id:user.id, password:passwordForSave||''}));
   } else {
-    sessionStorage.setItem('mahjong_user', JSON.stringify(user));
-    localStorage.removeItem('mahjong_saved_login');
+    // GAK DISIMPEN SAMA SEKALI, jadi refresh / close langsung logout
+    // Cuma simpen ID + Pass buat auto-isi form
+    localStorage.setItem('mahjong_saved_login', JSON.stringify({id:user.id, password:passwordForSave||''}));
   }
   if(el('nameInput')){ el('nameInput').value = user.display_name; el('nameInput').readOnly = true; }
   if(el('homeUserLabel')) el('homeUserLabel').innerText = user.avatar+' '+user.display_name+' ('+user.id+')';
@@ -653,7 +654,7 @@ function doLogout(){
 }
 function checkSavedLogin(){
   try{
-    let s = localStorage.getItem('mahjong_user') || sessionStorage.getItem('mahjong_user');
+    let s = localStorage.getItem('mahjong_user'); // cuma cek yang Save aja
     let saved = localStorage.getItem('mahjong_saved_login');
     if(saved){ let c=JSON.parse(saved); if(el('loginId')) el('loginId').value=c.id; if(el('loginPass')) el('loginPass').value=c.password; }
     if(!s){ renderAvatarPick(); return; }
