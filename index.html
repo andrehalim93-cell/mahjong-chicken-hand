@@ -600,6 +600,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 }
 .meldLeftBottom .meld, .meldRightBottom .meld{
   flex-direction: row !important;
+}
 .seatPos.left .oppFlower, .seatPos.right .oppFlower{
   writing-mode: vertical-rl !important;
   white-space: nowrap !important;
@@ -618,6 +619,48 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   position: relative !important;
   writing-mode: horizontal-tb !important;
   white-space: nowrap !important;
+}
+/* ===== FINAL FIX V20 - Nama Tile Bunga, Meld horizontal ===== */
+.seatPos.top{
+  display:flex !important; flex-direction:column !important;
+  align-items:center !important; gap:4px !important;
+}
+.seatPos.top .playerChip{ order:1 !important; writing-mode:horizontal-tb !important; }
+.seatPos.top .miniHand{ order:2 !important; flex-direction:row !important; }
+.seatPos.top .oppFlower{
+  order:3 !important; writing-mode:horizontal-tb !important;
+  transform:none !important; position:static !important;
+}
+.seatPos.left{
+  display:flex !important; flex-direction:row !important;
+  align-items:center !important; gap:6px !important;
+  width:auto !important; left:6px !important;
+  transform:translateY(-50%) !important;
+}
+.seatPos.right{
+  display:flex !important; flex-direction:row-reverse !important;
+  align-items:center !important; gap:6px !important;
+  width:auto !important; right:6px !important;
+  transform:translateY(-50%) !important;
+}
+.seatPos.left .playerChip, .seatPos.right .playerChip{
+  writing-mode:vertical-rl !important; transform:none !important;
+  position:relative !important; left:auto !important; right:auto !important;
+  top:auto !important; width:auto !important; max-width:none !important;
+  padding:10px 6px !important; white-space:nowrap !important;
+}
+.seatPos.left .miniHand, .seatPos.right .miniHand{
+  flex-direction:column !important; flex-wrap:nowrap !important;
+}
+.seatPos.left .oppFlower, .seatPos.right .oppFlower{
+  writing-mode:vertical-rl !important; transform:none !important;
+  position:static !important; white-space:nowrap !important;
+}
+.meldLeftBottom, .meldRightBottom{
+  display:flex !important; flex-direction:column !important; gap:6px !important;
+}
+.meldLeftBottom .meld, .meldRightBottom .meld, .meldTopRight .meld{
+  display:flex !important; flex-direction:row !important; gap:2px !important;
 }
 </style>
 </head>
