@@ -676,8 +676,37 @@ function loginSuccess(user, passwordForSave){
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
   toast('Halo '+user.avatar+' '+user.display_name+'!');
+  setTimeout(()=>{ openProfile(); }, 400);
 }
-function doLogout(){
+let profileAvatars = ['🧑','👦','👧','👨','👩','🧔','👱‍♀️','👱','😎','🤠','👑','🐔','🦁','🐯','🐼','🦊','🐲','🤖','👻','🎭'];
+async function openProfile(){
+  if(!currentUser) return;
+  el('profileAvatarBig').innerText = currentUser.avatar || '🧑';
+  el('profileName').innerText = currentUser.display_name || '-';
+  el('profileId').innerText = '@' + currentUser.id;
+  el('profileHu').innerText = '🏆 TOTAL HU TANDING: ' + (currentUser.hu ?? 0);
+  let pick = el('profileAvatarPick'); pick.innerHTML = '';
+  profileAvatars.forEach(a=>{
+    let b = document.createElement('button');
+    b.innerText = a; b.style.cssText = 'font-size:28px;background:'+(a===currentUser.avatar?'#facc15':'#1e293b')+';border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:6px 10px;cursor:pointer';
+    b.onclick = ()=>changeAvatar(a);
+    pick.appendChild(b);
+  });
+  el('profileModal').style.display = 'flex';
+  try{
+    let r = await fetch('/api/get-hu?id=' + currentUser.id);
+    let j = await r.json();
+    if(j.ok){ currentUser.hu = j.hu; el('profileHu').innerText = '🏆 TOTAL HU TANDING: ' + j.hu; }
+  }catch(e){}
+}
+function closeProfile(){ el('profileModal').style.display = 'none'; }
+async function changeAvatar(a){
+  currentUser.avatar = a; el('profileAvatarBig').innerText = a;
+  if(el('homeUserLabel')) el('homeUserLabel').innerText = a + ' ' + currentUser.display_name + ' (' + currentUser.id + ')';
+  try{ await fetch('/api/change-avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, avatar: a})}); }catch(e){}
+  openProfile();
+}
+  function doLogout(){
   currentUser = null;
   localStorage.removeItem('mahjong_user');
   sessionStorage.removeItem('mahjong_user');
