@@ -645,7 +645,7 @@ function el(id){ return document.getElementById(id); }
 // ============ AUTH JS ============
 let currentUser = null;
 let regGender = 'male';
-let regAvatar = '🀄';
+let regAvatar = '/avatars/pria1.png';
 let AVATARS = ['/avatars/pria1.png','/avatars/pria2.png','/avatars/pria3.png','/avatars/pria4.png','/avatars/pria5.png','/avatars/wanita1.png','/avatars/wanita2.png','/avatars/wanita3.png','/avatars/wanita4.png','/avatars/wanita5.png'];
 function avatarHTML(a, size){
   size = size || 32;
@@ -681,8 +681,8 @@ async function doRegister(){
   let j = await r.json();
   if(!j.ok) return showAuthErr(j.error||'Gagal daftar!');
   if(el('saveLogin')) el('saveLogin').checked = true;
-  loginSuccess(j.user, password);
-  showAuthOk('Daftar berhasil!');
+  loginSuccess(j.user, password, false);
+  toast('Daftar berhasil! Selamat datang!');
 }
 async function doLogin(){
   let id = el('loginId').value.trim().toLowerCase();
@@ -691,9 +691,9 @@ async function doLogin(){
   let r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password})});
   let j = await r.json();
   if(!j.ok) return showAuthErr(j.error||'Gagal login!');
-  loginSuccess(j.user, password);
+  loginSuccess(j.user, password, true);
 }
-function loginSuccess(user, passwordForSave){
+function loginSuccess(user, passwordForSave, showProfile){
   currentUser = user;
   let save = el('saveLogin') ? el('saveLogin').checked : false;
   // JANGAN PERNAH simpen user-nya, biar refresh / close selalu logout
@@ -711,7 +711,7 @@ function loginSuccess(user, passwordForSave){
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
   toast('Halo '+user.display_name+'!');
-  setTimeout(()=>{ openProfile(); }, 400);
+  if(showProfile) setTimeout(()=>{ openProfile(); }, 400);
   refreshRooms();
 }
 let profileAvatars = AVATARS;
