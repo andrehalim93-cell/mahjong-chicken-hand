@@ -691,7 +691,7 @@ function renderAvatarPick(){
   box.innerHTML = AVATARS.map(a=>`<button type="button" onclick="pickAvatar('${a}',this)" style="width:40px;height:40px;border-radius:10px;background:${a===regAvatar?'#facc15':'rgba(0,0,0,.4)'};border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0">${avatarHTML(a,40)}</button>`).join('');
 }
 function pickAvatar(a, btn){ regAvatar = a; renderAvatarPick(); }
-function showAuthErr(m){ let e=el('authErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',3500); }
+function showAuthErr(m){ let e=el('authErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',10000); }
 function showAuthOk(m){ let e=el('authOk'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',2500); }
 async function doRegister(){
   let id = el('regId').value.trim().toLowerCase();
@@ -706,13 +706,20 @@ async function doRegister(){
   toast('Daftar berhasil! Selamat datang!');
 }
 async function doLogin(){
-  let id = el('loginId').value.trim().toLowerCase();
-  let password = el('loginPass').value;
-  if(!id || !password) return showAuthErr('Isi ID & Password dulu!');
-  let r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password})});
-  let j = await r.json();
-  if(!j.ok) return showAuthErr(j.error||'Gagal login!');
-  loginSuccess(j.user, password, true);
+  try{
+    let id = el('loginId').value.trim().toLowerCase();
+    let password = el('loginPass').value;
+    if(!id || !password) return showAuthErr('Isi ID & Password dulu!');
+    let r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password})});
+    let txt = await r.text();
+    let j;
+    try{ j = JSON.parse(txt); }catch(e){ return showAuthErr('Server error! Cek Render Logs. Respon server: ' + txt.slice(0,100)); }
+    if(!j.ok) return showAuthErr(j.error||'Gagal login! (kode ' + r.status + ')');
+    loginSuccess(j.user, password, true);
+  }catch(e){
+    console.log('LOGIN GAGAL:', e);
+    showAuthErr('Gak bisa nyambung ke server! Cek internet / Render lagi tidur. Coba refresh 1x lagi. (' + e.message + ')');
+  }
 }
 function loginSuccess(user, passwordForSave, showProfile){
   currentUser = user;
