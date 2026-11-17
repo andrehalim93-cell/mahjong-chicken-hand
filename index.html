@@ -1009,10 +1009,10 @@ socket.on('rejoinFailed', m=>{
   // Meja udah bubar / kursi udah kehapus, balik ke Home aja, tetep login
   backToHome();
 });
-socket.on('roomCreated', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); // kode meja udah gak dipake, gak ditampilin lagi el('chatFab').classList.add('showInLobby'); });
+socket.on('roomCreated', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
 socket.on('roomList', d=>{ renderPublicRooms(d); });
 socket.on('roomListUpdated', ()=>{ refreshRooms(); });
-socket.on('joinedRoom', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); // kode meja udah gak dipake, gak ditampilin lagi el('chatFab').classList.add('showInLobby'); });
+socket.on('joinedRoom', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
 socket.on('updateLobby', room=>{
   myCode=room.code; currentPlayers=room.players;
   if(room.turnTimeSec!==undefined && room.turnTimeSec!==null){
