@@ -856,8 +856,17 @@ socket.on('jiaKong', ({ code, tileId })=>{
       if(room.players.length===0){
         clearTurnTimer(room);
         delete rooms[code];
-      } else {
-        if(left.isHost && room.players.length>0) room.players[0].isHost = true;
+            } else {
+        // Kalau udah gak ada manusia, hapus meja + semua BOT-nya, jangan ditinggal zombie
+        let humansLeft = room.players.filter(p=>!p.isBot);
+        if(humansLeft.length===0){
+          clearTurnTimer(room);
+          delete rooms[code];
+          io.emit('roomListUpdated');
+          return;
+        }
+        // Kalau host keluar, oper ke MANUSIA pertama, JANGAN ke BOT
+        if(left.isHost) humansLeft[0].isHost = true;
         emitLobby(room);
         addLog(room, `👋 ${left.name} keluar!`);
         if(room.phase==='playing'){
@@ -907,8 +916,15 @@ socket.on('jiaKong', ({ code, tileId })=>{
         if(room.players.length===0){
           clearTurnTimer(room);
           delete rooms[code];
-        } else {
-          if(left.isHost && room.players.length>0) room.players[0].isHost = true;
+              } else {
+          let humansLeft = room.players.filter(p=>!p.isBot);
+          if(humansLeft.length===0){
+            clearTurnTimer(room);
+            delete rooms[code];
+            io.emit('roomListUpdated');
+            return;
+          }
+          if(left.isHost) humansLeft[0].isHost = true;
           emitLobby(room);
           addLog(room, `👋 ${left.name} keluar! (gak balik 30 detik)`);
           if(room.phase==='playing'){
