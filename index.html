@@ -319,8 +319,28 @@ input{font-family:inherit}
 .seatPos.top .playerChip{ order:1 !important; }
 .seatPos.top .miniHand{ order:3 !important; }
 /* Kiri/kanan: bunga di LUAR miniHand, di samping nama, bukan di atasnya */
-.seatPos.left .oppFlower{ position:absolute !important; left:-30px !important; top:calc(50% + 70px) !important; writing-mode:vertical-rl !important; transform:translateY(-50%) rotate(180deg) !important; font-size:11px !important; white-space:nowrap !important; }
-.seatPos.right .oppFlower{ position:absolute !important; right:-30px !important; top:calc(50% + 70px) !important; writing-mode:vertical-rl !important; transform:translateY(-50%) !important; font-size:11px !important; white-space:nowrap !important; }
+.seatPos.right .oppFlower, .seatPos.left .oppFlower, .seatPos.top .oppFlower{
+  position:static !important;
+  writing-mode:horizontal-tb !important;
+  transform:none !important;
+  margin:4px auto !important;
+  white-space:nowrap !important;
+}
+.seatPos.right, .seatPos.left{
+  width:170px !important;
+  z-index:5 !important;
+}
+.playerChip{
+  display:flex !important;
+  align-items:center !important;
+  gap:5px !important;
+  white-space:nowrap !important;
+  max-width:170px !important;
+}
+.playerChip img{
+  display:inline-block !important;
+  flex:none !important;
+}
 /* --- Meld: tanpa rotate kotak --- */
 .meldZone{ z-index:4 !important; }
 .meldTopRight{ top:92px !important; left:50% !important; transform:translateX(-50%) !important; width:auto !important; max-width:520px !important; flex-direction:row !important; flex-wrap:nowrap !important; gap:4px !important; justify-content:center !important; }
@@ -949,7 +969,7 @@ function submitCreateRoom(){ if(!currentUser) return showErr('Login dulu!'); myN
 // ===== MEJA PUBLIK + LEADERBOARD =====
 function refreshRooms(){ if(typeof socket!=='undefined' && socket) socket.emit('getRooms'); }
 function joinPublicRoom(code, isPrivate){
-  let myName = el('nameInput').value.trim();
+  myName = el('nameInput').value.trim() || (currentUser ? currentUser.display_name : '');
   if(!myName) return showErr('Isi nama dulu!');
   let password = '';
   if(isPrivate){
