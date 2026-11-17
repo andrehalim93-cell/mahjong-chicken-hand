@@ -773,8 +773,40 @@ document.addEventListener('fullscreenchange', ()=>{
 function botDisplayName(p){ return esc(p.name); }
 function randomBotName(){ let pool=BOT_NAMES.filter(n=>!usedBotNames.includes(n) && n!==myName); if(pool.length===0) pool=BOT_NAMES.slice(); let n=pool[Math.floor(Math.random()*pool.length)]; usedBotNames.push(n); return n; }
 function setTurnTime(sec, btn){ if(!isHost){ toast('Cuma HOST yang bisa ganti waktu!'); return; } turnTimeSec=sec; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); el('timeInfo').innerText = sec===0 ? 'Saat ini: Tanpa batas' : 'Saat ini: '+sec+' detik per giliran'; el('turnTimer').innerText = sec===0 ? '♾️' : sec+'s'; socket.emit('setTurnTime',{code:myCode, seconds:sec}); }
+let meldPopupTimer=null;
+function showMeldPopup(by, meld){
+  let p = el('meldPopup'); if(!p || !meld) return;
+  let pl = (currentPlayers||[]).find(x=>x.name===by);
+  el('meldAvatar').innerText = pl && pl.avatar ? pl.avatar : '🧑';
+  el('meldName').innerText = by===myName ? 'KAMU! 🔥' : by;
+  let act = (meld.type||'').toLowerCase();
+  if(act==='pong'){ el('meldAction').innerText = '🃏 PONG!'; el('meldAction').style.color = '#fb923c'; }
+  else if(act==='chow'){ el('meldAction').innerText = '🃏 CHOW!'; el('meldAction').style.color = '#60a5fa'; }
+  else if(act==='kong'){ el('meldAction').innerText = '🀄 KONG!'; el('meldAction').style.color = '#facc15'; }
+  else { el('meldAction').innerText = act.toUpperCase()+'!'; }
+  el('meldTiles').innerHTML = (meld.tiles||[]).map(t=>tileHTML(t)).join('');
+  p.style.display = 'block';
+  if(meldPopupTimer) clearTimeout(meldPopupTimer);
+  meldPopupTimer = setTimeout(()=>{ p.style.display = 'none'; }, 3000);
+}
 let turnPopupTimer=null; function showTurnPopup(name){ let p=el('turnPopup'); el('turnPopupName').innerText = name===myName ? 'KAMU! 🔥' : name; el('turnPopupSub').innerText = name===myName ? 'Giliran kamu! Buang 1 tile!' : 'Tunggu '+name+' buang tile...'; p.classList.add('show'); if(turnPopupTimer) clearTimeout(turnPopupTimer); turnPopupTimer=setTimeout(()=>p.classList.remove('show'), 900); }
-function startTurnTimer(){ clearInterval(turnTimerInt); if(turnTimeSec===0){ el('turnTimer').innerText='♾️'; return; } turnLeft=turnTimeSec; el('turnTimer').innerText=turnLeft+'s'; turnTimerInt=setInterval(()=>{ turnLeft--; if(turnLeft<=0){ clearInterval(turnTimerInt); el('turnTimer').innerText='0s'; } else { el('turnTimer').innerText=turnLeft+'s'; } },1000); }
+function startTurnTimer(){
+  clearInterval(turnTimerInt);
+  let cd = el('turnCountdown'); if(cd) cd.style.display = 'none';
+  if(turnTimeSec===0){ el('turnTimer').innerText='♾️'; return; }
+  turnLeft = turnTimeSec;
+  el('turnTimer').innerText = turnLeft+'s';
+  turnTimerInt = setInterval(()=>{
+    turnLeft--;
+    if(turnLeft<=0){ clearInterval(turnTimerInt); el('turnTimer').innerText='0s'; if(cd) cd.style.display='none'; }
+    else {
+      el('turnTimer').innerText = turnLeft+'s';
+      if(turnLeft<=5 && turnLeft>=0){
+        if(cd){ cd.style.display='block'; el('turnCountdownNum').innerText = turnLeft; }
+      } else { if(cd) cd.style.display='none'; }
+    }
+  },1000);
+}
 function showDiceRoll(firstPlayer, serverDice){ let m=el('diceModal'); m.classList.add('show'); let d1=el('dice1'), d2=el('dice2'); d1.classList.add('rolling'); d2.classList.add('rolling'); el('diceText').innerText='Menentukan siapa yang mulai duluan...'; el('diceTotal').innerText='Total: -'; el('diceWinner').innerText=''; let ticks=0; let iv=setInterval(()=>{ let a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6); d1.innerText=DICE_FACES[a]; d2.innerText=DICE_FACES[b]; ticks++; if(ticks>12){ clearInterval(iv); d1.classList.remove('rolling'); d2.classList.remove('rolling'); let finalA = serverDice ? serverDice.d1 : a; let finalB = serverDice ? serverDice.d2 : b; d1.innerText=DICE_FACES[finalA]; d2.innerText=DICE_FACES[finalB]; let total=finalA+finalB; el('diceTotal').innerText='Total: '+total+' ('+finalA+' + '+finalB+')'; el('diceWinner').innerText = firstPlayer ? '🎯 '+firstPlayer+' jalan duluan!' : '🎯 Giliran pertama dimulai!'; setTimeout(()=>m.classList.remove('show'), 1400); } },140); }
 let mjAudio = null;
 function playMjSound(type){
@@ -962,7 +994,7 @@ socket.on('turnChanged', d=>{
     renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]);
   }
 } });
-socket.on('meldMade', d=>{ if(d.by===myName) lastDrawnTileId=null; if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); if(d.by===myName && isMyTurn && canHuLocal()){ renderActionBar([{type:'selfHu'}]); } });
+socket.on('meldMade', d=>{ if(d.by===myName) lastDrawnTileId=null; showMeldPopup(d.by, d.meld); if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); currentPlayers=d.players; addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); if(d.by===myName && isMyTurn && canHuLocal()){ renderActionBar([{type:'selfHu'}]); } });
 function groupHuTiles(tiles){
   function key(t){ return t.type+'|'+(t.suit??'')+'|'+(t.num??''); }
   function order(t){ return t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); }
@@ -1028,7 +1060,7 @@ socket.on('youHu', async d=>{
   try{ await fetch('/api/add-hu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, mode: d.mode})}); }catch(e){}
   if(d.mode==='tanding') toast('🏆 HU TANDING dicatat! +1 HU');
 });
-socket.on('gameOver', d=>{ clearInterval(turnTimerInt); playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message; let wh=el('winHand'); let wl=el('winMeldLabel'); if(d.hand && d.hand.length){ wh.innerHTML = groupHuTiles(d.hand).map(function(g){ return '<div class="huGroup">'+g.map(function(tt){ return tileHTML(tt); }).join('')+'</div>'; }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = ''; } else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; } el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
+socket.on('gameOver', d=>{ clearInterval(turnTimerInt);  if(el('turnCountdown')) el('turnCountdown').style.display='none'; if(el('meldPopup')) el('meldPopup').style.display='none'; playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message; let wh=el('winHand'); let wl=el('winMeldLabel'); if(d.hand && d.hand.length){ wh.innerHTML = groupHuTiles(d.hand).map(function(g){ return '<div class="huGroup">'+g.map(function(tt){ return tileHTML(tt); }).join('')+'</div>'; }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = ''; } else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; } el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
 socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden');   el('chatFab').classList.remove('showInGame'); el('chatPanel').classList.remove('show'); chatOpen=false; myHand=[]; myMelds=[]; myFlowers=[]; usedBotNames=[]; if(el('winHand')) el('winHand').innerHTML=''; if(el('winMeldLabel')) el('winMeldLabel').innerText=''; renderMyHand(); });
 function addLog(m){ let l=el('gameLog'); l.innerHTML = m + '<br>' + l.innerHTML; }
 function renderSeats(players, turn){
