@@ -506,8 +506,8 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   <div class="card">
     <h2>👋<span>Selamat Datang</span></h2>
     <div class="lbl">NAMA KAMU</div><input id="nameInput" class="inp" placeholder="Input nama kamu" maxlength="15" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false">
-    <div class="lbl">KODE MEJA (KALAU MAU JOIN)</div><input id="codeInput" class="inp" placeholder="Input kode meja" maxlength="4" style="text-transform:uppercase" autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false">
-    <button class="btn btn-gold" onclick="openCreateModal()">🀄 BUAT MEJA BARU</button>
+    <div class="lbl">KODE MEJA (KALAU MAU JOIN)</div><input id="codeInput" class="inp" placeholder="Input kode meja" maxlength="4" style="text-transform:uppercase" autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false"><button class="btn btn-gold" onclick="openCreateModal()">🀄 BUAT MEJA BARU</button>
+    <div class="lbl">PASSWORD MEJA (KALAU PRIVATE, KALAU PUBLIK KOSONGIN AJA)</div><input id="joinPassInput" class="inp" placeholder="Isi kalau mejanya Private" maxlength="10">
     <button class="btn btn-green" onclick="joinRoom()">🚪 JOIN MEJA</button>
     <button class="btn btn-dark" onclick="document.getElementById('howtoBox').classList.toggle('hidden')">📖 CARA MAIN - KLIK</button>
     <div id="howtoBox" class="hidden" style="margin-top:10px;color:#e2e8f0;font-size:12.5px;line-height:1.6"><b style="color:#fde68a">🎯 Tujuan:</b> Jadiin tangan kamu <b>4 Set + 1 Pasang (14 tile)</b> = <b>CHICKEN HAND, HU!</b><br><b style="color:#fde68a">🃏 Set:</b> PONG (3 sama) atau CHOW (urut, cuma buat Bambu/Dot/Karakter)<br><b style="color:#fde68a">🔄 Giliran:</b> Ambil 1 tile → Buang 1 tile. Kalau buangan orang bisa bikin kamu PONG / CHOW / HU, tombolnya muncul otomatis!<br><b style="color:#fde68a">🌸 Bunga:</b> Auto kebuka jadi bonus.<br><b style="color:#fde68a">🤖 BOT:</b> Tambah BOT di lobby. EASY gampang, HARD susah banget!</div>
@@ -543,6 +543,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <div id="lobbyScreen" class="hidden">
   <div style="max-width:560px;margin:0 auto;text-align:right"><button onclick="toggleFull()" class="fsTopBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">LAYAR PENUH</span></button></div>
   <div class="roomTop"><div style="font-size:12px;letter-spacing:2px;color:#fde68a;font-weight:800">KODE MEJA KAMU</div><div class="code" id="roomCodeBig">----</div><small>Kasih kode ini ke temen kamu, biar join!</small></div>
+ <div id="roomModeLabel" style="text-align:center;font-weight:900;font-size:14px;color:#fde68a;margin-top:6px"></div>
   <div class="seats" id="seatsWrap"></div>
   <div class="botBox" id="botBox"><h3>🤖 Tambah BOT (Cuma HOST yang bisa)</h3><div class="botBtns"><button class="bEasy" onclick="addBot('easy')">🟢 BOT<br>EASY</button><button class="bNorm" onclick="addBot('normal')">🟡 BOT<br>NORMAL</button><button class="bHard" onclick="addBot('hard')">🔴 BOT<br>HARD</button></div><button class="btnFill" onclick="fillBots()">⚡ ISI FULL BOT SAMPE 4 ORANG</button><div style="font-size:11px;color:#a7f3d0;margin-top:8px;text-align:center">EASY = gampang • NORMAL = lumayan mikir • HARD = ngitung kartu kamu!</div></div>
   <div class="timeBox" id="timeBox"><h3>⏱️ WAKTU GILIRAN (HOST ONLY)</h3><div class="timeBtns" id="timeBtns"><button data-sec="10" onclick="setTurnTime(10,this)">10 DETIK</button><button data-sec="15" onclick="setTurnTime(15,this)">15 DETIK</button><button data-sec="30" onclick="setTurnTime(30,this)" class="active">30 DETIK</button><button data-sec="60" onclick="setTurnTime(60,this)">60 DETIK</button><button data-sec="0" onclick="setTurnTime(0,this)">TANPA BATAS ♾️</button></div><div id="timeInfo" style="font-size:11px;color:#a7f3d0;margin-top:8px">Saat ini: 30 detik per giliran</div></div>
@@ -768,7 +769,7 @@ function closeCreateModal(){ el('createRoomModal').style.display='none'; }
 function pickMode(m){ selectedMode=m; el('modeLatihan').className=m==='latihan'?'btn btn-gold':'btn btn-dark'; el('modeTanding').className=m==='tanding'?'btn btn-gold':'btn btn-dark'; }
 function pickPrivate(v){ selectedPrivate=v; el('privNo').className=!v?'btn btn-gold':'btn btn-dark'; el('privYes').className=v?'btn btn-gold':'btn btn-dark'; el('passBox').style.display=v?'block':'none'; }
 function submitCreateRoom(){ if(!currentUser) return showErr('Login dulu!'); myName=currentUser.display_name; let roomName=el('inputRoomName').value.trim()||('Meja '+myName); let password=selectedPrivate?el('inputRoomPass').value.trim():''; if(selectedPrivate && !password) return showErr('Isi password meja!'); closeCreateModal(); socket.emit('createRoom',{name:myName, roomName, mode:selectedMode, isPrivate:selectedPrivate, password}); }
-function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim().toUpperCase(); if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName}); }
+function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim().toUpperCase(); let password=el('joinPassInput')?el('joinPassInput').value.trim():''; if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName,password,avatar: currentUser?currentUser.avatar:'🧑'}); }
 function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:myCode, level, botName}); }
 function fillBots(){ let need=4 - (currentPlayers.length||0); if(need<=0) need=3; for(let i=0;i<need;i++){ setTimeout(()=>addBot('normal'), i*150); } }
 function startGame(){ socket.emit('startGame',{code:myCode, turnTimeSec}); }
@@ -924,6 +925,10 @@ function groupHuTiles(tiles){
   while(a.length) groups.push(a.splice(0,3));
   return groups;
 }
+socket.on('youHu', async d=>{
+  try{ await fetch('/api/add-hu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, mode: d.mode})}); }catch(e){}
+  if(d.mode==='tanding') toast('🏆 HU TANDING dicatat! +1 HU');
+});
 socket.on('gameOver', d=>{ clearInterval(turnTimerInt); playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message; let wh=el('winHand'); let wl=el('winMeldLabel'); if(d.hand && d.hand.length){ wh.innerHTML = groupHuTiles(d.hand).map(function(g){ return '<div class="huGroup">'+g.map(function(tt){ return tileHTML(tt); }).join('')+'</div>'; }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = ''; } else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; } el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
 socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden');   el('chatFab').classList.remove('showInGame'); el('chatPanel').classList.remove('show'); chatOpen=false; myHand=[]; myMelds=[]; myFlowers=[]; usedBotNames=[]; if(el('winHand')) el('winHand').innerHTML=''; if(el('winMeldLabel')) el('winMeldLabel').innerText=''; renderMyHand(); });
 function addLog(m){ let l=el('gameLog'); l.innerHTML = m + '<br>' + l.innerHTML; }
