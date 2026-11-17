@@ -550,9 +550,24 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   white-space:nowrap !important;
 }
 /* FIX: nama kiri/kanan VERTIKAL, nempel di samping tile */
-.seatPos.left, .seatPos.right{
+.seatPos.left{
   display: flex !important;
   flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: none !important;
+}
+.seatPos.right{
+  display: flex !important;
+  flex-direction: row-reverse !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  width: auto !important;
+  max-width: none !important;
+}
   align-items: center !important;
   justify-content: center !important;
   gap: 6px !important;
@@ -585,6 +600,10 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 }
 .meldLeftBottom .meld, .meldRightBottom .meld{
   flex-direction: row !important;
+.seatPos.left .oppFlower, .seatPos.right .oppFlower{
+  writing-mode: vertical-rl !important;
+  white-space: nowrap !important;
+}
 }
 </style>
 </head>
