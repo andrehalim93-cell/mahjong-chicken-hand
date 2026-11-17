@@ -101,6 +101,28 @@ input{font-family:inherit}
 .seatPos.left{left:6px;top:42%;transform:translateY(-50%);width:130px}
 .seatPos.right{right:6px;top:42%;transform:translateY(-50%);width:130px}
 .playerChip{display:inline-block;background:rgba(0,0,0,.75);border:2px solid rgba(255,255,255,.25);border-radius:999px;padding:5px 8px;font-size:11px;font-weight:800;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.playerChip{
+  display:flex !important;
+  align-items:center !important;
+  gap:5px !important;
+  white-space:nowrap !important;
+  max-width:170px !important;
+  overflow:hidden !important;
+}
+.playerChip img{
+  display:inline-block !important;
+  flex:none !important;
+}
+.playerChip .nm{
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+  flex:1 !important;
+}
+.seatPos.right, .seatPos.left{
+  width:170px !important;
+  z-index:5 !important;
+}
 .playerChip.turn{border-color:#facc15;box-shadow:0 0 0 3px rgba(250,204,21,.35),0 0 18px #facc15;color:#fde68a;animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 .miniHand{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:6px;min-height:28px}
@@ -671,7 +693,7 @@ let AVATARS = ['/avatars/pria1.png','/avatars/pria2.png','/avatars/pria3.png','/
 function avatarHTML(a, size){
   size = size || 32;
   a = a || '🧑';
-  if(a.startsWith('/') || a.startsWith('http')) return '<img src="'+a+'" style="width:'+size+'px;height:'+size+'px;border-radius:12px;object-fit:cover;object-position:top;vertical-align:middle;display:block" alt="">';
+  if(a.startsWith('/') || a.startsWith('http')) return '<img src="'+a+'" style="width:'+size+'px;height:'+size+'px;border-radius:50%;object-fit:cover;object-position:top;vertical-align:middle;display:inline-block;flex:none" alt="">';
   return '<span style="font-size:'+size+'px">'+a+'</span>';
 }
 function avatarImg(a, size){ return avatarHTML(a, size); }
