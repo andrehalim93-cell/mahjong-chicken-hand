@@ -637,10 +637,10 @@ let currentUser = null;
 let regGender = 'male';
 let regAvatar = '🀄';
 let AVATARS = ['/avatars/pria1.png','/avatars/pria2.png','/avatars/pria3.png','/avatars/pria4.png','/avatars/pria5.png','/avatars/wanita1.png','/avatars/wanita2.png','/avatars/wanita3.png','/avatars/wanita4.png','/avatars/wanita5.png'];
-function avatarHTML(a, size){
+ffunction avatarHTML(a, size){
   size = size || 32;
   a = a || '🧑';
-  if(a.startsWith('/') || a.startsWith('http')) return '<img src="'+a+'" style="width:'+size+'px;height:'+size+'px;border-radius:50%;object-fit:cover;vertical-align:middle" alt="">';
+  if(a.startsWith('/') || a.startsWith('http')) return '<img src="'+a+'" style="width:'+size+'px;height:'+size+'px;border-radius:12px;object-fit:cover;object-position:top;vertical-align:middle;display:block" alt="">';
   return '<span style="font-size:'+size+'px">'+a+'</span>';
 }
 function avatarImg(a, size){ return avatarHTML(a, size); }
@@ -657,7 +657,7 @@ function pickGender(g){
 }
 function renderAvatarPick(){
   let box = el('avatarPick'); if(!box) return;
-  box.innerHTML = AVATARS.map(a=>`<button type="button" onclick="pickAvatar('${a}',this)" style="width:48px;height:48px;border-radius:12px;background:${a===regAvatar?'#facc15':'rgba(0,0,0,.4)'};border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0">${avatarHTML(a,44)}</button>`).join('');
+  box.innerHTML = AVATARS.map(a=>`<button type="button" onclick="pickAvatar('${a}',this)" style="width:56px;height:56px;border-radius:12px;background:${a===regAvatar?'#facc15':'rgba(0,0,0,.4)'};border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0">${avatarHTML(a,56)}</button>`).join('');
 }
 function pickAvatar(a, btn){ regAvatar = a; renderAvatarPick(); }
 function showAuthErr(m){ let e=el('authErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',3500); }
