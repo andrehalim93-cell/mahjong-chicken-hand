@@ -470,7 +470,10 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
         <input id="loginId" class="inp" placeholder="Contoh: budi123">
         <div class="lbl">PASSWORD</div>
         <input id="loginPass" class="inp" type="password" placeholder="Password kamu">
-        <button class="btn btn-gold" style="margin-top:14px" onclick="doLogin()">🔑 MASUK</button>
+<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:#d1d5db;cursor:pointer">
+  <input id="saveLogin" type="checkbox" checked style="width:18px;height:18px;accent-color:#facc15"> Ingat ID & Password di HP ini
+</label>
+<button class="btn btn-gold" style="margin-top:14px" onclick="doLogin()">🔑 MASUK</button>
       </div>
       <div id="registerForm" class="hidden">
         <div class="lbl">BUAT ID (3-20, huruf/angka/_)</div>
@@ -494,6 +497,10 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 </div>
 <div id="homeScreen" class="hidden">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px">
+  <div id="homeUserLabel" style="font-size:13px;color:#fde68a;font-weight:700"></div>
+  <button onclick="doLogout()" style="background:#7f1d1d;color:#fecaca;border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px">🚪 LOGOUT</button>
+</div>
   <div style="max-width:460px;margin:0 auto;text-align:right"><button onclick="toggleFull()" class="fsTopBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">LAYAR PENUH</span></button></div>
   <div class="topLogo"><div class="crown">👑🀄👑</div><h1>MAHJONG<br>CHICKEN HAND</h1><p></p></div>
   <div class="card">
@@ -600,7 +607,9 @@ async function doRegister(){
   let r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password,display_name,gender:regGender,avatar:regAvatar})});
   let j = await r.json();
   if(!j.ok) return showAuthErr(j.error||'Gagal daftar!');
-  loginSuccess(j.user); showAuthOk('Daftar berhasil!');
+  if(el('saveLogin')) el('saveLogin').checked = true;
+  loginSuccess(j.user, password);
+  showAuthOk('Daftar berhasil!');
 }
 async function doLogin(){
   let id = el('loginId').value.trim().toLowerCase();
@@ -609,18 +618,52 @@ async function doLogin(){
   let r = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password})});
   let j = await r.json();
   if(!j.ok) return showAuthErr(j.error||'Gagal login!');
-  loginSuccess(j.user);
+  loginSuccess(j.user, password);
 }
-function loginSuccess(user){
+function loginSuccess(user, passwordForSave){
   currentUser = user;
-  localStorage.setItem('mahjong_user', JSON.stringify(user));
+  let save = el('saveLogin') ? el('saveLogin').checked : true;
+  localStorage.removeItem('mahjong_user');
+  sessionStorage.removeItem('mahjong_user');
+  if(save){
+    localStorage.setItem('mahjong_user', JSON.stringify(user));
+    localStorage.setItem('mahjong_saved_login', JSON.stringify({id:user.id, password:passwordForSave||''}));
+  } else {
+    sessionStorage.setItem('mahjong_user', JSON.stringify(user));
+    localStorage.removeItem('mahjong_saved_login');
+  }
   if(el('nameInput')){ el('nameInput').value = user.display_name; el('nameInput').readOnly = true; }
+  if(el('homeUserLabel')) el('homeUserLabel').innerText = user.avatar+' '+user.display_name+' ('+user.id+')';
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
   toast('Halo '+user.avatar+' '+user.display_name+'!');
 }
+function doLogout(){
+  currentUser = null;
+  localStorage.removeItem('mahjong_user');
+  sessionStorage.removeItem('mahjong_user');
+  if(el('nameInput')){ el('nameInput').value=''; el('nameInput').readOnly=false; }
+  el('homeScreen').classList.add('hidden');
+  el('authScreen').classList.remove('hidden');
+  try{
+    let s = localStorage.getItem('mahjong_saved_login');
+    if(s){ let c=JSON.parse(s); if(el('loginId')) el('loginId').value=c.id; if(el('loginPass')) el('loginPass').value=c.password; }
+  }catch(e){}
+  toast('Udah logout!');
+}
 function checkSavedLogin(){
-  try{ let s = localStorage.getItem('mahjong_user'); if(!s){ renderAvatarPick(); return; } loginSuccess(JSON.parse(s)); }catch(e){ renderAvatarPick(); }
+  try{
+    let s = localStorage.getItem('mahjong_user') || sessionStorage.getItem('mahjong_user');
+    let saved = localStorage.getItem('mahjong_saved_login');
+    if(saved){ let c=JSON.parse(saved); if(el('loginId')) el('loginId').value=c.id; if(el('loginPass')) el('loginPass').value=c.password; }
+    if(!s){ renderAvatarPick(); return; }
+    let u = JSON.parse(s);
+    currentUser = u;
+    if(el('nameInput')){ el('nameInput').value = u.display_name; el('nameInput').readOnly = true; }
+    if(el('homeUserLabel')) el('homeUserLabel').innerText = u.avatar+' '+u.display_name+' ('+u.id+')';
+    el('authScreen').classList.add('hidden');
+    el('homeScreen').classList.remove('hidden');
+  }catch(e){ renderAvatarPick(); }
 }
 setTimeout(()=>{ renderAvatarPick(); pickGender('male'); checkSavedLogin(); }, 300);
 function showErr(m){ let e=el('homeErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',3000); }
