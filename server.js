@@ -92,14 +92,26 @@ app.post('/api/login', async (req, res) => {
     return res.status(500).json({ ok:false, error:'Server error saat login!' });
   }
 });
-app.post('/api/add-hu', async (req,res)=>{
+app.post('/api/add-hu', async (req, res)=>{
   try{
-    let { id, mode } = req.body||{};
-    if(mode!=='tanding') return res.json({ok:true, skipped:true});
+    let {id, mode, playerCount} = req.body || {};
+    // TANDING: cuma dihitung kalau full 4 orang asli
+    if(mode==='tanding' && Number(playerCount)!==4){
+      return res.json({ok:false, counted:false, reason:'need-4-players'});
+    }
+    if(mode!=='tanding'){
+      return res.json({ok:false, counted:false, reason:'latihan'});
+    }
+    if(!id) return res.json({ok:false, counted:false, reason:'no-id'});
+    // Ambil HU sekarang, tambah 1, simpen balik ke Supabase
     let { data:u } = await supabase.from('users').select('hu').eq('id', id).maybeSingle();
-    await supabase.from('users').update({ hu:(u?.hu||0)+1 }).eq('id', id);
-    res.json({ok:true});
-  }catch(e){ res.json({ok:false}); }
+    let newHu = (u?.hu||0) + 1;
+    await supabase.from('users').update({hu: newHu}).eq('id', id);
+    return res.json({ok:true, counted:true, hu: newHu});
+  }catch(e){
+    console.log('ADD-HU EX:', e);
+    return res.json({ok:false, counted:false});
+  }
 });
 app.get('/api/get-hu', async (req,res)=>{
   let { data:u } = await supabase.from('users').select('hu').eq('id', req.query.id).maybeSingle();
@@ -582,10 +594,13 @@ function endGameWin(room, winnerName, msg, winningTile){
     (winner.hand||[]).forEach(t=>fullHand.push(t));
     if(winningTile && !fullHand.some(t=>t.id===winningTile.id)) fullHand.push(winningTile);
   }
-  emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: fullHand, melds: winner?winner.melds:[], winningTile: winningTile||null });
+  // BARU: hitung berapa orang asli (bot gak dihitung) + HU dihitung apa engga
+  let realCount = room.players.filter(p=>!p.isBot).length;
+  let counted = (room.mode==='tanding' && realCount===4);
+  emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: fullHand, melds: winner?winner.melds:[], winningTile: winningTile||null, mode: room.mode, playerCount: realCount, counted: counted });
   addLog(room, '🏆 '+msg);
     if(winner && !winner.isBot){
-    io.to(winner.id).emit('youHu', { mode: room.mode });
+    io.to(winner.id).emit('youHu', { mode: room.mode, playerCount: realCount, counted: counted });
   }
 }
 
