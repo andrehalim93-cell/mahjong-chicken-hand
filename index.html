@@ -40,13 +40,26 @@ input{font-family:inherit}
 .roomTop .code{font-size:44px;font-weight:900;letter-spacing:8px;color:#facc15;text-shadow:0 0 24px rgba(250,204,21,.6)}
 .roomTop small{color:#a7f3d0}
 .seats{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:560px;margin:14px auto}
-.seat{background:linear-gradient(180deg,#14532d,#0a2a16);border:2px solid rgba(250,204,21,.3);border-radius:18px;padding:14px;min-height:88px;position:relative;overflow:hidden}
-.seat.empty{border-style:dashed;opacity:.7;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:13px}
-.seat .ava{font-size:32px}
-.seat .nm{font-weight:900;font-size:15px;margin-top:4px}
-.seat .role{font-size:11px;color:#fde68a}
+.lobbyCard{max-width:560px;margin:0 auto 14px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:16px;backdrop-filter:blur(10px);box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.lobbyHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.lobbyTitle{font-size:20px;font-weight:900;color:#fff;line-height:1.2}
+.lobbySub{font-size:12px;color:#a7f3d0;margin-top:4px;font-weight:700}
+.lobbyMode{flex:none;background:#facc15;color:#422006;font-size:11px;font-weight:900;padding:7px 10px;border-radius:999px;white-space:nowrap}
+.lobbyMode.tanding{background:#f97316;color:#fff}
+.lobbyProgress{height:8px;background:rgba(0,0,0,.4);border-radius:999px;overflow:hidden;margin-top:14px}
+.lobbyProgress div{height:100%;background:linear-gradient(90deg,#facc15,#f97316);border-radius:999px;transition:width .3s}
+.lobbyHint{font-size:11px;color:#cbd5e1;margin-top:10px;line-height:1.5}
+.seats{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:560px;margin:0 auto}
+.seat{background:linear-gradient(180deg,#1a3a26,#0a1f12);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:14px;min-height:110px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px}
+.seat.empty{border-style:dashed;opacity:.65;color:#94a3b8;font-size:13px}
+.seat .ava{width:56px;height:56px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);border:2px solid rgba(250,204,21,.5);flex:none}
+.seat .ava img{width:100%!important;height:100%!important;border-radius:50%!important;object-fit:cover!important;object-position:top!important;display:block!important}
+.seat .ava span{font-size:32px}
+.seat .nm{font-weight:900;font-size:15px;color:#fff;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat .role{font-size:11px;color:#fde68a;font-weight:700;background:rgba(0,0,0,.35);padding:3px 8px;border-radius:999px}
 .seat.host{border-color:#facc15;box-shadow:0 0 0 2px rgba(250,204,21,.25),0 10px 24px rgba(0,0,0,.4)}
-.seat.me{border-color:#22c55e}
+.seat.me{border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.3)}
+.seat .kickBtn{position:absolute;top:6px;right:6px;background:rgba(220,38,38,.9);color:#fff;border:none;width:24px;height:24px;border-radius:50%;font-size:11px;cursor:pointer}
 .botBox{max-width:560px;margin:0 auto;background:rgba(0,0,0,.35);border:1px solid rgba(250,204,21,.3);border-radius:18px;padding:14px}
 .botBox h3{font-size:14px;margin-bottom:8px}
 .botBtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -526,10 +539,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     <div class="lbl" style="margin-top:14px">🀄 MEJA YANG BUKA - KLIK BUAT JOIN</div>
     <div id="publicRoomList" style="display:flex;flex-direction:column;gap:8px">Memuat meja...</div>
     <button class="btn btn-dark" onclick="refreshRooms()">🔄 REFRESH MEJA</button>
-    <div class="lbl" style="margin-top:14px">🔒 MAU JOIN MEJA PRIVATE? PAKE KODE + PASSWORD DI BAWAH</div>
-    <div class="lbl">KODE MEJA PRIVATE</div><input id="codeInput" class="inp" placeholder="Input kode meja Private" maxlength="4" style="text-transform:uppercase" autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false">
-    <div class="lbl">PASSWORD MEJA PRIVATE</div><input id="joinPassInput" class="inp" placeholder="Isi kalau mejanya Private" maxlength="10">
-    <button class="btn btn-green" onclick="joinRoom()">🚪 JOIN MEJA PRIVATE</button>
     <div id="homeErr" style="display:none;margin-top:10px;background:#7f1d1d;color:#fecaca;padding:10px;border-radius:10px;font-size:13px"></div>
   </div>
 </div>
@@ -581,11 +590,20 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 
 <div id="lobbyScreen" class="hidden">
   <div style="max-width:560px;margin:0 auto;text-align:right"><button onclick="toggleFull()" class="fsTopBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">LAYAR PENUH</span></button></div>
-  <div class="roomTop"><div style="font-size:12px;letter-spacing:2px;color:#fde68a;font-weight:800">KODE MEJA KAMU</div><div class="code" id="roomCodeBig">----</div><small>Kasih kode ini ke temen kamu, biar join!</small></div>
- <div id="roomModeLabel" style="text-align:center;font-weight:900;font-size:14px;color:#fde68a;margin-top:6px"></div>
+    <div class="lobbyCard">
+    <div class="lobbyHead">
+      <div>
+        <div class="lobbyTitle" id="lobbyRoomName">🀄 Meja Mahjong</div>
+        <div class="lobbySub" id="lobbyPlayerCount">Menunggu pemain...</div>
+      </div>
+      <div class="lobbyMode" id="roomModeLabel">🎮 LATIHAN</div>
+    </div>
+    <div class="lobbyProgress"><div id="lobbyProgressBar" style="width:25%"></div></div>
+    <div class="lobbyHint" id="lobbyHint">Bagikan meja ini dari daftar meja di Home, klik meja-nya buat join.</div>
+  </div>
   <div class="seats" id="seatsWrap"></div>
-  <div class="botBox" id="botBox"><h3>🤖 Tambah BOT (Cuma HOST yang bisa)</h3><div class="botBtns"><button class="bEasy" onclick="addBot('easy')">🟢 BOT<br>EASY</button><button class="bNorm" onclick="addBot('normal')">🟡 BOT<br>NORMAL</button><button class="bHard" onclick="addBot('hard')">🔴 BOT<br>HARD</button></div><button class="btnFill" onclick="fillBots()">⚡ ISI FULL BOT SAMPE 4 ORANG</button><div style="font-size:11px;color:#a7f3d0;margin-top:8px;text-align:center">EASY = gampang • NORMAL = lumayan mikir • HARD = ngitung kartu kamu!</div></div>
-  <div class="timeBox" id="timeBox"><h3>⏱️ WAKTU GILIRAN (HOST ONLY)</h3><div class="timeBtns" id="timeBtns"><button data-sec="10" onclick="setTurnTime(10,this)">10 DETIK</button><button data-sec="15" onclick="setTurnTime(15,this)">15 DETIK</button><button data-sec="30" onclick="setTurnTime(30,this)" class="active">30 DETIK</button><button data-sec="60" onclick="setTurnTime(60,this)">60 DETIK</button><button data-sec="0" onclick="setTurnTime(0,this)">TANPA BATAS ♾️</button></div><div id="timeInfo" style="font-size:11px;color:#a7f3d0;margin-top:8px">Saat ini: 30 detik per giliran</div></div>
+  <div class="botBox" id="botBox"><h3>🤖 Tambah BOT </h3><div class="botBtns"><button class="bEasy" onclick="addBot('easy')">🟢 BOT<br>EASY</button><button class="bNorm" onclick="addBot('normal')">🟡 BOT<br>NORMAL</button><button class="bHard" onclick="addBot('hard')">🔴 BOT<br>HARD</button></div><button class="btnFill" onclick="fillBots()">⚡ ISI FULL BOT SAMPE 4 ORANG</button><div style="font-size:11px;color:#a7f3d0;margin-top:8px;text-align:center">EASY = gampang • NORMAL = lumayan mikir • HARD = ngitung kartu kamu!</div></div>
+  <div class="timeBox" id="timeBox"><h3>⏱️ WAKTU GILIRAN </h3><div class="timeBtns" id="timeBtns"><button data-sec="10" onclick="setTurnTime(10,this)">10 DETIK</button><button data-sec="15" onclick="setTurnTime(15,this)">15 DETIK</button><button data-sec="30" onclick="setTurnTime(30,this)" class="active">30 DETIK</button><button data-sec="60" onclick="setTurnTime(60,this)">60 DETIK</button><button data-sec="0" onclick="setTurnTime(0,this)">TANPA BATAS ♾️</button></div><div id="timeInfo" style="font-size:11px;color:#a7f3d0;margin-top:8px">Saat ini: 30 detik per giliran</div></div>
   <div style="max-width:560px;margin:14px auto 0;position:sticky;bottom:10px;z-index:10"><button class="btn btn-gold" id="startBtn" onclick="startGame()">🚀 MULAI GAME (MIN 2 PEMAIN)</button><button class="btn btn-dark" onclick="backToHome()">⬅️ KELUAR KE HOME</button></div>
   <div class="smallNote">💡 Tips: Kalau sendirian, pencet <b>ISI FULL BOT</b> biar langsung main lawan 3 bot!<br>Host bisa klik bot buat ngehapus bot.</div>
 </div>
@@ -984,21 +1002,44 @@ socket.on('rejoinFailed', m=>{
   // Meja udah bubar / kursi udah kehapus, balik ke Home aja, tetep login
   backToHome();
 });
-socket.on('roomCreated', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('roomCodeBig').innerText=d.code; el('chatFab').classList.add('showInLobby'); });
+socket.on('roomCreated', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); // kode meja udah gak dipake, gak ditampilin lagi el('chatFab').classList.add('showInLobby'); });
 socket.on('roomList', d=>{ renderPublicRooms(d); });
 socket.on('roomListUpdated', ()=>{ refreshRooms(); });
-socket.on('joinedRoom', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('roomCodeBig').innerText=d.code; el('chatFab').classList.add('showInLobby'); });
+socket.on('joinedRoom', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); // kode meja udah gak dipake, gak ditampilin lagi el('chatFab').classList.add('showInLobby'); });
 socket.on('updateLobby', room=>{
-  myCode=room.code; currentPlayers=room.players; if(room.turnTimeSec!==undefined && room.turnTimeSec!==null){ turnTimeSec=room.turnTimeSec; el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s'; el('timeInfo').innerText = turnTimeSec===0?'Saat ini: Tanpa batas':'Saat ini: '+turnTimeSec+' detik per giliran'; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec)); }
+  myCode=room.code; currentPlayers=room.players;
+  if(room.turnTimeSec!==undefined && room.turnTimeSec!==null){
+    turnTimeSec=room.turnTimeSec;
+    el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s';
+    el('timeInfo').innerText = turnTimeSec===0?'Saat ini: Tanpa batas':'Saat ini: '+turnTimeSec+' detik per giliran';
+    document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec));
+  }
   isHost = room.players.some(p=>p.name===myName && !p.isBot && p.id===room.hostId);
   el('timeBox').style.display = isHost ? 'block' : 'none';
   let isTanding = room.mode==='tanding';
+  // BOT: cuma Latihan + Host. Tanding = SELALU HILANG, gak pake kedip.
   el('botBox').style.display = (isHost && !isTanding) ? 'block' : 'none';
-  let modeEl = el('roomModeLabel'); if(modeEl) modeEl.innerText = isTanding ? '🏆 MODE: TANDING (No BOT, HU Dihitung)' : '🎮 MODE: LATIHAN (Bisa BOT)';
+
+  // Header modern baru
+  let modeEl = el('roomModeLabel');
+  if(modeEl){ modeEl.innerText = isTanding ? '🏆 TANDING' : '🎮 LATIHAN'; modeEl.className = 'lobbyMode' + (isTanding ? ' tanding' : ''); }
+  let nameEl = el('lobbyRoomName');
+  if(nameEl) nameEl.innerText = '🀄 ' + (room.name || room.roomName || 'Meja Mahjong');
+  let countEl = el('lobbyPlayerCount');
+  if(countEl) countEl.innerText = room.players.length + ' / 4 pemain • ' + (room.players.length>=2 ? 'Siap mulai!' : 'Butuh min 2 pemain');
+  let bar = el('lobbyProgressBar');
+  if(bar) bar.style.width = (room.players.length/4*100) + '%';
+  let hint = el('lobbyHint');
+  if(hint) hint.innerText = isTanding ? 'Mode TANDING: Tanpa BOT, HU dihitung ke leaderboard.' : 'Mode LATIHAN: Host bisa tambah BOT kalau kurang orang.';
+
   let wrap=el('seatsWrap'); wrap.innerHTML='';
   room.players.forEach(p=>{
     let isMe=p.name===myName && !p.isBot;
-    wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}" ${p.isBot && isHost?`onclick="removeBot('${esc(p.name)}')"` :''}><div class="ava">${p.isBot?'🤖':avatarHTML(p.avatar, 40)}</div><div class="nm">${p.isBot?botDisplayName(p):esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?('🤖 BOT'+(isHost?' - Klik buat hapus':'')):(p.id===room.hostId?'👑 HOST':'Pemain')}</div></div>`;
+    // FIX AVATAR: kalau server gak kirim avatar, pake avatar lu sendiri kalau ini lu
+    let av = p.avatar;
+    if(!av && isMe && currentUser) av = currentUser.avatar;
+    if(!av) av = '🧑';
+    wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}"><div class="ava">${p.isBot?'🤖':avatarHTML(av, 56)}</div><div class="nm">${p.isBot?botDisplayName(p):esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?('🤖 BOT'+(isHost?' • Klik buat hapus':'')):(p.id===room.hostId?'👑 HOST':'Pemain')}</div>${p.isBot && isHost?`<button class="kickBtn" onclick="removeBot('${esc(p.name)}')">✕</button>`:''}</div>`;
   });
   for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty">💺 Kursi Kosong<br><small>Menunggu pemain...</small></div>`;
   el('startBtn').disabled = room.players.length<2;
