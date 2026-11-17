@@ -40,7 +40,7 @@ app.post('/api/register', async (req, res) => {
     id = cleanStr(id, 20).toLowerCase();
     display_name = cleanStr(display_name, 20);
     gender = cleanStr(gender, 10);
-    avatar = cleanStr(avatar, 10);
+    avatar = cleanStr(avatar, 100);
 
     if(!isValidUserId(id)) return res.status(400).json({ ok:false, error:'ID harus 3-20 karakter, huruf/angka/_ aja, tanpa spasi!' });
     if(!password || String(password).length < 6) return res.status(400).json({ ok:false, error:'Password minimal 6 karakter!' });
