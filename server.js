@@ -13,7 +13,86 @@ app.use(express.static(path.join(__dirname)));
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET","POST"] } });
 const PORT = process.env.PORT || 3000;
+// ============ TAMBAHAN BARU: AUTH + SUPABASE + HASH - JANGAN UBAH YANG LAIN ============
+const bcrypt = require('bcryptjs');
+const { createClient } = require('@supabase/supabase-js');
 
+// ISI 2 INI DARI SUPABASE LU (yang tadi lu copy di notes)
+// Cara isi di Render: Settings -> Environment -> Tambah SUPABASE_URL & SUPABASE_ANON_KEY
+// Kalau jalanin di lokal, ganti process.env.xxx jadi string langsung "https://xxx.supabase.co"
+const SUPABASE_URL = process.env.SUPABASE_URL || 'PASTE_SUPABASE_URL_LU_DISINI';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'PASTE_SUPABASE_ANON_KEY_LU_DISINI';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// --- Helper validasi ---
+function isValidUserId(id){
+  return typeof id === 'string' && /^[a-zA-Z0-9_]{3,20}$/.test(id);
+}
+function cleanStr(s, max){
+  return String(s || '').trim().slice(0, max || 50);
+}
+
+// --- REGISTER: ID + Password di-hash dulu baru disimpen ---
+app.post('/api/register', async (req, res) => {
+  try{
+    let { id, password, display_name, gender, avatar } = req.body || {};
+    id = cleanStr(id, 20).toLowerCase();
+    display_name = cleanStr(display_name, 20);
+    gender = cleanStr(gender, 10);
+    avatar = cleanStr(avatar, 10);
+
+    if(!isValidUserId(id)) return res.status(400).json({ ok:false, error:'ID harus 3-20 karakter, huruf/angka/_ aja, tanpa spasi!' });
+    if(!password || String(password).length < 6) return res.status(400).json({ ok:false, error:'Password minimal 6 karakter!' });
+    if(!display_name) return res.status(400).json({ ok:false, error:'Nama tampilan wajib diisi!' });
+    if(gender !== 'male' && gender !== 'female') return res.status(400).json({ ok:false, error:'Gender harus male / female!' });
+    if(!avatar) avatar = '🀄';
+
+    // Cek ID udah dipake belum
+    let { data: existing } = await supabase.from('users').select('id').eq('id', id).maybeSingle();
+    if(existing) return res.status(400).json({ ok:false, error:'ID udah dipake! Coba ID lain!' });
+
+    // HASH PASSWORD - yang disimpen ke DB cuma hash-nya, bukan password asli
+    let password_hash = await bcrypt.hash(String(password), 10);
+
+    let { data, error } = await supabase.from('users').insert([{
+      id, password_hash, display_name, gender, avatar
+    }]).select('id, display_name, gender, avatar, created_at').single();
+
+    if(error){
+      console.log('REGISTER ERROR:', error);
+      return res.status(500).json({ ok:false, error:'Gagal daftar: ' + error.message });
+    }
+    return res.json({ ok:true, user: data });
+  }catch(e){
+    console.log('REGISTER EX:', e);
+    return res.status(500).json({ ok:false, error:'Server error saat daftar!' });
+  }
+});
+
+// --- LOGIN: Cek password pake bcrypt.compare ---
+app.post('/api/login', async (req, res) => {
+  try{
+    let { id, password } = req.body || {};
+    id = cleanStr(id, 20).toLowerCase();
+    if(!id || !password) return res.status(400).json({ ok:false, error:'ID & Password wajib diisi!' });
+
+    let { data: user, error } = await supabase.from('users').select('*').eq('id', id).maybeSingle();
+    if(error || !user) return res.status(400).json({ ok:false, error:'ID tidak ditemukan!' });
+
+    // Bandingin password ketikan vs hash di DB
+    let match = await bcrypt.compare(String(password), user.password_hash);
+    if(!match) return res.status(400).json({ ok:false, error:'Password salah!' });
+
+    // JANGAN kirim password_hash ke client!
+    delete user.password_hash;
+    return res.json({ ok:true, user });
+  }catch(e){
+    console.log('LOGIN EX:', e);
+    return res.status(500).json({ ok:false, error:'Server error saat login!' });
+  }
+});
+// ============ AKHIR TAMBAHAN BARU ============
 app.get('/health', (req, res) => res.send('OK'))
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
