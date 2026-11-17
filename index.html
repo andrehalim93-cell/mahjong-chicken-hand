@@ -1021,7 +1021,7 @@ socket.on('updateLobby', room=>{
     el('timeInfo').innerText = turnTimeSec===0?'Saat ini: Tanpa batas':'Saat ini: '+turnTimeSec+' detik per giliran';
     document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec));
   }
-  isHost = room.players.some(p=>p.name===myName && !p.isBot && p.id===room.hostId);
+  isHost = room.players.some(p=>p.name===myName && !p.isBot && p.isHost);
   el('timeBox').style.display = isHost ? 'block' : 'none';
   let isTanding = room.mode==='tanding';
   // BOT: cuma Latihan + Host. Tanding = SELALU HILANG, gak pake kedip.
