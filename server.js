@@ -523,6 +523,7 @@ else if(action==='kong'){
   room.waitingClaim=false; room.lastDiscard=null; room.currentClaim=null;
   room.turnIdx = room.players.findIndex(p=>p.name===claimer.name);
   emitToRoom(room, 'meldMade', { by:claimer.name, meld:{type:action, tiles:[tile, ...need]}, players:publicPlayers(room) });
+  room.lastMeldAt = Date.now();
   emitToRoom(room, 'claimed', { claimer:claimer.name, action, tiles:[tile, ...need], turn:claimer.name });
   emitToRoom(room, 'turnChanged', { turn:claimer.name, wallLeft:room.wall.length });
   room.players.forEach(p=>sendHand(room,p));
@@ -534,8 +535,8 @@ if(action==='kong' && room.wall.length>0){
   if(rep) claimer.hand.push(rep);
   room.players.forEach(p2=>sendHand(room,p2));
 }
-  startTurnTimer(room);
-  if(claimer.isBot){ setTimeout(()=>{ botDiscard(room, claimer); }, 1500); }
+ startTurnTimer(room);
+  if(claimer.isBot){ setTimeout(()=>{ botDiscard(room, claimer); }, 6500); }
 }
 function advanceTurn(room, fromPlayer){
   if(!room || room.phase!=='playing') return;
