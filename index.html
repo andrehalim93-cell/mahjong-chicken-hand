@@ -519,6 +519,36 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 #avatarPick{ gap:6px !important; }
 #avatarPick button{ width:40px !important; height:40px !important; }
 #avatarPick button img{ width:40px !important; height:40px !important; }
+/* ===== FINAL FIX V19 - MATIIN V11 + V14, PALING AKHIR, JANGAN DITAMBAH LAGI DI ATAS ===== */
+.seatPos.left .playerChip, .seatPos.right .playerChip, .seatPos.top .playerChip{
+  writing-mode:horizontal-tb !important;
+  position:static !important;
+  transform:none !important;
+  width:auto !important;
+  max-width:170px !important;
+  display:flex !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  gap:5px !important;
+  padding:5px 8px !important;
+  white-space:nowrap !important;
+}
+.seatPos.left, .seatPos.right{
+  width:170px !important;
+  left:auto !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+}
+.seatPos.left{ left:6px !important; }
+.seatPos.right{ right:6px !important; }
+.seatPos.left .oppFlower, .seatPos.right .oppFlower, .seatPos.top .oppFlower{
+  writing-mode:horizontal-tb !important;
+  position:static !important;
+  transform:none !important;
+  margin:4px auto !important;
+  white-space:nowrap !important;
+}
 </style>
 </head>
 <body>
