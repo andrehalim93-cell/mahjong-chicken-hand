@@ -622,16 +622,16 @@ async function doLogin(){
 }
 function loginSuccess(user, passwordForSave){
   currentUser = user;
-  let save = el('saveLogin') ? el('saveLogin').checked : true;
+  let save = el('saveLogin') ? el('saveLogin').checked : false;
+  // JANGAN PERNAH simpen user-nya, biar refresh / close selalu logout
   localStorage.removeItem('mahjong_user');
   sessionStorage.removeItem('mahjong_user');
   if(save){
-    localStorage.setItem('mahjong_user', JSON.stringify(user));
-    localStorage.setItem('mahjong_saved_login', JSON.stringify({id:user.id, password:passwordForSave||''}));
-  } else {
-    // GAK DISIMPEN SAMA SEKALI, jadi refresh / close langsung logout
     // Cuma simpen ID + Pass buat auto-isi form
     localStorage.setItem('mahjong_saved_login', JSON.stringify({id:user.id, password:passwordForSave||''}));
+  } else {
+    // Kalau gak dicentang, hapus yang kesimpen
+    localStorage.removeItem('mahjong_saved_login');
   }
   if(el('nameInput')){ el('nameInput').value = user.display_name; el('nameInput').readOnly = true; }
   if(el('homeUserLabel')) el('homeUserLabel').innerText = user.avatar+' '+user.display_name+' ('+user.id+')';
@@ -646,25 +646,29 @@ function doLogout(){
   if(el('nameInput')){ el('nameInput').value=''; el('nameInput').readOnly=false; }
   el('homeScreen').classList.add('hidden');
   el('authScreen').classList.remove('hidden');
+  // Auto-isi lagi kalau tadi dicentang
   try{
     let s = localStorage.getItem('mahjong_saved_login');
-    if(s){ let c=JSON.parse(s); if(el('loginId')) el('loginId').value=c.id; if(el('loginPass')) el('loginPass').value=c.password; }
+    if(s){ let c=JSON.parse(s); if(el('loginId')) el('loginId').value=c.id; if(el('loginPass')) el('loginPass').value=c.password; if(el('saveLogin')) el('saveLogin').checked=true; }
+    else { if(el('loginId')) el('loginId').value=''; if(el('loginPass')) el('loginPass').value=''; if(el('saveLogin')) el('saveLogin').checked=false; }
   }catch(e){}
   toast('Udah logout!');
 }
 function checkSavedLogin(){
+  // GAK ADA AUTO-LOGIN LAGI, cuma auto-isi form login aja
   try{
-    let s = localStorage.getItem('mahjong_user'); // cuma cek yang Save aja
     let saved = localStorage.getItem('mahjong_saved_login');
-    if(saved){ let c=JSON.parse(saved); if(el('loginId')) el('loginId').value=c.id; if(el('loginPass')) el('loginPass').value=c.password; }
-    if(!s){ renderAvatarPick(); return; }
-    let u = JSON.parse(s);
-    currentUser = u;
-    if(el('nameInput')){ el('nameInput').value = u.display_name; el('nameInput').readOnly = true; }
-    if(el('homeUserLabel')) el('homeUserLabel').innerText = u.avatar+' '+u.display_name+' ('+u.id+')';
-    el('authScreen').classList.add('hidden');
-    el('homeScreen').classList.remove('hidden');
-  }catch(e){ renderAvatarPick(); }
+    if(saved){
+      let c=JSON.parse(saved);
+      if(el('loginId')) el('loginId').value=c.id;
+      if(el('loginPass')) el('loginPass').value=c.password;
+      if(el('saveLogin')) el('saveLogin').checked=true;
+    }
+  }catch(e){}
+  renderAvatarPick();
+  // Selalu tampilin layar login pas pertama buka
+  el('authScreen').classList.remove('hidden');
+  el('homeScreen').classList.add('hidden');
 }
 setTimeout(()=>{ renderAvatarPick(); pickGender('male'); checkSavedLogin(); }, 300);
 function showErr(m){ let e=el('homeErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',3000); }
