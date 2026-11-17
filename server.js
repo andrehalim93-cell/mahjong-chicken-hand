@@ -103,9 +103,9 @@ app.post('/api/add-hu', async (req,res)=>{
 });
 app.get('/api/get-hu', async (req,res)=>{
   let { data:u } = await supabase.from('users').select('hu').eq('id', req.query.id).maybeSingle();
-  res.json({hu: u?.hu||0});
+  res.json({ok:true, hu: u?.hu||0});
 });
-app.post('/api/update-avatar', async (req,res)=>{
+app.post('/api/change-avatar', async (req,res)=>{
   await supabase.from('users').update({ avatar:req.body.avatar }).eq('id', req.body.id);
   res.json({ok:true});
 });
