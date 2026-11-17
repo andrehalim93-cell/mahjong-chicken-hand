@@ -637,7 +637,7 @@ let currentUser = null;
 let regGender = 'male';
 let regAvatar = '🀄';
 let AVATARS = ['/avatars/pria1.png','/avatars/pria2.png','/avatars/pria3.png','/avatars/pria4.png','/avatars/pria5.png','/avatars/wanita1.png','/avatars/wanita2.png','/avatars/wanita3.png','/avatars/wanita4.png','/avatars/wanita5.png'];
-ffunction avatarHTML(a, size){
+function avatarHTML(a, size){
   size = size || 32;
   a = a || '🧑';
   if(a.startsWith('/') || a.startsWith('http')) return '<img src="'+a+'" style="width:'+size+'px;height:'+size+'px;border-radius:12px;object-fit:cover;object-position:top;vertical-align:middle;display:block" alt="">';
