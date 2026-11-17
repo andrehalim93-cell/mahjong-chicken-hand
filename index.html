@@ -497,21 +497,37 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 </div>
 <div id="homeScreen" class="hidden">
- <div style="display:flex;gap:8px">
-  <button onclick="openProfile()" style="background:#facc15;color:#422006;border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px">👤 PROFIL</button>
-  <button onclick="doLogout()" style="background:#7f1d1d;color:#fecaca;border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px">🚪 LOGOUT</button>
-</div>
+ <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px">
+  <div id="homeUserLabel" style="font-size:13px;color:#fde68a;font-weight:700"></div>
+  <div style="display:flex;gap:8px">
+   <button onclick="openProfile()" style="background:#facc15;color:#422006;border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px">👤 PROFIL</button>
+   <button onclick="doLogout()" style="background:#7f1d1d;color:#fecaca;border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px">🚪 LOGOUT</button>
+  </div>
+ </div>
   <div style="max-width:460px;margin:0 auto;text-align:right"><button onclick="toggleFull()" class="fsTopBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">LAYAR PENUH</span></button></div>
   <div class="topLogo"><div class="crown">👑🀄👑</div><h1>MAHJONG<br>CHICKEN HAND</h1><p></p></div>
   <div class="card">
-    <h2>👋<span>Selamat Datang</span></h2>
+   <h2>👋<span>Selamat Datang</span></h2>
     <div class="lbl">NAMA KAMU</div><input id="nameInput" class="inp" placeholder="Input nama kamu" maxlength="15" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false">
-    <div class="lbl">KODE MEJA (KALAU MAU JOIN)</div><input id="codeInput" class="inp" placeholder="Input kode meja" maxlength="4" style="text-transform:uppercase" autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false"><button class="btn btn-gold" onclick="openCreateModal()">🀄 BUAT MEJA BARU</button>
-    <div class="lbl">PASSWORD MEJA (KALAU PRIVATE, KALAU PUBLIK KOSONGIN AJA)</div><input id="joinPassInput" class="inp" placeholder="Isi kalau mejanya Private" maxlength="10">
-    <button class="btn btn-green" onclick="joinRoom()">🚪 JOIN MEJA</button>
-    <button class="btn btn-dark" onclick="document.getElementById('howtoBox').classList.toggle('hidden')">📖 CARA MAIN - KLIK</button>
-    <div id="howtoBox" class="hidden" style="margin-top:10px;color:#e2e8f0;font-size:12.5px;line-height:1.6"><b style="color:#fde68a">🎯 Tujuan:</b> Jadiin tangan kamu <b>4 Set + 1 Pasang (14 tile)</b> = <b>CHICKEN HAND, HU!</b><br><b style="color:#fde68a">🃏 Set:</b> PONG (3 sama) atau CHOW (urut, cuma buat Bambu/Dot/Karakter)<br><b style="color:#fde68a">🔄 Giliran:</b> Ambil 1 tile → Buang 1 tile. Kalau buangan orang bisa bikin kamu PONG / CHOW / HU, tombolnya muncul otomatis!<br><b style="color:#fde68a">🌸 Bunga:</b> Auto kebuka jadi bonus.<br><b style="color:#fde68a">🤖 BOT:</b> Tambah BOT di lobby. EASY gampang, HARD susah banget!</div>
+    <button class="btn btn-gold" onclick="openCreateModal()">🀄 BUAT MEJA BARU</button>
+    <button class="btn btn-dark" onclick="openLeaderboard()">🏆 LEADERBOARD HU</button>
+    <div class="lbl" style="margin-top:14px">🀄 MEJA PUBLIK YANG BUKA - KLIK BUAT LANGSUNG JOIN (TANPA KODE)</div>
+    <div id="publicRoomList" style="display:flex;flex-direction:column;gap:8px">Memuat meja...</div>
+    <button class="btn btn-dark" onclick="refreshRooms()">🔄 REFRESH MEJA</button>
+    <div class="lbl" style="margin-top:14px">🔒 MAU JOIN MEJA PRIVATE? PAKE KODE + PASSWORD DI BAWAH</div>
+    <div class="lbl">KODE MEJA PRIVATE</div><input id="codeInput" class="inp" placeholder="Input kode meja Private" maxlength="4" style="text-transform:uppercase" autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false">
+    <div class="lbl">PASSWORD MEJA PRIVATE</div><input id="joinPassInput" class="inp" placeholder="Isi kalau mejanya Private" maxlength="10">
+    <button class="btn btn-green" onclick="joinRoom()">🚪 JOIN MEJA PRIVATE</button>
     <div id="homeErr" style="display:none;margin-top:10px;background:#7f1d1d;color:#fecaca;padding:10px;border-radius:10px;font-size:13px"></div>
+  </div>
+</div>
+<!-- POPUP LEADERBOARD -->
+<div id="leaderboardModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:210;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="max-width:420px;width:100%;margin:0;text-align:center;max-height:85vh;overflow-y:auto">
+    <h2 style="margin:0">🏆 LEADERBOARD HU</h2>
+    <div style="color:#a7f3d0;font-size:12px;margin:4px 0 12px">Semua pemain terdaftar - Urut HU terbanyak</div>
+    <div id="leaderboardList" style="display:flex;flex-direction:column;gap:6px;text-align:left">Memuat...</div>
+    <button class="btn btn-gold" style="margin-top:14px" onclick="closeLeaderboard()">✅ TUTUP</button>
   </div>
 </div>
 <!-- POPUP PROFIL -->
@@ -677,6 +693,7 @@ function loginSuccess(user, passwordForSave){
   el('homeScreen').classList.remove('hidden');
   toast('Halo '+user.avatar+' '+user.display_name+'!');
   setTimeout(()=>{ openProfile(); }, 400);
+  refreshRooms();
 }
 let profileAvatars = ['🧑','👦','👧','👨','👩','🧔','👱‍♀️','👱','😎','🤠','👑','🐔','🦁','🐯','🐼','🦊','🐲','🤖','👻','🎭'];
 async function openProfile(){
@@ -809,12 +826,45 @@ function closeCreateModal(){ el('createRoomModal').style.display='none'; }
 function pickMode(m){ selectedMode=m; el('modeLatihan').className=m==='latihan'?'btn btn-gold':'btn btn-dark'; el('modeTanding').className=m==='tanding'?'btn btn-gold':'btn btn-dark'; }
 function pickPrivate(v){ selectedPrivate=v; el('privNo').className=!v?'btn btn-gold':'btn btn-dark'; el('privYes').className=v?'btn btn-gold':'btn btn-dark'; el('passBox').style.display=v?'block':'none'; }
 function submitCreateRoom(){ if(!currentUser) return showErr('Login dulu!'); myName=currentUser.display_name; let roomName=el('inputRoomName').value.trim()||('Meja '+myName); let password=selectedPrivate?el('inputRoomPass').value.trim():''; if(selectedPrivate && !password) return showErr('Isi password meja!'); closeCreateModal(); socket.emit('createRoom',{name:myName, roomName, mode:selectedMode, isPrivate:selectedPrivate, password}); }
+// ===== MEJA PUBLIK + LEADERBOARD =====
+function refreshRooms(){ if(typeof socket!=='undefined' && socket) socket.emit('getRooms'); }
+function joinPublicRoom(code){
+  let myName = el('nameInput').value.trim();
+  if(!myName) return showErr('Isi nama dulu!');
+  socket.emit('joinRoom',{code:code, name:myName, password:'', avatar: currentUser?currentUser.avatar:'🧑'});
+}
+function renderPublicRooms(list){
+  let box = el('publicRoomList'); if(!box) return;
+  if(!list || !list.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:10px">Belum ada meja publik yang buka.<br>Jadi yang pertama BUAT MEJA BARU!</div>'; return; }
+  box.innerHTML = list.map(r=>{
+    let modeTxt = r.mode==='tanding' ? '🏆 TANDING' : '🎯 LATIHAN';
+    return '<button onclick="joinPublicRoom(\''+r.code+'\')" style="width:100%;text-align:left;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px;color:#fff;cursor:pointer">'
+    + '<div style="display:flex;justify-content:space-between"><b style="color:#fde68a">🀄 '+esc(r.roomName||'Meja')+'</b><span style="font-size:12px">'+modeTxt+'</span></div>'
+    + '<div style="font-size:12px;color:#a7f3d0;margin-top:4px">👑 Host: '+esc(r.hostName||'-')+' &nbsp; 👥 '+r.players+'/4 &nbsp; 👉 KLIK BUAT JOIN</div></button>';
+  }).join('');
+}
+function openLeaderboard(){
+  el('leaderboardModal').style.display = 'flex';
+  el('leaderboardList').innerHTML = 'Memuat...';
+  fetch('/api/leaderboard').then(r=>r.json()).then(j=>{
+    let list = j.users || j.leaderboard || [];
+    if(!list.length){ el('leaderboardList').innerHTML = '<div style="text-align:center;color:#94a3b8">Belum ada pemain.</div>'; return; }
+    el('leaderboardList').innerHTML = list.map((u,i)=>{
+      let medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+      let isMe = currentUser && u.id===currentUser.id;
+      return '<div style="display:flex;justify-content:space-between;align-items:center;background:'+(isMe?'#facc15':'#1e293b')+';color:'+(isMe?'#422006':'#fff')+';border-radius:10px;padding:8px 10px"><span>'+medal+' '+(u.avatar||'🧑')+' <b>'+esc(u.display_name||u.id)+'</b> <span style="font-size:11px;opacity:.7">@'+esc(u.id)+'</span></span><b>🏆 '+(u.hu||0)+'</b></div>';
+    }).join('');
+  }).catch(e=>{ el('leaderboardList').innerHTML = '<div style="text-align:center;color:#fecaca">Gagal memuat leaderboard.</div>'; });
+}
+function closeLeaderboard(){ el('leaderboardModal').style.display = 'none'; }
 function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim().toUpperCase(); let password=el('joinPassInput')?el('joinPassInput').value.trim():''; if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName,password,avatar: currentUser?currentUser.avatar:'🧑'}); }
 function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:myCode, level, botName}); }
 function fillBots(){ let need=4 - (currentPlayers.length||0); if(need<=0) need=3; for(let i=0;i<need;i++){ setTimeout(()=>addBot('normal'), i*150); } }
 function startGame(){ socket.emit('startGame',{code:myCode, turnTimeSec}); }
 function playAgain(){ socket.emit('playAgain',{code:myCode}); el('winModal').classList.remove('show'); }
 socket.on('roomCreated', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('roomCodeBig').innerText=d.code; el('chatFab').classList.add('showInLobby'); });
+socket.on('roomList', d=>{ renderPublicRooms(d); });
+socket.on('roomListUpdated', ()=>{ refreshRooms(); });
 socket.on('joinedRoom', d=>{ myCode=d.code; el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('roomCodeBig').innerText=d.code; el('chatFab').classList.add('showInLobby'); });
 socket.on('updateLobby', room=>{
   myCode=room.code; currentPlayers=room.players; if(room.turnTimeSec!==undefined && room.turnTimeSec!==null){ turnTimeSec=room.turnTimeSec; el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s'; el('timeInfo').innerText = turnTimeSec===0?'Saat ini: Tanpa batas':'Saat ini: '+turnTimeSec+' detik per giliran'; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec)); }
