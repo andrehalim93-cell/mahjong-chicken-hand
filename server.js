@@ -20,8 +20,8 @@ const { createClient } = require('@supabase/supabase-js');
 // ISI 2 INI DARI SUPABASE LU (yang tadi lu copy di notes)
 // Cara isi di Render: Settings -> Environment -> Tambah SUPABASE_URL & SUPABASE_ANON_KEY
 // Kalau jalanin di lokal, ganti process.env.xxx jadi string langsung "https://xxx.supabase.co"
-const SUPABASE_URL = process.env.SUPABASE_URL || 'PASTE_SUPABASE_URL_LU_DISINI';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'PASTE_SUPABASE_ANON_KEY_LU_DISINI';
+const SUPABASE_URL = process.env.SUPABASE_URL ||   https://iisxxgaihgtcuzynjcus.supabase.co ;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ||   sb_publishable_y2IpdW-81zOi5qha15J0Ew_OTmhdrNA ;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
