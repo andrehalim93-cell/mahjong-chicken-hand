@@ -549,6 +549,29 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   margin:4px auto !important;
   white-space:nowrap !important;
 }
+/* FIX: nama kiri/kanan horizontal + meld selalu horizontal */
+.seatPos.left .playerChip, .seatPos.right .playerChip{
+  writing-mode: horizontal-tb !important;
+  transform: none !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  width: auto !important;
+  max-width: 100% !important;
+  padding: 5px 8px !important;
+  white-space: nowrap !important;
+}
+.seatPos.left, .seatPos.right{
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+.meldLeftBottom .meld, .meldRightBottom .meld{
+  flex-direction: row !important;
+  gap: 2px !important;
+}
 </style>
 </head>
 <body>
@@ -1310,7 +1333,7 @@ socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('ga
 function addLog(m){ let l=el('gameLog'); l.innerHTML = m + '<br>' + l.innerHTML; }
 function renderSeats(players, turn){
   let others = players.filter(p=>p.name!==myName);
-  let posMap = ['right','top','left'];
+  let posMap = players.length===2 ? ['top'] : ['right','top','left'];
   let slots = { top: el('seatTop'), left: el('seatLeft'), right: el('seatRight') };
   Object.values(slots).forEach(s=>s.innerHTML='');
   el('meldTop').innerHTML=''; el('meldLeft').innerHTML=''; el('meldRight').innerHTML='';
