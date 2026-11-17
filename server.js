@@ -170,6 +170,7 @@ function publicPlayers(room){
     hostId: room.players.find(x=>x.isHost)?.id,
     id:p.id, isHost:p.isHost,
     handCount:p.hand.length,
+    avatar:p.avatar||'🧑',
     melds:p.melds, discards:p.discards, flowers:p.flowers
   }));
 }
