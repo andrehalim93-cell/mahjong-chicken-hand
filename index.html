@@ -497,8 +497,8 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 </div>
 <div id="homeScreen" class="hidden">
-  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px">
-  <div id="homeUserLabel" style="font-size:13px;color:#fde68a;font-weight:700"></div>
+ <div style="display:flex;gap:8px">
+  <button onclick="openProfile()" style="background:#facc15;color:#422006;border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px">👤 PROFIL</button>
   <button onclick="doLogout()" style="background:#7f1d1d;color:#fecaca;border:1px solid rgba(255,255,255,.2);padding:8px 14px;border-radius:999px;font-weight:800;font-size:13px">🚪 LOGOUT</button>
 </div>
   <div style="max-width:460px;margin:0 auto;text-align:right"><button onclick="toggleFull()" class="fsTopBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">LAYAR PENUH</span></button></div>
@@ -514,7 +514,18 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     <div id="homeErr" style="display:none;margin-top:10px;background:#7f1d1d;color:#fecaca;padding:10px;border-radius:10px;font-size:13px"></div>
   </div>
 </div>
-
+<!-- POPUP PROFIL -->
+<div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:210;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="max-width:420px;width:100%;margin:0;text-align:center">
+    <div id="profileAvatarBig" style="font-size:64px">🧑</div>
+    <h2 id="profileName" style="margin:6px 0 2px">-</h2>
+    <div id="profileId" style="color:#a7f3d0;font-size:13px">@-</div>
+    <div id="profileHu" style="margin:12px 0;background:#422006;border-radius:12px;padding:10px;font-weight:900;color:#fde68a">🏆 TOTAL HU TANDING: 0</div>
+    <div class="lbl" style="text-align:left">GANTI AVATAR</div>
+    <div id="profileAvatarPick" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
+    <button class="btn btn-gold" style="margin-top:14px" onclick="closeProfile()">✅ TUTUP</button>
+  </div>
+</div>
 <!-- MODAL BUAT MEJA BARU - PILIHAN B -->
 <div id="createRoomModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:center;justify-content:center;padding:16px">
   <div class="card" style="max-width:460px;width:100%;margin:0">
