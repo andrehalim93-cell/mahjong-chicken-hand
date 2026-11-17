@@ -92,21 +92,22 @@ app.post('/api/login', async (req, res) => {
     return res.status(500).json({ ok:false, error:'Server error saat login!' });
   }
 });
-app.post('/api/add-hu', (req,res)=>{ 
-  let u=users[req.body.id]; 
-  if(u){ u.hu=(u.hu||0)+1; } 
-  res.json({ok:true}); 
+app.post('/api/add-hu', async (req,res)=>{
+  try{
+    let { id, mode } = req.body||{};
+    if(mode!=='tanding') return res.json({ok:true, skipped:true});
+    let { data:u } = await supabase.from('users').select('hu').eq('id', id).maybeSingle();
+    await supabase.from('users').update({ hu:(u?.hu||0)+1 }).eq('id', id);
+    res.json({ok:true});
+  }catch(e){ res.json({ok:false}); }
 });
-
-app.get('/api/get-hu', (req,res)=>{ 
-  let u=users[req.query.id]; 
-  res.json({hu: u?u.hu||0:0}); 
+app.get('/api/get-hu', async (req,res)=>{
+  let { data:u } = await supabase.from('users').select('hu').eq('id', req.query.id).maybeSingle();
+  res.json({hu: u?.hu||0});
 });
-
-app.post('/api/update-avatar', (req,res)=>{ 
-  let u=users[req.body.id]; 
-  if(u) u.avatar=req.body.avatar; 
-  res.json({ok:true}); 
+app.post('/api/update-avatar', async (req,res)=>{
+  await supabase.from('users').update({ avatar:req.body.avatar }).eq('id', req.body.id);
+  res.json({ok:true});
 });
 // ============ AKHIR TAMBAHAN BARU ============
 app.get('/health', (req, res) => res.send('OK'))
@@ -590,7 +591,8 @@ io.on('connection', (socket)=>{
     mode: mode==='tanding' ? 'tanding' : 'latihan',
     hostName: (name||'Player').trim()
   };
-  // ... sisanya sama kayak punya lu (buat player host, push ke room.players)
+    let host = { id:socket.id, name:(name||'Player').trim(), isBot:false, isHost:true, hand:[], melds:[], discards:[], flowers:[], level:'', avatar: avatar||'🧑' };
+  room.players.push(host);
   rooms[code]=room; socket.join(code);
   socket.emit('roomCreated', { code, players:publicPlayers(room) }); emitLobby(room);
   io.emit('roomListUpdated');
@@ -619,7 +621,14 @@ io.on('connection', (socket)=>{
   let me = room.players.find(p=>p.id===socket.id);
   if(!me || !me.isHost){ socket.emit('errorMsg','Cuma HOST yang bisa tambah BOT!'); return; }
   if(room.players.length>=4){ socket.emit('errorMsg', 'Sudah 4 pemain!'); return; }
-  // ... sisanya sama
+    level = (level||'normal').toLowerCase();
+  let base = (botName||'').trim() || ('BOT'+(room.players.filter(p=>p.isBot).length+1));
+  let finalName = base; let n=2;
+  while(room.players.some(p=>p.name===finalName)){ finalName = base+' '+n; n++; }
+  let bot = { id:'bot-'+Date.now()+'-'+Math.random(), name:finalName, isBot:true, isHost:false, hand:[], melds:[], discards:[], flowers:[], level, avatar:'🤖' };
+  room.players.push(bot);
+  emitLobby(room);
+  addLog(room, `🤖 ${bot.name} (${level.toUpperCase()} BOT) masuk!`);
 });
 
 socket.on('fillBots', ({ code, level })=>{
@@ -628,7 +637,15 @@ socket.on('fillBots', ({ code, level })=>{
   if(room.mode==='tanding') return socket.emit('errorMsg','Mode Tanding gak bisa tambah BOT!');
   let me = room.players.find(p=>p.id===socket.id);
   if(me && !me.isHost){ socket.emit('errorMsg','Cuma HOST!'); return; }
-  // ... sisanya sama
+  level = (level||'normal').toLowerCase();
+  let fallbacks = ['ANDI','BUDI','SARI','DEWI','EKO','FITRI'];
+  while(room.players.length < 4){
+    let base = fallbacks.find(n=>!room.players.some(p=>p.name===n)) || ('BOT'+(room.players.length+1));
+    let bot = { id:'bot-'+Date.now()+'-'+Math.random(), name:base, isBot:true, isHost:false, hand:[], melds:[], discards:[], flowers:[], level, avatar:'🤖' };
+    room.players.push(bot);
+  }
+  emitLobby(room);
+  addLog(room, `🤖 Bot diisi full sampe 4 orang!`);
 });
   socket.on('removeBot', ({ code, botName })=>{
     let room = rooms[(code||'').toUpperCase()];
