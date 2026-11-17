@@ -156,7 +156,7 @@ function genCode(){ let c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let 
 // ============ ROOM HELPERS ============
 function emitToRoom(room, ev, data){ io.to(room.code).emit(ev, data); }
 function emitLobby(room){
-  let payload = { code: room.code, players: publicPlayers(room), hostId: room.players.find(x=>x.isHost)?.id, turnTimeSec: room.turnTimeSec, turnTime: room.turnTimeSec };
+  let payload = { code: room.code, players: publicPlayers(room), hostId: room.players.find(x=>x.isHost)?.id, turnTimeSec: room.turnTimeSec, turnTime: room.turnTimeSec, mode: room.mode || 'latihan', roomName: room.roomName || 'Meja Mahjong', name: room.roomName || 'Meja Mahjong' };
   io.to(room.code).emit('lobbyUpdate', payload);
   io.to(room.code).emit('updateLobby', payload);
 }
