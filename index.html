@@ -452,6 +452,16 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 .fsTopBtn{ display:none !important; }
 /* Game: tombol FULL + pill-nya sekalian, biar gak nyisa pill kosong */
 .fsPill, #fullBtnInGame, .fsBtn{ display:none !important; }
+/* FIX: Form daftar muat 1 layar, gak perlu scroll */
+#authScreen{ height:100dvh !important; overflow-y:auto !important; display:flex !important; align-items:flex-start !important; justify-content:center !important; padding:8px 10px 10px !important; box-sizing:border-box !important; }
+#authScreen .card, #authScreen > div{ width:100% !important; max-width:420px !important; margin:0 auto !important; }
+#authScreen h1, #authScreen .title{ font-size:26px !important; line-height:1.1 !important; margin:4px 0 !important; }
+#registerForm input{ padding:8px 12px !important; font-size:14px !important; }
+#registerForm .lbl{ margin:8px 0 4px !important; font-size:12px !important; }
+#registerForm .btn{ padding:9px 10px !important; font-size:14px !important; }
+#avatarPick{ gap:6px !important; }
+#avatarPick button{ width:40px !important; height:40px !important; }
+#avatarPick button img{ width:40px !important; height:40px !important; }
 </style>
 </head>
 <body>
@@ -489,7 +499,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
         </div>
         <div class="lbl">PILIH AVATAR</div>
         <div id="avatarPick" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-        <button class="btn btn-green" style="margin-top:14px" onclick="doRegister()">✅ DAFTAR & MASUK</button>
+        <button class="btn btn-green" style="margin-top:10px;position:sticky;bottom:8px;z-index:10" onclick="doRegister()">✅ DAFTAR & MASUK</button>
       </div>
       <div id="authErr" style="display:none;margin-top:10px;background:#7f1d1d;color:#fecaca;padding:10px;border-radius:10px;font-size:13px"></div>
       <div id="authOk" style="display:none;margin-top:10px;background:#14532d;color:#bbf7d0;padding:10px;border-radius:10px;font-size:13px"></div>
@@ -657,7 +667,7 @@ function pickGender(g){
 }
 function renderAvatarPick(){
   let box = el('avatarPick'); if(!box) return;
-  box.innerHTML = AVATARS.map(a=>`<button type="button" onclick="pickAvatar('${a}',this)" style="width:56px;height:56px;border-radius:12px;background:${a===regAvatar?'#facc15':'rgba(0,0,0,.4)'};border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0">${avatarHTML(a,56)}</button>`).join('');
+  box.innerHTML = AVATARS.map(a=>`<button type="button" onclick="pickAvatar('${a}',this)" style="width:40px;height:40px;border-radius:10px;background:${a===regAvatar?'#facc15':'rgba(0,0,0,.4)'};border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0">${avatarHTML(a,40)}</button>`).join('');
 }
 function pickAvatar(a, btn){ regAvatar = a; renderAvatarPick(); }
 function showAuthErr(m){ let e=el('authErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',3500); }
