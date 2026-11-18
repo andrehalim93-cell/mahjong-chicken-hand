@@ -697,12 +697,12 @@ socket.on('fillBots', ({ code, level })=>{
     emitLobby(room);
   });
   socket.on('getRooms', ()=>{
-  let list = Object.values(rooms).filter(r=>r.phase==='lobby').map(r=>({
-    code:r.code, 
-    roomName:r.roomName, 
-    hostName:r.hostName, 
-    players:r.players.length, 
-    isPrivate:!!r.isPrivate, 
+  let list = Object.values(rooms).filter(r=>r.phase==='lobby' && r.players.some(p=>!p.isBot && !p.disconnected)).map(r=>({
+    code:r.code,
+    roomName:r.roomName,
+    hostName:r.hostName,
+    players:r.players.length,
+    isPrivate:!!r.isPrivate,
     mode:r.mode||'latihan'
   }));
   socket.emit('roomList', list);
@@ -970,5 +970,29 @@ socket.on('jiaKong', ({ code, tileId })=>{
     }
   });
 });
-
+// SAPU MEJA ZOMBIE TIAP 10 DETIK: kalau udah gak ada manusia aktif, hapus meja + BOT-nya
+setInterval(()=>{
+  let changed = false;
+  for(let code in rooms){
+    let room = rooms[code];
+    if(!room) continue;
+    let humans = room.players.filter(p=>!p.isBot);
+    let activeHumans = humans.filter(p=>!p.disconnected);
+    if(humans.length===0){
+      clearTurnTimer(room);
+      delete rooms[code];
+      changed = true;
+      continue;
+    }
+    if(activeHumans.length===0 && humans.length>0){
+      let allOld = humans.every(p=>p.disconnectedAt && (Date.now() - p.disconnectedAt > 30000));
+      if(allOld){
+        clearTurnTimer(room);
+        delete rooms[code];
+        changed = true;
+      }
+    }
+  }
+  if(changed) io.emit('roomListUpdated');
+}, 10000);
 server.listen(PORT, ()=>{ console.log(`🀄 MAHJONG ONLINE + BOT di port ${PORT}`); });
