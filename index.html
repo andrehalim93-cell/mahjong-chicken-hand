@@ -1444,9 +1444,18 @@ function loginSuccess(user, passwordForSave, showProfile){
   if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(user.avatar, 24)+' '+esc(user.display_name)+' ('+esc(user.id)+')';
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
-  toast('Halo '+user.display_name+'!');
+    toast('Halo '+user.display_name+'!');
   if(showProfile) setTimeout(()=>{ openProfile(); }, 400);
   refreshRooms();
+  try{
+    let savedRoom = JSON.parse(sessionStorage.getItem('mahjong_room'));
+    if(savedRoom && savedRoom.code && socket && socket.connected){
+      setTimeout(()=>{
+        toast('🔄 Nyambung lagi, masuk meja lagi...');
+        socket.emit('rejoinRoom', { name: savedRoom.name || user.display_name, code: savedRoom.code, avatar: user.avatar || '🧑' });
+      }, 500);
+    }
+  }catch(e){}
 }
 let profileAvatars = AVATARS;
 async function openProfile(){
@@ -1739,14 +1748,13 @@ socket.on('connect', ()=>{
       }
     }catch(e){}
   }
-  if(myCode && myName){
+  if(myCode && myName && currentUser){
     el('reconnectBanner').style.display = 'none';
     toast('🔄 Nyambung lagi, masuk meja lagi...');
     socket.emit('rejoinRoom', { name: myName, code: myCode, avatar: currentUser ? currentUser.avatar : '🧑' });
   }
   hasConnectedBefore = true;
 });
-
 socket.on('disconnect', ()=>{
   // Cuma tampilin banner kalau lagi di meja, kalau di home gak usah panik
   if(myCode){
