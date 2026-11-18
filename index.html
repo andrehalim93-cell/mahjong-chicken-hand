@@ -167,7 +167,7 @@ input{font-family:inherit}
 #winHand .t .face .lbl{display:none!important}
 #winHand .t .face .dot{width:6px!important;height:6px!important}
 #winHand .t .face .stick{width:3px!important;height:10px!important}
-#winModal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:none;align-items:center;justify-content:center;padding:16px}
+#winModal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:350;display:none;align-items:center;justify-content:center;padding:16px}
 /* ===== EFEK HU FINAL ===== */
 #huFx{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:400;display:none;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;transition:background .3s}
 #huFx.show{display:flex;background:rgba(0,0,0,.65)}
@@ -1896,8 +1896,10 @@ function removeBot(name){ if(confirm('Hapus '+name+'?')) socket.emit('removeBot'
 socket.on('errorMsg', m=>{ showErr(m); toast(m); });
 socket.on('gameStarted', d=>{
   el('lobbyScreen').classList.add('hidden'); el('gameScreen').classList.remove('hidden');
+  el('winModal').classList.remove('show');
+  el('winModal').style.display = 'none';
   el('chatFab').classList.add('showInGame');
-  el('gCode').innerText=myCode; el('wallLeft').innerText=d.wallLeft;
+  el('wallLeft').innerText=d.wallLeft;
   if(d.turnTimeSec!==undefined) turnTimeSec=d.turnTimeSec;
   el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s';
   el('turnName').innerText=d.turn; currentPlayers=d.players; el('myNameLabel').innerHTML = avatarHTML(currentUser?currentUser.avatar:'🧑', 20)+' '+esc(myName);
@@ -2077,6 +2079,8 @@ socket.on('rematchUpdate', d=>{
   if(d.count >= d.total) el('rematchStatus').innerText = '🔁 Semua setuju! Acak kartu baru...';
 });
 socket.on('gameStarted', ()=>{
+  el('winModal').classList.remove('show');
+  el('winModal').style.display = 'none';
   rematchClicked = false;
   if(el('rematchBtn')){ el('rematchBtn').innerText = '🔁 REMATCH - MAIN LAGI (ORANG SAMA)'; el('rematchBtn').style.opacity = '1'; }
   if(el('rematchStatus')) el('rematchStatus').innerText = '';
