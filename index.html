@@ -1092,6 +1092,43 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     display:none !important;
   }
 }
+/* ===== V47 - BIKIN MEJA LEGA: MELD NEMPEL PINGGIR + RAPET DIKIT ===== */
+@media (max-width:768px){
+  /* 1. Meld kiri-kanan: geser 6px lagi ke pinggir, biar tengah lega */
+  #gameScreen .meldLeftBottom{ left:62px !important; }
+  #gameScreen .meldRightBottom{ right:62px !important; }
+  /* 2. Meld atas: geser dikit ke atas, biar gak nempel buangan */
+  #gameScreen .meldTopRight{ top:44px !important; }
+
+  /* 3. Tile meld kiri-kanan: dari 28x20 -> 26x18, isinya dari 20x28 -> 18x26 */
+  /* Masih kebaca, tapi lebih ramping */
+  #gameScreen .meldLeftBottom .meld .mTile, #gameScreen .meldLeftBottom .meld .t,
+  #gameScreen .meldRightBottom .meld .mTile, #gameScreen .meldRightBottom .meld .t{
+    width:26px !important; height:18px !important;
+  }
+  #gameScreen .meldLeftBottom .meld .mTile img, #gameScreen .meldLeftBottom .meld .mTile .face,
+  #gameScreen .meldLeftBottom .meld .t img, #gameScreen .meldLeftBottom .meld .t .face{
+    width:18px !important; height:26px !important;
+  }
+  #gameScreen .meldRightBottom .meld .mTile img, #gameScreen .meldRightBottom .meld .mTile .face,
+  #gameScreen .meldRightBottom .meld .t img, #gameScreen .meldRightBottom .meld .t .face{
+    width:18px !important; height:26px !important;
+  }
+  /* 4. Tile meld atas: dari 20x28 -> 18x26 juga, biar seragam */
+  #gameScreen .meldTopRight .meld .mTile, #gameScreen .meldTopRight .meld .t{
+    width:18px !important; height:26px !important;
+  }
+  /* 5. Rapetin: gap antar tile dari 2px -> -1px (overlap dikit kayak meld beneran), gap antar meld dari 6px -> 4px */
+  #gameScreen .meldLeftBottom .meld, #gameScreen .meldRightBottom .meld, #gameScreen .meldTopRight .meld{
+    gap:-1px !important; padding:1px !important;
+  }
+  #gameScreen .meldLeftBottom, #gameScreen .meldRightBottom, #gameScreen .meldTopRight{
+    gap:4px !important;
+  }
+  /* 6. Kotak tengah (Dari: IVAN) dibikin lebih ramping, biar gak makan tempat */
+  #gameScreen .centerBox{ padding:3px !important; }
+  #gameScreen .centerBox .t{ width:26px !important; height:34px !important; }
+}
 </style>
 </head>
 <body>
