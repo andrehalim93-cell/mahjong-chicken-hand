@@ -499,7 +499,7 @@ function handleAfterDiscard(room, discarder, tile){
     return;
   }
   // PONG / CHOW / HU ngikutin waktu giliran. Kalau habis / semua udah PASS, langsung next.
-  if(room.turnTimeSec && room.turnTimeSec>0){ room.claimTimer = setTimeout(()=>{ resolveClaimTimeout(room, discarder, tile); }, room.turnTimeSec*1000); }
+  room.claimTimer = setTimeout(()=>{ resolveClaimTimeout(room, discarder, tile); }, (room.turnTimeSec||15)*1000);
 }
 function doClaim(room, claimer, action, chowNums, tile, discarder){
   clearTurnTimer(room);
