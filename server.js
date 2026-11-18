@@ -982,21 +982,20 @@ socket.on('jiaKong', ({ code, tileId })=>{
     addLog(room, `🔄 ${p.name} nyambung lagi!`);
     io.emit('roomListUpdated');
   });
- socket.on('disconnect', ()=>{
+   socket.on('disconnect', ()=>{
     for(let code in rooms){
       let room = rooms[code];
       let p = room.players.find(x=>x.id===socket.id);
       if(!p) continue;
-      // JANGAN langsung hapus. Tandain putus, kasih 30 detik buat balik.
+      // JANGAN langsung hapus. Tandain putus, kasih 120 detik buat balik.
       p.disconnected = true;
       p.disconnectedAt = Date.now();
-      addLog(room, `📶 ${p.name} putus... nunggu 30 detik buat balik!`);
+      addLog(room, `📶 ${p.name} putus... nunggu 120 detik buat balik!`);
       emitLobby(room);
-      // Kalau 30 detik gak balik, baru beneran hapus
+      // Kalau 120 detik gak balik, baru beneran hapus
       p.disconnectTimer = setTimeout(()=>{
         // JANGAN hapus kursi kalau game lagi jalan - biar bisa balik kapanpun
         if(room.phase==='playing') return;
-        let idx = room.players.findIndex(x=>x.name===p.name && x.disconnected);
         let idx = room.players.findIndex(x=>x.name===p.name && x.disconnected);
         if(idx<0) return;
         let left = room.players[idx];
@@ -1004,7 +1003,7 @@ socket.on('jiaKong', ({ code, tileId })=>{
         if(room.players.length===0){
           clearTurnTimer(room);
           delete rooms[code];
-              } else {
+        } else {
           let humansLeft = room.players.filter(p=>!p.isBot);
           if(humansLeft.length===0){
             clearTurnTimer(room);
@@ -1014,7 +1013,7 @@ socket.on('jiaKong', ({ code, tileId })=>{
           }
           if(left.isHost) humansLeft[0].isHost = true;
           emitLobby(room);
-          addLog(room, `👋 ${left.name} keluar! (gak balik 30 detik)`);
+          addLog(room, `👋 ${left.name} keluar! (gak balik 120 detik)`);
           if(room.phase==='playing'){
             if(room.turnIdx >= room.players.length) room.turnIdx = 0;
             if(room.players[room.turnIdx] && room.players[room.turnIdx].name===left.name){
@@ -1023,11 +1022,10 @@ socket.on('jiaKong', ({ code, tileId })=>{
           }
         }
         io.emit('roomListUpdated');
-      }, 30000);
+      }, 120000);
       break;
     }
   });
-});
 // SAPU MEJA ZOMBIE TIAP 10 DETIK: kalau udah gak ada manusia aktif, hapus meja + BOT-nya
 setInterval(()=>{
   let changed = false;
