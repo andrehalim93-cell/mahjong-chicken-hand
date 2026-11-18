@@ -348,7 +348,7 @@ function botDrawAndDiscard(room, bot){
   if(room.wall.length===0){ endGameDraw(room); return; }
   let drawn = room.wall.pop();
   while(drawn && drawn.type==='flower'){ bot.flowers.push(drawn); if(room.wall.length===0) break; drawn=room.wall.pop(); }
-      if(drawn){ p.hand.push(drawn); p.hand = sortHand(p.hand); }
+      if(drawn){ bot.hand.push(drawn); bot.hand = sortHand(bot.hand); }
   sendHand(room, bot);
   emitToRoom(room, 'playerDrew', { player:bot.name, wallLeft:room.wall.length });
   setTimeout(()=>botDiscard(room, bot), 900);
