@@ -1764,7 +1764,8 @@ socket.on('disconnect', ()=>{
   }
 });
 
-socket.on('rejoinedRoom', d=>{
+ssocket.on('rejoinedRoom', d=>{
+  rejoinTryCount = 0;
   el('reconnectBanner').style.display = 'none';
   toast('✅ Balik lagi ke meja!');
   // Balikin layar yang bener sesuai fase
@@ -1779,10 +1780,19 @@ socket.on('rejoinedRoom', d=>{
   }
 });
 
+let rejoinTryCount = 0;
 socket.on('rejoinFailed', m=>{
+  rejoinTryCount = rejoinTryCount + 1;
+  if(rejoinTryCount < 3){
+    toast('📶 Coba nyambung lagi... (' + rejoinTryCount + '/3)');
+    setTimeout(()=>{
+      socket.emit('rejoinRoom', { name: myName, code: myCode, avatar: currentUser ? currentUser.avatar : '🧑' });
+    }, 1500);
+    return;
+  }
+  rejoinTryCount = 0;
   el('reconnectBanner').style.display = 'none';
   toast(m);
-  // Meja udah bubar / kursi udah kehapus, balik ke Home aja, tetep login
   backToHome();
 });
 socket.on('roomCreated', d=>{ myCode=d.code; sessionStorage.setItem('mahjong_room', JSON.stringify({code: myCode, name: myName})); el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
