@@ -1908,11 +1908,6 @@ socket.on('rejoinFailed', m=>{
     // Nanti pas socket nyambung lagi, socket.on('connect') yang bakal ngirim rejoinRoom lagi.
   }, 2000);
 });
-  toast('📶 Coba nyambung lagi...');
-  setTimeout(()=>{
-    if(myCode && myName) socket.emit('rejoinRoom', { name: myName, code: myCode, avatar: currentUser ? currentUser.avatar : '🧑' });
-  }, 2000);
-});
 socket.on('roomCreated', d=>{ myCode=d.code; try{ sessionStorage.setItem('mahjong_room', JSON.stringify({code:d.code, name:myName})); }catch(e){} el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
 socket.on('roomList', d=>{ renderPublicRooms(d); });
 socket.on('roomListUpdated', ()=>{ refreshRooms(); });
