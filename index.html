@@ -1480,6 +1480,7 @@ function backToHome(){
   // 1. Kasih tau server kita keluar meja, biar nama kita ilang dari lobby temen
   try{ if(myCode) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
   myCode = '';
+  sessionStorage.removeItem('mahjong_room');
   // 2. Tutup semua layar game / lobby / popup menang
   el('lobbyScreen').classList.add('hidden');
   el('gameScreen').classList.add('hidden');
@@ -1495,10 +1496,11 @@ function backToHome(){
   refreshRooms();
   toast('Balik ke Home!');
 }
-  function doLogout(){
+    function doLogout(){
   currentUser = null;
   localStorage.removeItem('mahjong_user');
   sessionStorage.removeItem('mahjong_user');
+  sessionStorage.removeItem('mahjong_room');
   if(el('nameInput')){ el('nameInput').value=''; el('nameInput').readOnly=false; }
   el('homeScreen').classList.add('hidden');
   el('authScreen').classList.remove('hidden');
@@ -1728,8 +1730,16 @@ let hasConnectedBefore = false;
 let wasInRoom = false;
 
 socket.on('connect', ()=>{
-  if(hasConnectedBefore && myCode && myName){
-    // Ini reconnect, bukan pertama kali connect
+  if(!myCode){
+    try{
+      let savedRoom = JSON.parse(sessionStorage.getItem('mahjong_room'));
+      if(savedRoom && savedRoom.code){
+        myCode = savedRoom.code;
+        myName = savedRoom.name;
+      }
+    }catch(e){}
+  }
+  if(myCode && myName){
     el('reconnectBanner').style.display = 'none';
     toast('🔄 Nyambung lagi, masuk meja lagi...');
     socket.emit('rejoinRoom', { name: myName, code: myCode, avatar: currentUser ? currentUser.avatar : '🧑' });
