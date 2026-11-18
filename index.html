@@ -1430,9 +1430,9 @@ async function doLogin(){
 function loginSuccess(user, passwordForSave, showProfile){
   currentUser = user;
   let save = el('saveLogin') ? el('saveLogin').checked : false;
-  // JANGAN PERNAH simpen user-nya, biar refresh / close selalu logout
+  // Simpen di sessionStorage aja: refresh tetep login, close browser auto logout
   localStorage.removeItem('mahjong_user');
-  sessionStorage.removeItem('mahjong_user');
+  try{ sessionStorage.setItem('mahjong_user', JSON.stringify({user: user, password: passwordForSave || ''})); }catch(e){}
   if(save){
     // Cuma simpen ID + Pass buat auto-isi form
     localStorage.setItem('mahjong_saved_login', JSON.stringify({id:user.id, password:passwordForSave||''}));
@@ -1511,7 +1511,31 @@ function backToHome(){
   toast('Udah logout!');
 }
 function checkSavedLogin(){
-  // GAK ADA AUTO-LOGIN LAGI, cuma auto-isi form login aja
+  renderAvatarPick();
+  // 1. Cek session dulu - kalau ada, berarti ini refresh, bukan close browser
+  try{
+    let sess = sessionStorage.getItem('mahjong_user');
+    if(sess){
+      let s = JSON.parse(sess);
+      if(s && s.user && s.password){
+        // Auto-login diam-diam pake ID + password yang ke-save di session
+        fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:s.user.id, password:s.password})})
+        .then(r=>r.text()).then(txt=>{
+          try{ let j = JSON.parse(txt); if(j.ok){ loginSuccess(j.user, s.password, false); return; } }catch(e){}
+          // Kalau gagal (password diganti dll), jatuh ke login biasa
+          showLoginScreen();
+        }).catch(()=>showLoginScreen());
+        return;
+      }
+      if(s && s.user){
+        loginSuccess(s.user, '', false);
+        return;
+      }
+    }
+  }catch(e){}
+  showLoginScreen();
+}
+function showLoginScreen(){
   try{
     let saved = localStorage.getItem('mahjong_saved_login');
     if(saved){
@@ -1521,8 +1545,6 @@ function checkSavedLogin(){
       if(el('saveLogin')) el('saveLogin').checked=true;
     }
   }catch(e){}
-  renderAvatarPick();
-  // Selalu tampilin layar login pas pertama buka
   el('authScreen').classList.remove('hidden');
   el('homeScreen').classList.add('hidden');
 }
