@@ -734,14 +734,31 @@ socket.on('fillBots', ({ code, level })=>{
     startGame(room, turnTimeSec);
   });
 
-  socket.on('playAgain', ({ code })=>{
+   socket.on('playAgain', ({ code })=>{ socket.emit('rematchUpdate', { count: 0, total: 1 }); });
+  socket.on('rematch', ({ code })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
-    clearTurnTimer(room);
-    room.phase='lobby';
-    room.players.forEach(p=>{ p.hand=[]; p.melds=[]; p.discards=[]; p.flowers=[]; });
-    emitLobby(room);
-    emitToRoom(room, 'playAgainReady', { code });
+    if(room.phase!=='finished' && room.phase!=='playing') return;
+    let me = room.players.find(p=>p.id===socket.id);
+    if(!me || me.isBot) return;
+    if(!room.rematchVotes) room.rematchVotes = [];
+    if(!room.rematchVotes.includes(me.name)) room.rematchVotes.push(me.name);
+    let humans = room.players.filter(p=>!p.isBot && !p.disconnected);
+    let count = room.rematchVotes.filter(n=>humans.some(p=>p.name===n)).length;
+    emitToRoom(room, 'rematchUpdate', { count, total: humans.length, voters: room.rematchVotes });
+    if(count >= humans.length && humans.length>0){
+      room.rematchVotes = [];
+      room.phase='lobby';
+      room.players.forEach(p=>{ p.hand=[]; p.melds=[]; p.discards=[]; p.flowers=[]; });
+      // Langsung mulai lagi, gak balik lobby, pemain sama persis
+      startGame(room, room.turnTimeSec);
+    }
+  });
+  socket.on('cancelRematch', ({ code })=>{
+    let room = rooms[(code||'').toUpperCase()];
+    if(!room) return;
+    room.rematchVotes = [];
+    emitToRoom(room, 'rematchUpdate', { count: 0, total: room.players.filter(p=>!p.isBot).length, voters: [] });
   });
 
   socket.on('drawTile', ({ code })=>{
