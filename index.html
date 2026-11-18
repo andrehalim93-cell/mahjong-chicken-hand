@@ -884,6 +884,25 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     transform:none !important; rotate:0deg !important;
   }
 }
+/* ===== V40 - JANGKARIN MELD KIRI-KANAN LAGI KE PINGGIR ===== */
+@media (max-width:768px){
+  /* KIRI: nempel kiri bawah, di sebelah tile merah, BUKAN di tengah */
+  #gameScreen .meldLeftBottom{
+    left:52px !important; right:auto !important; top:auto !important; bottom:6px !important;
+    width:max-content !important; max-width:60% !important;
+    flex-direction:row !important; justify-content:flex-start !important; align-items:flex-end !important;
+  }
+  /* KANAN: nempel kanan bawah, di sebelah tile merah, BUKAN di tengah */
+  #gameScreen .meldRightBottom{
+    right:52px !important; left:auto !important; top:auto !important; bottom:6px !important;
+    width:max-content !important; max-width:60% !important;
+    flex-direction:row !important; justify-content:flex-end !important; align-items:flex-end !important;
+  }
+  /* Meld-nya tetep jejer ke samping */
+  #gameScreen .meldLeftBottom .meld, #gameScreen .meldRightBottom .meld{
+    flex-direction:row !important;
+  }
+}
 </style>
 </head>
 <body>
