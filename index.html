@@ -1765,19 +1765,23 @@ socket.on('disconnect', ()=>{
 });
 
 let rejoinTryCount = 0;
-socket.on('rejoinedRoom', d=>{
+ssocket.on('rejoinedRoom', d=>{
   rejoinTryCount = 0;
   el('reconnectBanner').style.display = 'none';
   toast('✅ Balik lagi ke meja!');
-  // Balikin layar yang bener sesuai fase
+  // Balikin layar yang bener sesuai fase + balikin tombol chat
   if(d.phase==='playing'){
     el('lobbyScreen').classList.add('hidden');
     el('homeScreen').classList.add('hidden');
     el('gameScreen').classList.remove('hidden');
+    el('chatFab').classList.remove('showInLobby');
+    el('chatFab').classList.add('showInGame');
   } else {
     el('gameScreen').classList.add('hidden');
     el('homeScreen').classList.add('hidden');
     el('lobbyScreen').classList.remove('hidden');
+    el('chatFab').classList.remove('showInGame');
+    el('chatFab').classList.add('showInLobby');
   }
 });
 socket.on('rejoinFailed', m=>{
