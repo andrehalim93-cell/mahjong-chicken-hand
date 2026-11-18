@@ -734,31 +734,54 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   width:24px !important; padding:8px 4px !important;
   z-index:20 !important;
 }
-/* ===== V30 ROLLBACK + GESER DIKIT AJA - JANGAN UBAH seatPos ===== */
+/* ===== V31 - BALIKIN NAMA KIRI-KANAN + KECILIN MEJA + BENERIN MELD + BUANGAN GEDE ===== */
 @media (max-width:768px){
-  /* Kembalikan posisi seatPos yang dirusak V29 */
-  #gameScreen .seatPos.top{position:absolute !important; top:32px !important; left:50% !important; transform:translateX(-50%) !important}
-  #gameScreen .seatPos.left{position:absolute !important; left:38px !important; top:50% !important; transform:translateY(-50%) !important}
-  #gameScreen .seatPos.right{position:absolute !important; right:38px !important; top:50% !important; transform:translateY(-50%) !important}
-  #gameScreen .table{position:relative !important; overflow:visible !important}
-  #gameScreen .gameWrap{overflow:visible !important; padding:8px 8px 6px 8px !important}
+  /* Meja dikecilin dikit lagi */
+  #gameScreen .gameWrap{padding:6px 6px 4px 6px !important; overflow:visible !important}
+  #gameScreen .table{width:84% !important; margin:18px auto 4px auto !important; min-height:280px !important; overflow:visible !important; position:relative !important}
 
-  /* Nama keluar dikit aja dari seatPos-nya - seatPos-nya tetep di dalam */
-  #gameScreen .seatPos.top .playerChip{margin-top:-30px !important}
-  #gameScreen .seatPos.left .playerChip{margin-left:-36px !important}
-  #gameScreen .seatPos.right .playerChip{margin-right:-36px !important}
+  /* 1. NAMA KIRI-KANAN DIBALIKIN - jangan pake margin minus gede lagi */
+  #gameScreen .seatPos.top{position:absolute !important; top:2px !important; left:50% !important; transform:translateX(-50%) !important}
+  #gameScreen .seatPos.left{position:absolute !important; left:2px !important; top:50% !important; transform:translateY(-50%) !important}
+  #gameScreen .seatPos.right{position:absolute !important; right:2px !important; top:50% !important; transform:translateY(-50%) !important}
+  #gameScreen .seatPos.left .playerChip, #gameScreen .seatPos.right .playerChip{
+    margin:0 !important; position:relative !important; z-index:30 !important;
+    writing-mode:vertical-rl !important; white-space:nowrap !important;
+    display:flex !important; visibility:visible !important; opacity:1 !important;
+  }
+  #gameScreen .seatPos.top .playerChip{margin:0 !important; position:relative !important; z-index:30 !important; white-space:nowrap !important}
 
-  /* Buangan: balikin ke bawah, cuma 1 tile terakhir */
-  #gameScreen .centerBox{position:absolute !important; top:auto !important; bottom:6px !important; left:50% !important; transform:translateX(-50%) !important}
-  #gameScreen .poolAllBottom{position:absolute !important; top:auto !important; bottom:5px !important; left:50% !important; transform:translateX(-50%) !important; width:auto !important; padding:4px 6px !important}
+  /* 2. MELD KIRI-KANAN HARUS SESUAI - sejajar tengah, kiri di kiri, kanan di kanan */
+  #gameScreen .meldLeftBottom{
+    position:absolute !important; left:42px !important; top:50% !important;
+    transform:translateY(-50%) !important; display:flex !important; flex-direction:column !important; gap:4px !important;
+  }
+  #gameScreen .meldRightBottom{
+    position:absolute !important; right:42px !important; left:auto !important; top:50% !important;
+    transform:translateY(-50%) !important; display:flex !important; flex-direction:column !important; gap:4px !important; align-items:flex-end !important;
+  }
+  #gameScreen .meldLeftBottom .meld, #gameScreen .meldRightBottom .meld{display:flex !important; flex-direction:row !important; gap:2px !important}
+
+  /* 3. BUANGAN DIBENERIN - label di atas, tile di bawah, gak numpuk lagi + GEDE SAMA KAYAK TILE KAMU */
+  #gameScreen .centerBox{
+    position:absolute !important; top:auto !important; bottom:6px !important; left:50% !important;
+    transform:translateX(-50%) !important; display:flex !important; flex-direction:column !important;
+    align-items:center !important; gap:2px !important; width:auto !important; z-index:10 !important;
+  }
+  /* Tulisan "Dari: RINA" + "BUANGAN" dibikin 1 kolom, gak ketimpa */
+  #gameScreen .centerBox > div{width:100% !important; text-align:center !important}
+  #gameScreen #poolAllTiles{display:flex !important; justify-content:center !important}
   #gameScreen #poolAllTiles .mTile{display:none !important}
-  #gameScreen #poolAllTiles .mTile:last-child{display:flex !important; width:26px !important; height:36px !important}
+  #gameScreen #poolAllTiles .mTile:last-child{
+    display:flex !important; width:52px !important; height:72px !important; flex:none !important;
+  }
+  #gameScreen #poolAllTiles .mTile:last-child .face{width:100% !important; height:100% !important}
+  #gameScreen #poolAllTiles .mTile:last-child img{width:100% !important; height:100% !important; object-fit:cover !important}
 
   /* Tile bawah biar gak kepotong */
   #gameScreen .myArea{overflow:visible !important; padding-bottom:14px !important}
   #gameScreen .myHand{overflow:visible !important; padding-bottom:10px !important}
-
-  /* Tile bunga dibuang, tinggal tulisan */
+  /* Tile bunga tetep tulisan aja */
   #gameScreen #myFlowers .t, #gameScreen #myFlowers .mTile, #gameScreen #myFlowers img{display:none !important}
 }
 </style>
