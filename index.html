@@ -930,6 +930,51 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     transform:none !important; rotate:0deg !important;
   }
 }
+/* ===== V42 - BATALIN PUTERAN V41, MELD KIRI-KANAN NEMPEL PINGGIR VERTIKAL ===== */
+@media (max-width:768px){
+  /* 1. BATALIN SEMUA PUTERAN V41 */
+  #gameScreen .meldLeftBottom, #gameScreen .meldRightBottom,
+  #gameScreen .meldLeftBottom .meld, #gameScreen .meldRightBottom .meld,
+  #gameScreen .meldLeftBottom .meld .mTile, #gameScreen .meldLeftBottom .meld .t,
+  #gameScreen .meldRightBottom .meld .mTile, #gameScreen .meldRightBottom .meld .t{
+    transform:none !important; rotate:0deg !important;
+  }
+
+  /* 2. VINA / KIRI - nempel pinggir kiri, tengah secara vertikal, susun ke bawah */
+  #gameScreen .meldLeftBottom{
+    position:absolute !important;
+    left:4px !important; right:auto !important;
+    top:50% !important; bottom:auto !important;
+    transform:translateY(-50%) !important;
+    width:max-content !important; max-width:80px !important;
+    display:flex !important; flex-direction:column !important;
+    gap:6px !important; justify-content:center !important; align-items:flex-start !important;
+  }
+  /* 3. CITRA / TONI / KANAN - nempel pinggir kanan, tengah secara vertikal, susun ke bawah */
+  #gameScreen .meldRightBottom{
+    position:absolute !important;
+    right:4px !important; left:auto !important;
+    top:50% !important; bottom:auto !important;
+    transform:translateY(-50%) !important;
+    width:max-content !important; max-width:80px !important;
+    display:flex !important; flex-direction:column !important;
+    gap:6px !important; justify-content:center !important; align-items:flex-end !important;
+  }
+  /* 4. Tiap meld-nya tetep jejer 3 tile ke samping, kecil kayak meld KIKI */
+  #gameScreen .meldLeftBottom .meld, #gameScreen .meldRightBottom .meld{
+    display:flex !important; flex-direction:row !important; gap:2px !important;
+  }
+  #gameScreen .meldLeftBottom .meld .mTile, #gameScreen .meldLeftBottom .meld .t,
+  #gameScreen .meldRightBottom .meld .mTile, #gameScreen .meldRightBottom .meld .t{
+    width:22px !important; height:32px !important; flex:none !important;
+  }
+  #gameScreen .meldLeftBottom .meld .mTile img, #gameScreen .meldLeftBottom .meld .mTile .face,
+  #gameScreen .meldLeftBottom .meld .t img, #gameScreen .meldLeftBottom .meld .t .face,
+  #gameScreen .meldRightBottom .meld .mTile img, #gameScreen .meldRightBottom .meld .mTile .face,
+  #gameScreen .meldRightBottom .meld .t img, #gameScreen .meldRightBottom .meld .t .face{
+    width:100% !important; height:100% !important;
+  }
+}
 </style>
 </head>
 <body>
