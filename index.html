@@ -168,6 +168,18 @@ input{font-family:inherit}
 #winHand .t .face .dot{width:6px!important;height:6px!important}
 #winHand .t .face .stick{width:3px!important;height:10px!important}
 #winModal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;display:none;align-items:center;justify-content:center;padding:16px}
+/* ===== EFEK HU FINAL ===== */
+#huFx{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:400;display:none;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;transition:background .3s}
+#huFx.show{display:flex;background:rgba(0,0,0,.65)}
+#huFxTile{opacity:0;transform:scale(.5)}
+#huFx.showTile #huFxTile{opacity:1;transform:scale(1.4);transition:.3s}
+#huFxTile .t{width:72px!important;height:100px!important;box-shadow:0 0 0 4px #facc15,0 0 40px 12px rgba(250,204,21,.9);animation:huTileShake .35s infinite;border-radius:10px}
+#huFxTile .t .face .bigChar{font-size:36px!important}
+#huFxText{opacity:0;transform:scale(.5);text-align:center;margin-top:18px}
+#huFx.showTile #huFxText{opacity:1;transform:scale(1);transition:.3s}
+#huFxText .huBig{font-size:52px;font-weight:900;color:#facc15;text-shadow:0 4px 0 #92400e,0 0 30px rgba(250,204,21,.9);animation:huTileShake .5s infinite}
+#huFxText .huName{font-size:22px;font-weight:900;color:#fff;margin-top:6px;text-shadow:0 2px 8px #000}
+@keyframes huTileShake{0%,100%{transform:rotate(-3deg) scale(1)}50%{transform:rotate(3deg) scale(1.06)}}
 #winModal.show{display:flex}
 .winBox{background:linear-gradient(180deg,#fef3c7,#fde68a);color:#422006;border-radius:22px;padding:22px;text-align:center;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.6)}
 .winBox h2{font-size:26px}.winBox p{margin-top:8px;font-size:14px;line-height:1.5}.winBox .btn{margin-top:14px}
@@ -1365,6 +1377,8 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
   <div style="display:flex;gap:6px;padding:8px;border-top:1px solid rgba(255,255,255,.15)"><input id="chatInput" placeholder="Silahkan chat disini" style="flex:1;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:13px;outline:none"><button onclick="sendChat()" style="padding:11px 16px;border-radius:10px;background:#facc15;color:#422006;font-weight:900;font-size:13px">KIRIM ➡️</button></div>
 </div>
+<div id="huFx"><div id="huFxTile"></div><div id="huFxText"><div class="huBig">🀄 HU!!</div><div class="huName" id="huFxName"></div></div></div>
+<div id="winModal"><div class="winBox"><div style="font-size:48px">🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2>
 <div id="winModal"><div class="winBox"><div style="font-size:48px">🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2><p id="winMsg">...</p><div id="winHand" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:12px 0 4px"></div><div id="winMeldLabel" style="font-size:11px;color:#92400e;font-weight:800"></div><div id="rematchStatus" style="font-size:13px;font-weight:900;color:#92400e;margin-top:8px"></div><button id="rematchBtn" class="btn btn-gold" onclick="this.innerText='⏳ UDAH KLIK, NUNGGU TEMEN...';this.style.opacity='0.6';document.getElementById('rematchStatus').innerText='🔁 Kamu udah klik, nunggu temen...';socket.emit('rematch',{code:myCode});">🔁 REMATCH - MAIN LAGI (ORANG SAMA)</button><button class="btn btn-dark" onclick="cancelRematchAndHome()">🏠 BALIK KE HOME</button></div></div>
 <div id="reconnectBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#dc2626;color:#fff;text-align:center;padding:10px;font-weight:900;font-size:13px">📶 PUTUS! Lagi nyambung lagi... jangan tutup / reload!</div>
 <div id="toast"></div>
@@ -2019,7 +2033,42 @@ socket.on('youHu', async d=>{
   try{ await fetch('/api/add-hu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, mode: d.mode})}); }catch(e){}
   if(d.mode==='tanding') toast('🏆 HU TANDING dicatat! +1 HU');
 });
-socket.on('gameOver', d=>{ clearInterval(turnTimerInt);  if(el('turnCountdown')) el('turnCountdown').style.display='none'; if(el('meldPopup')) el('meldPopup').style.display='none'; playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message; let wh=el('winHand'); let wl=el('winMeldLabel'); if(d.hand && d.hand.length){ wh.innerHTML = groupHuTiles(d.hand).map(function(g){ return '<div class="huGroup">'+g.map(function(tt){ return tileHTML(tt); }).join('')+'</div>'; }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = ''; } else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; } el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
+socket.on('gameOver', d=>{
+  clearInterval(turnTimerInt);
+  if(el('turnCountdown')) el('turnCountdown').style.display='none';
+  if(el('meldPopup')) el('meldPopup').style.display='none';
+  // Kalau SERI, gak ada efek, langsung popup aja
+  if(!d.winner){ showWinModal(d); return; }
+  playMjSound('hu');
+  // 1. Layar gelap dulu
+  let fx = el('huFx');
+  let tileBox = el('huFxTile');
+  let nameBox = el('huFxName');
+  let winTile = d.winningTile || (d.hand && d.hand.length ? d.hand[d.hand.length-1] : null);
+  tileBox.innerHTML = winTile ? tileHTML(winTile) : '🀄';
+  nameBox.innerText = d.winner===myName ? 'KAMU MENANG!' : d.winner + ' MENANG!';
+  fx.classList.add('show');
+  fx.classList.remove('showTile');
+  // 2. Abis 0.5 detik, tile nyala + goyang + teks gede muncul
+  setTimeout(()=>{
+    fx.classList.add('showTile');
+  }, 500);
+  // 3. Abis total 2.2 detik, efek ilang, baru popup menang muncul
+  setTimeout(()=>{
+    fx.classList.remove('show'); fx.classList.remove('showTile');
+    showWinModal(d);
+  }, 2200);
+});
+function showWinModal(d){
+  playMjSound('hu');
+  el('winTitle').innerText = d.winner ? (d.winner===myName ? '🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!';
+  el('winMsg').innerText = d.message;
+  let wh=el('winHand'); let wl=el('winMeldLabel');
+  if(d.hand && d.hand.length){ wh.innerHTML = groupHuTiles(d.hand).map(function(g){ return '<div class="huGroup">'+g.map(function(tt){ return tileHTML(tt); }).join('')+'</div>'; }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = ''; }
+  else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; }
+  el('winModal').classList.add('show');
+  addLog('🏁 '+d.message);
+}
 socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden');   el('chatFab').classList.remove('showInGame'); el('chatPanel').classList.remove('show'); chatOpen=false; myHand=[]; myMelds=[]; myFlowers=[]; usedBotNames=[]; if(el('winHand')) el('winHand').innerHTML=''; if(el('winMeldLabel')) el('winMeldLabel').innerText=''; renderMyHand(); });
 socket.on('rematchUpdate', d=>{
   if(d.count===0){ el('rematchStatus').innerText = ''; return; }
