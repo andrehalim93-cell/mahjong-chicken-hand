@@ -811,6 +811,62 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   .centerBox{width:170px !important;max-width:54% !important}
   .poolAllBottom{width:210px !important;max-width:66% !important}
 }
+/* ===== V25 REVISI - BUNGA JANGAN DIUBAH, CUMA NAMA + BUANGAN - KHUSUS HP ===== */
+@media (max-width:768px){
+  .gameWrap{padding:34px 36px 4px 36px !important;overflow:visible !important}
+  .table{overflow:visible !important}
+
+  /* 1. NAMA DILUAR MEJA - BOT + PEMAIN sama */
+  /* ATAS: nama di atas luar meja */
+  .seatPos.top .playerChip{
+    position:absolute !important; left:50% !important; top:-30px !important;
+    transform:translateX(-50%) !important;
+    writing-mode:horizontal-tb !important; white-space:nowrap !important; z-index:20 !important;
+  }
+  /* KIRI: nama di kiri luar meja, vertikal */
+  .seatPos.left .playerChip{
+    position:absolute !important; left:-32px !important; top:50% !important;
+    transform:translateY(-50%) !important;
+    writing-mode:vertical-rl !important; white-space:nowrap !important; z-index:20 !important;
+  }
+  /* KANAN: nama di kanan luar meja, vertikal */
+  .seatPos.right .playerChip{
+    position:absolute !important; right:-32px !important; top:50% !important;
+    transform:translateY(-50%) !important;
+    writing-mode:vertical-rl !important; white-space:nowrap !important; z-index:20 !important;
+  }
+
+  /* 2. BUANGAN DI PALING BAWAH MEJA */
+  .centerBox{
+    top:auto !important; bottom:8px !important;
+    left:50% !important; transform:translateX(-50%) !important;
+  }
+  .poolAllBottom{
+    top:auto !important; bottom:6px !important;
+    left:50% !important; transform:translateX(-50%) !important;
+  }
+
+  /* BUNGA: SENGAJA GAK ADA DI SINI - BIARIN KAYAK SEKARANG, JANGAN DIUBAH */
+}
+/* ===== V26 - BUANGAN CUMA 1 TILE PALING AKHIR - KHUSUS HP, BUNGA JANGAN DIUBAH ===== */
+@media (max-width:768px){
+  /* Buangan bawah meja: sembunyiin semua, tampilin 1 paling akhir aja */
+  .poolAllBottom .mTile{display:none !important}
+  .poolAllBottom .mTile:last-child{
+    display:flex !important;
+    width:26px !important; height:36px !important;
+  }
+  /* Buangan tengah (kalau masih kepake): sama, cuma 1 paling akhir */
+  .centerBox .poolCenter .mTile,
+  .centerBox .poolCenter .t{display:none !important}
+  .centerBox .poolCenter .mTile:last-child,
+  .centerBox .poolCenter .t:last-child{
+    display:flex !important;
+    width:26px !important; height:36px !important;
+  }
+  /* Biar kotak buangannya gak lebar, muat 1 tile aja */
+  .poolAllBottom{width:auto !important; min-width:40px !important; padding:4px 6px !important}
+}
 </style>
 </head>
 <body>
