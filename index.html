@@ -1143,6 +1143,27 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     justify-content:center !important;
   }
 }
+/* ===== POPUP CLAIM SEBESAR MEJA ===== */
+#claimPopup{display:none;position:absolute;inset:0;z-index:50;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:12px}
+#claimPopup.show{display:flex}
+#claimCard{width:80%;max-width:420px;background:#fef3c7;border-radius:20px;padding:14px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.5);max-height:92%;overflow:auto}
+#claimTitle{font-size:18px;font-weight:900;color:#422006}
+#claimSub{font-size:12px;color:#92400e;margin:4px 0 8px}
+#claimTimerBar{height:6px;background:#fde68a;border-radius:99px;overflow:hidden;margin-bottom:10px}
+#claimTimerFill{height:100%;width:100%;background:#dc2626;transition:width 1s linear}
+#claimBtns{display:flex;flex-direction:column;gap:10px}
+.claimBig{width:100%;border:none;border-radius:14px;padding:12px;font-weight:900;cursor:pointer;color:#fff}
+.claimBig.hu{background:linear-gradient(180deg,#facc15,#b45309);font-size:22px;padding:16px;color:#422006}
+.claimBig.kong{background:#7c3aed;font-size:18px}
+.claimBig.pong{background:#2563eb;font-size:18px}
+.chowCard{width:100%;border:2px solid #059669;border-radius:14px;padding:10px;background:#ecfdf5;cursor:pointer}
+.chowCard .chowTiles{display:flex;justify-content:center;gap:4px;margin-bottom:6px}
+.chowCard .chowTiles .t{width:38px;height:54px;flex:none}
+.chowCard b{color:#065f46;font-size:14px}
+.claimMiniTiles{display:flex;justify-content:center;gap:4px;margin-bottom:6px}
+.claimMiniTiles .t{width:38px;height:54px;flex:none}
+.claimMiniTiles .t.isDiscard{outline:3px solid #facc15;outline-offset:2px}
+#claimPassBtn{margin-top:12px;width:100%;border:none;background:#e5e7eb;border-radius:12px;padding:10px;font-weight:800;cursor:pointer}
 </style>
 </head>
 <body>
@@ -1304,6 +1325,16 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <div class="meldZone meldLeftBottom" id="meldLeft"></div>
 <div class="meldZone meldRightBottom" id="meldRight"></div>
   </div>
+<!-- ===== POPUP CLAIM PONG/CHOW/KONG/HU ===== -->
+<div id="claimPopup" onclick="if(event.target===this) doClaim('pass')">
+  <div id="claimCard">
+    <div id="claimTitle">Ada buangan!</div>
+    <div id="claimSub"></div>
+    <div id="claimTimerBar"><div id="claimTimerFill"></div></div>
+    <div id="claimBtns"></div>
+    <button id="claimPassBtn" onclick="doClaim('pass')">⏭️ PASS / LEWAT</button>
+  </div>
+</div>
   <div class="myArea">
     <div class="myTools"><button id="discardFab" onclick="openDiscards()" title="Lihat semua buangan">🗑️</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
     <div class="myTop"><div><b id="myNameLabel">Kamu</b> <span id="myStatus">• Menunggu giliran...</span></div><div><span id="myCount">13 tile</span> • <span id="myMeldCount">0 set</span></div></div>
@@ -1941,11 +1972,68 @@ function renderActionBar(actions){
     if(a.type==='selfHu'){ bar.innerHTML+=`<button class="aSelfHu" onclick="selfHu()">🐔 HU! SAYA MENANG!</button>`; }
     if(a.type==='anKong'){ bar.innerHTML+=`<button class="aPong" onclick="doAnKong('${a.key}')">🀄 KONG TERTUTUP!</button>`; }
     if(a.type==='jiaKong'){ bar.innerHTML+=`<button class="aPong" onclick="doJiaKong('${a.tile.id}')">🀄 KONG TAMBAHAN!</button>`; }
-    if(a.type==='claim'){ let c=a.claim; if(c.canHu) bar.innerHTML+=`<button class="aHu" onclick="doClaim('hu')">🐔 HU! MENANG!</button>`; if(c.kong) bar.innerHTML+=`<button class="aPong" onclick="doClaim('kong')">🀄 KONG!</button>`; else if(c.pong) bar.innerHTML+=`<button class="aPong" onclick="doClaim('pong')">🃏 PONG!</button>`; window._lastChows = c.chow||[]; (c.chow||[]).forEach((ch, idx)=>{ bar.innerHTML+=`<button class="aChow" onclick="doClaimChowByIdx(${idx})">🃏 CHOW ${ch.join('-')}</button>`; }); bar.innerHTML+=`<button class="aPass" onclick="doClaim('pass')">⏭️ PASS</button>`; if(claimTimeoutInt) clearTimeout(claimTimeoutInt); if(turnTimeSec && turnTimeSec>0){ claimTimeoutInt=setTimeout(()=>{ if(bar.innerHTML.includes('PASS')){ bar.innerHTML=''; socket.emit('claim',{code:myCode, action:'pass'}); } }, turnTimeSec*1000); } }
+    // CLAIM LAWAN BUANG -> JADI POPUP, BUKAN TOMBOL KECIL LAGI
+    if(a.type==='claim'){ openClaimPopup(a.claim, a.tile); }
   });
 }
-function doClaim(action){ if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
-function doClaimChow(chowNums){ if(claimTimeoutInt) clearTimeout(claimTimeoutInt); console.log('KLIK CHOW, kirim ke server:', chowNums); socket.emit('claim',{code:myCode, action:'chow', chowNums}); el('actionBar').innerHTML=''; }
+
+function closeClaimPopup(){
+  let p=el('claimPopup'); if(p) p.classList.remove('show');
+  if(claimTimeoutInt) clearTimeout(claimTimeoutInt);
+}
+function openClaimPopup(c, discardTile){
+  window._lastChows = c.chow||[];
+  window._claimTile = discardTile;
+  el('claimTitle').innerText = '🃏 Bisa diambil!';
+  el('claimSub').innerHTML = `Lawan buang tile ini, mau ambil?`;
+  let box = el('claimBtns'); box.innerHTML='';
+
+  // Helper: cari tile di tangan kamu yang key-nya sama kayak tile buangan
+  function myTilesByKey(key, n){ return myHand.filter(t=>t.key===key).slice(0,n); }
+  function tilesRow(tiles, discardId){
+    return `<div class="claimMiniTiles">${tiles.map(t=>`<div class="${t.id===discardId?'isDiscard':''}">${tileHTML(t)}</div>`).join('')}</div>`;
+    // Note: tileHTML udah bikin div .t, jadi wrapper ini cuma buat highlight
+  }
+  // Kita bikin row manual biar highlight buangan jalan:
+  function rowHTML(tiles){
+    return `<div class="claimMiniTiles">${tiles.map(t=>tileHTML(t, t.id===discardTile.id?'sel':'')).join('')}</div>`;
+  }
+
+  // 1. HU - PALING ATAS, PALING GEDE, CUMA TOMBOL, GAK ADA TILE
+  if(c.canHu){
+    box.innerHTML += `<button class="claimBig hu" onclick="doClaim('hu')">🐔 HU! MENANG!</button>`;
+  }
+  // 2. KONG - 3 tile tangan + 1 buangan
+  if(c.kong){
+    let mine = myTilesByKey(discardTile.key, 3);
+    box.innerHTML += `<div><div>${rowHTML([...mine, discardTile])}</div><button class="claimBig kong" onclick="doClaim('kong')">🀄 KONG!</button></div>`;
+  }
+  // 3. PONG - cuma kalau gak bisa KONG (biar gak dobel, kayak kode lama lu)
+  else if(c.pong){
+    let mine = myTilesByKey(discardTile.key, 2);
+    box.innerHTML += `<div><div>${rowHTML([...mine, discardTile])}</div><button class="claimBig pong" onclick="doClaim('pong')">🃏 PONG!</button></div>`;
+  }
+  // 4. CHOW - TAMPILIN SEMUA PILIHAN, masing-masing 1 kartu + 3 tile urut
+  (c.chow||[]).forEach((ch, idx)=>{
+    // ch = [3,4,5] misal, yang 1 angka = tile buangan, 2 lainnya dari tangan
+    let tiles = ch.map(n=>{
+      if(n===discardTile.num) return discardTile;  
+      return myHand.find(t=>t.type==='suit' && t.suit===discardTile.suit && t.num===n);
+    }).filter(Boolean).sort((x,y)=>x.num-y.num);
+    box.innerHTML += `<button class="chowCard" onclick="doClaimChowByIdx(${idx})">${rowHTML(tiles)}<b>🃏 CHOW ${ch.join('-')}</b></button>`;
+  });
+
+  el('claimPopup').classList.add('show');
+  // Timer visual + auto PASS, pake turnTimeSec yang udah ada
+  if(claimTimeoutInt) clearTimeout(claimTimeoutInt);
+  let fill = el('claimTimerFill'); if(fill) fill.style.width='100%';
+  if(turnTimeSec && turnTimeSec>0){
+    setTimeout(()=>{ if(fill) fill.style.width='0%'; }, 50);
+    claimTimeoutInt=setTimeout(()=>{ closeClaimPopup(); socket.emit('claim',{code:myCode, action:'pass'}); }, turnTimeSec*1000);
+  }
+}
+function doClaim(action){ closeClaimPopup(); if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
+function doClaimChow(chowNums){ closeClaimPopup(); if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action:'chow', chowNums}); el('actionBar').innerHTML=''; }
 function doClaimChowByIdx(idx){ let chowNums = (window._lastChows||[])[idx]; console.log('KLIK CHOW idx:', idx, 'isi:', chowNums); doClaimChow(chowNums); }
 function selfHu(){ console.log('KLIK HU, hand:', myHand, 'melds:', myMelds); socket.emit('selfHu',{code:myCode}); }
 function doJiaKong(tileId){ let bar=document.getElementById('actionBar'); if(bar) bar.innerHTML=''; socket.emit('jiaKong',{code:myCode, tileId}); }
