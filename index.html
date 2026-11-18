@@ -903,6 +903,33 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     flex-direction:row !important;
   }
 }
+/* ===== V41 - MELD VINA + TONI = SEKECIL + SEBACA MELD KIKI, DIPUTER NGADAP PEMILIKNYA ===== */
+@media (max-width:768px){
+  /* 1. Ukuran tile-nya samain kayak meld KIKI - kecil tapi kebaca */
+  #gameScreen .meldLeftBottom .meld .mTile, #gameScreen .meldLeftBottom .meld .t,
+  #gameScreen .meldRightBottom .meld .mTile, #gameScreen .meldRightBottom .meld .t{
+    width:22px !important; height:32px !important; flex:none !important;
+  }
+  #gameScreen .meldLeftBottom .meld .mTile img, #gameScreen .meldLeftBottom .meld .mTile .face,
+  #gameScreen .meldLeftBottom .meld .t img, #gameScreen .meldLeftBottom .meld .t .face,
+  #gameScreen .meldRightBottom .meld .mTile img, #gameScreen .meldRightBottom .meld .mTile .face,
+  #gameScreen .meldRightBottom .meld .t img, #gameScreen .meldRightBottom .meld .t .face{
+    width:100% !important; height:100% !important;
+  }
+
+  /* 2. VINA (kiri) - puter 90° biar ngadep ke VINA */
+  #gameScreen .meldLeftBottom .meld{
+    transform:rotate(90deg) !important; transform-origin:center center !important;
+  }
+  /* 3. TONI (kanan) - puter -90° biar ngadep ke TONI */
+  #gameScreen .meldRightBottom .meld{
+    transform:rotate(-90deg) !important; transform-origin:center center !important;
+  }
+  /* Biar karakter di dalam tile ikut muter bareng tile-nya, jangan dilawan */
+  #gameScreen .meldLeftBottom .meld .face *, #gameScreen .meldRightBottom .meld .face *{
+    transform:none !important; rotate:0deg !important;
+  }
+}
 </style>
 </head>
 <body>
