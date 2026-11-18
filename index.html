@@ -1575,9 +1575,10 @@ function shareRoom(){
   if(navigator.share){ navigator.share({title:'Join Meja Mahjong', text:'Join meja ' + myCode, url: link}); }
   else { navigator.clipboard.writeText(link); toast('🔗 Link meja ke-copy!'); }
 }  
-  function backToHome(){
-  // 1. Kasih tau server kita keluar meja, biar nama kita ilang dari lobby temen
-  try{ if(myCode) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
+  function backToHome(skipLeave){
+  // 1. Kasih tau server kita keluar meja, KECUALI kalau ini dipanggil pas rejoin gagal.
+  // Kalau rejoin gagal, JANGAN kirim leaveRoom, nanti kursi kita kehapus sendiri.
+  try{ if(myCode && !skipLeave) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
   myCode = '';
   sessionStorage.removeItem('mahjong_room');
   // 2. Tutup semua layar game / lobby / popup menang
@@ -1839,35 +1840,39 @@ function cancelRematchAndHome(){
 let hasConnectedBefore = false;
 let wasInRoom = false;
 
+let rejoinInFlight = false;
 socket.on('connect', ()=>{
-  if(!myCode){
-    try{
-      let savedRoom = JSON.parse(sessionStorage.getItem('mahjong_room'));
-      if(savedRoom && savedRoom.code){
-        myCode = savedRoom.code;
-        myName = savedRoom.name;
-      }
-    }catch(e){}
+  if(!currentUser){
+    try{ let s = JSON.parse(sessionStorage.getItem('mahjong_user')); if(s && s.user) currentUser = s.user; }catch(e){}
   }
-  if(myCode && myName && currentUser){
+  if(!myCode){
+    try{ let r = JSON.parse(sessionStorage.getItem('mahjong_room')); if(r && r.code){ myCode = r.code; myName = r.name; } }catch(e){}
+  }
+  if(myCode && myName && !rejoinInFlight){
+    rejoinInFlight = true;
     el('reconnectBanner').style.display = 'none';
     toast('🔄 Nyambung lagi, masuk meja lagi...');
     socket.emit('rejoinRoom', { name: myName, code: myCode, avatar: currentUser ? currentUser.avatar : '🧑' });
+    setTimeout(()=>{ rejoinInFlight = false; }, 3000);
   }
   hasConnectedBefore = true;
 });
-socket.on('disconnect', ()=>{
-  // Cuma tampilin banner kalau lagi di meja, kalau di home gak usah panik
+socket.on('disconnect', (reason)=>{
+  console.log('PUTUS, alasan:', reason);
   if(myCode){
     wasInRoom = true;
     el('reconnectBanner').style.display = 'block';
-    toast('📶 Putus! Nunggu 30 detik buat nyambung lagi...');
+    toast('📶 Putus! Lagi nyambung lagi...');
   }
+});
+socket.on('connect_error', (e)=>{ console.log('CONNECT_ERROR:', e && e.message); });
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden && myCode && socket && !socket.connected){ socket.connect(); }
 });
 
 let rejoinTryCount = 0;
 socket.on('rejoinedRoom', d=>{
-  rejoinTryCount = 0;
+  rejoinTryCount = 0; rejoinInFlight = false;
   el('reconnectBanner').style.display = 'none';
   toast('✅ Balik lagi ke meja!');
   // Balikin layar yang bener sesuai fase + balikin tombol chat
@@ -1886,18 +1891,27 @@ socket.on('rejoinedRoom', d=>{
   }
 });
 socket.on('rejoinFailed', m=>{
-  rejoinTryCount = rejoinTryCount + 1;
-  if(rejoinTryCount < 3){
-    toast('📶 Coba nyambung lagi... (' + rejoinTryCount + '/3)');
-    setTimeout(()=>{
-      socket.emit('rejoinRoom', { name: myName, code: myCode, avatar: currentUser ? currentUser.avatar : '🧑' });
-    }, 1500);
+  // JANGAN PERNAH backToHome() / leaveRoom() dari sini!
+  // Kalau meja beneran bubar, biarin banner-nya nempel, user yang pencet balik manual.
+  // Kalau cuma gagal sesaat, coba terus tiap 2 detik sampe berhasil.
+  rejoinInFlight = false;
+  if(m && m.includes('bubar')){
+    toast('Meja udah bubar, bikin meja baru ya!');
     return;
   }
-  rejoinTryCount = 0;
-  el('reconnectBanner').style.display = 'none';
-  toast(m);
-  backToHome();
+  toast('📶 Coba nyambung lagi...');
+  setTimeout(()=>{
+    if(myCode && myName && socket && socket.connected){
+      socket.emit('rejoinRoom', { name: myName, code: myCode, avatar: currentUser ? currentUser.avatar : '🧑' });
+    }
+    // Kalau socket-nya masih putus, diemin aja.
+    // Nanti pas socket nyambung lagi, socket.on('connect') yang bakal ngirim rejoinRoom lagi.
+  }, 2000);
+});
+  toast('📶 Coba nyambung lagi...');
+  setTimeout(()=>{
+    if(myCode && myName) socket.emit('rejoinRoom', { name: myName, code: myCode, avatar: currentUser ? currentUser.avatar : '🧑' });
+  }, 2000);
 });
 socket.on('roomCreated', d=>{ myCode=d.code; try{ sessionStorage.setItem('mahjong_room', JSON.stringify({code:d.code, name:myName})); }catch(e){} el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
 socket.on('roomList', d=>{ renderPublicRooms(d); });
