@@ -734,51 +734,32 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   width:24px !important; padding:8px 4px !important;
   z-index:20 !important;
 }
-/* ===== V29 FINAL - GANTI V23-V26, PALING AKHIR ===== */
+/* ===== V30 ROLLBACK + GESER DIKIT AJA - JANGAN UBAH seatPos ===== */
 @media (max-width:768px){
-  #gameScreen, .gameWrap, .table{overflow:visible !important}
-  #gameScreen{height:auto !important; padding-bottom:10px !important}
-  .gameWrap{padding:38px 38px 6px 38px !important; overflow:visible !important}
-  .table{position:relative !important; overflow:visible !important; width:88% !important; margin:0 auto !important}
+  /* Kembalikan posisi seatPos yang dirusak V29 */
+  #gameScreen .seatPos.top{position:absolute !important; top:32px !important; left:50% !important; transform:translateX(-50%) !important}
+  #gameScreen .seatPos.left{position:absolute !important; left:38px !important; top:50% !important; transform:translateY(-50%) !important}
+  #gameScreen .seatPos.right{position:absolute !important; right:38px !important; top:50% !important; transform:translateY(-50%) !important}
+  #gameScreen .table{position:relative !important; overflow:visible !important}
+  #gameScreen .gameWrap{overflow:visible !important; padding:8px 8px 6px 8px !important}
 
-  /* 1. NAMA DILUAR KOTAK - kuncinya seatPos dibikin static, jadi chip nempel ke TABLE, bukan ke seatPos */
-  #gameScreen .seatPos{position:static !important}
-  #gameScreen .seatPos.top .playerChip{
-    position:absolute !important; left:50% !important; top:-32px !important;
-    transform:translateX(-50%) !important; z-index:50 !important; white-space:nowrap !important;
-  }
-  #gameScreen .seatPos.left .playerChip{
-    position:absolute !important; left:-34px !important; top:50% !important;
-    transform:translateY(-50%) !important; writing-mode:vertical-rl !important;
-    z-index:50 !important; white-space:nowrap !important;
-  }
-  #gameScreen .seatPos.right .playerChip{
-    position:absolute !important; right:-34px !important; top:50% !important;
-    transform:translateY(-50%) !important; writing-mode:vertical-rl !important;
-    z-index:50 !important; white-space:nowrap !important;
-  }
+  /* Nama keluar dikit aja dari seatPos-nya - seatPos-nya tetep di dalam */
+  #gameScreen .seatPos.top .playerChip{margin-top:-30px !important}
+  #gameScreen .seatPos.left .playerChip{margin-left:-36px !important}
+  #gameScreen .seatPos.right .playerChip{margin-right:-36px !important}
 
-  /* 2. BUANGAN DI PALING BAWAH MEJA, CUMA 1 TILE PALING AKHIR */
-  #gameScreen .centerBox{
-    position:absolute !important; top:auto !important; bottom:6px !important;
-    left:50% !important; transform:translateX(-50%) !important; z-index:10 !important;
-  }
-  #gameScreen .poolAllBottom{
-    position:absolute !important; top:auto !important; bottom:5px !important;
-    left:50% !important; transform:translateX(-50%) !important; z-index:10 !important;
-    width:auto !important; min-width:40px !important; padding:4px 6px !important;
-  }
+  /* Buangan: balikin ke bawah, cuma 1 tile terakhir */
+  #gameScreen .centerBox{position:absolute !important; top:auto !important; bottom:6px !important; left:50% !important; transform:translateX(-50%) !important}
+  #gameScreen .poolAllBottom{position:absolute !important; top:auto !important; bottom:5px !important; left:50% !important; transform:translateX(-50%) !important; width:auto !important; padding:4px 6px !important}
   #gameScreen #poolAllTiles .mTile{display:none !important}
   #gameScreen #poolAllTiles .mTile:last-child{display:flex !important; width:26px !important; height:36px !important}
 
-  /* 3. TILE BAWAH GAK KEPOTONG */
+  /* Tile bawah biar gak kepotong */
   #gameScreen .myArea{overflow:visible !important; padding-bottom:14px !important}
-  #gameScreen .myHand{overflow:visible !important; padding-bottom:10px !important; flex-wrap:wrap !important}
+  #gameScreen .myHand{overflow:visible !important; padding-bottom:10px !important}
 
-  /* 4. TILE BUNGA DIBUANG, TINGGAL TULISAN - target bener: #myFlowers */
+  /* Tile bunga dibuang, tinggal tulisan */
   #gameScreen #myFlowers .t, #gameScreen #myFlowers .mTile, #gameScreen #myFlowers img{display:none !important}
-  #gameScreen #myFlowers{min-height:0 !important; margin:0 !important; padding:0 !important}
-  /* Tulisan "Bunga kamu: 2" + "1 bunga" lawan dibiarin, jangan dihapus */
 }
 </style>
 </head>
