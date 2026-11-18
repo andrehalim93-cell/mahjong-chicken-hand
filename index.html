@@ -829,6 +829,33 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     left:50% !important; transform:translateX(-50%) !important;
   }
 }
+/* ===== V38 GABUNGAN - BUNGA KANAN + HAPUS TILE BUNGA KAMU ===== */
+@media (max-width:768px){
+  /* 1. BUNGA KANAN - urutan dari luar ke dalam = Nama : Bunga : Tile */
+  #gameScreen .seatPos.right{
+    display:flex !important; flex-direction:row-reverse !important; align-items:center !important; gap:4px !important;
+  }
+  #gameScreen .seatPos.right .playerChip{order:1 !important}
+  #gameScreen .seatPos.right .oppFlower{
+    order:2 !important;
+    /* Vertikal, arah tulisan sama kayak ANDI */
+    writing-mode:vertical-rl !important; transform:none !important; rotate:0deg !important;
+    white-space:nowrap !important; margin:0 !important; position:static !important;
+  }
+  #gameScreen .seatPos.right .miniHand{order:3 !important}
+
+  /* 2. HAPUS TILE BUNGA DI MEJA KAMU - tile pink 夏 nya hilang */
+  /* Tulisannya "🌸 Bunga kamu: 1" tetep ada, cuma tile-nya aja yang hilang */
+  #gameScreen #myFlowers .t, #gameScreen #myFlowers .mTile,
+  #gameScreen #myFlowers img, #gameScreen .flowersRow .t,
+  #gameScreen .flowersRow .mTile, #gameScreen .flowersRow img{
+    display:none !important;
+  }
+  /* Biar gak ada ruang kosong bekas tile-nya */
+  #gameScreen #myFlowers, #gameScreen .flowersRow{
+    min-height:0 !important; margin-top:2px !important; margin-bottom:0 !important; padding:0 !important;
+  }
+}
 </style>
 </head>
 <body>
