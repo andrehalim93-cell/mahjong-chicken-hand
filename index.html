@@ -1765,7 +1765,7 @@ socket.on('disconnect', ()=>{
 });
 
 let rejoinTryCount = 0;
-ssocket.on('rejoinedRoom', d=>{
+socket.on('rejoinedRoom', d=>{
   rejoinTryCount = 0;
   el('reconnectBanner').style.display = 'none';
   toast('✅ Balik lagi ke meja!');
