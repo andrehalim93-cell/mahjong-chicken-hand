@@ -1026,6 +1026,7 @@ socket.on('jiaKong', ({ code, tileId })=>{
       break;
     }
   });
+});
 // SAPU MEJA ZOMBIE TIAP 10 DETIK: kalau udah gak ada manusia aktif, hapus meja + BOT-nya
 setInterval(()=>{
   let changed = false;
