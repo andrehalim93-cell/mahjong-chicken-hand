@@ -856,6 +856,40 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     min-height:0 !important; margin-top:2px !important; margin-bottom:0 !important; padding:0 !important;
   }
 }
+/* ===== V39 - CUMA MELD KIRI-KANAN + KUNCI MEJA ===== */
+@media (max-width:768px){
+  /* 1. MELD KIRI + KANAN DIBIKIN HORIZONTAL, TILE TEGAK, KARAKTER KE BACA */
+  /* Meld-nya jejer ke samping kayak yang atas, bukan numpuk ke bawah */
+  #gameScreen .meldLeftBottom, #gameScreen .meldRightBottom{
+    display:flex !important; flex-direction:row !important; gap:6px !important;
+    align-items:flex-start !important; justify-content:center !important;
+    width:auto !important; max-width:none !important;
+  }
+  #gameScreen .meldLeftBottom .meld, #gameScreen .meldRightBottom .meld{
+    display:flex !important; flex-direction:row !important; gap:2px !important;
+  }
+  /* Tile meld kiri-kanan dibikin tegak, JANGAN diputer 90° lagi */
+  #gameScreen .meldLeftBottom .meld .mTile, #gameScreen .meldLeftBottom .meld .t,
+  #gameScreen .meldRightBottom .meld .mTile, #gameScreen .meldRightBottom .meld .t{
+    width:26px !important; height:36px !important; flex:none !important; transform:none !important; rotate:0deg !important;
+  }
+  #gameScreen .meldLeftBottom .meld .mTile img, #gameScreen .meldLeftBottom .meld .mTile .face,
+  #gameScreen .meldLeftBottom .meld .t img, #gameScreen .meldLeftBottom .meld .t .face,
+  #gameScreen .meldRightBottom .meld .mTile img, #gameScreen .meldRightBottom .meld .mTile .face,
+  #gameScreen .meldRightBottom .meld .t img, #gameScreen .meldRightBottom .meld .t .face{
+    width:100% !important; height:100% !important; transform:none !important; rotate:0deg !important;
+  }
+  /* Biar karakter di dalam tile gak ikut keputer */
+  #gameScreen .meldLeftBottom .meld .face *, #gameScreen .meldRightBottom .meld .face *{
+    transform:none !important; rotate:0deg !important;
+  }
+
+  /* 2. KUNCI MEJA BIAR GAK BERUBAH-UBAH BESAR-KECIL */
+  #gameScreen .table{
+    flex:none !important; height:300px !important; min-height:300px !important; max-height:300px !important;
+    width:80% !important; overflow:hidden !important;
+  }
+}
 </style>
 </head>
 <body>
