@@ -738,7 +738,6 @@ socket.on('fillBots', ({ code, level })=>{
   socket.on('rematch', ({ code })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
-    if(room.phase!=='finished' && room.phase!=='playing') return;
     let me = room.players.find(p=>p.id===socket.id);
     if(!me || me.isBot) return;
     if(!room.rematchVotes) room.rematchVotes = [];
