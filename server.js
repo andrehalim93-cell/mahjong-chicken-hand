@@ -891,12 +891,12 @@ socket.on('jiaKong', ({ code, tileId })=>{
       io.emit('roomListUpdated');
     }
   });
-  socket.on('rejoinRoom', ({ name, code, avatar })=>{
+    socket.on('rejoinRoom', ({ name, code, avatar })=>{
     code = (code||'').toUpperCase().trim();
     let room = rooms[code]; if(!room) return socket.emit('rejoinFailed', 'Meja udah bubar!');
     let cleanName = (name||'').trim();
-    // Cari pemain lama yang namanya sama + lagi putus
-    let p = room.players.find(x=>x.name===cleanName && x.disconnected);
+    // Cari pemain lama yang namanya sama, gak peduli masih putus atau belum ke-detect putus
+    let p = room.players.find(x=>x.name===cleanName && !x.isBot);
     if(!p) return socket.emit('rejoinFailed', 'Kursi kamu udah diambil orang / udah kehapus!');
     // Balikin kursi: ganti socket.id lama ke yang baru
     if(p.disconnectTimer){ clearTimeout(p.disconnectTimer); p.disconnectTimer = null; }
