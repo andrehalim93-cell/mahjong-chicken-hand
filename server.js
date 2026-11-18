@@ -263,8 +263,17 @@ if(tiles.length + meldTiles !== 14) return false;
   if(needSets===0 && tiles.length===2 && tiles[0].key===tiles[1].key) return true;
   return false;
 }
+function sortedKeys(counts){
+  let order = t => t==='suit'?0 : t==='wind'?1 : t==='dragon'?2 : 3;
+  return Object.keys(counts).filter(k=>counts[k]>0).sort((a,b)=>{
+    let [ta,sa,na] = a.split('|'); let [tb,sb,nb] = b.split('|');
+    if(order(ta)!==order(tb)) return order(ta)-order(tb);
+    if(parseInt(sa)!==parseInt(sb)) return parseInt(sa)-parseInt(sb);
+    return parseInt(na)-parseInt(nb);
+  });
+}
 function canFormSets(counts, needSets){
-  let keys = Object.keys(counts).filter(k=>counts[k]>0);
+  let keys = sortedKeys(counts);
   if(keys.length===0) return needSets===0;
   if(needSets===0) return false;
   let key = keys[0];
@@ -278,7 +287,7 @@ function canFormSets(counts, needSets){
   return false;
 }
 function canForm4Melds(counts){
-  let keys = Object.keys(counts).filter(k=>counts[k]>0);
+  let keys = sortedKeys(counts);
   if(keys.length===0) return true;
   let key = keys[0];
   let [type, suitStr, numStr] = key.split('|');
@@ -326,7 +335,7 @@ function botDrawAndDiscard(room, bot){
   if(room.wall.length===0){ endGameDraw(room); return; }
   let drawn = room.wall.pop();
   while(drawn && drawn.type==='flower'){ bot.flowers.push(drawn); if(room.wall.length===0) break; drawn=room.wall.pop(); }
-  if(drawn) bot.hand.push(drawn);
+      if(drawn){ p.hand.push(drawn); p.hand = sortHand(p.hand); }
   sendHand(room, bot);
   emitToRoom(room, 'playerDrew', { player:bot.name, wallLeft:room.wall.length });
   setTimeout(()=>botDiscard(room, bot), 900);
