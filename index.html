@@ -1376,9 +1376,8 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
   <div style="display:flex;gap:6px;padding:8px;border-top:1px solid rgba(255,255,255,.15)"><input id="chatInput" placeholder="Silahkan chat disini" style="flex:1;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:13px;outline:none"><button onclick="sendChat()" style="padding:11px 16px;border-radius:10px;background:#facc15;color:#422006;font-weight:900;font-size:13px">KIRIM ➡️</button></div>
 </div>
-<div id="huFx"><div id="huFxTile"></div><div id="huFxText"><div class="huBig">🀄 HU!!</div><div class="huName" id="huFxName"></div></div></div>
-<div id="winModal"><div class="winBox"><div style="font-size:48px">🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2>
-<div id="winModal"><div class="winBox"><div style="font-size:48px">🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2><p id="winMsg">...</p><div id="winHand" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:12px 0 4px"></div><div id="winMeldLabel" style="font-size:11px;color:#92400e;font-weight:800"></div><div id="rematchStatus" style="font-size:13px;font-weight:900;color:#92400e;margin-top:8px"></div><button id="rematchBtn" class="btn btn-gold" onclick="this.innerText='⏳ UDAH KLIK, NUNGGU TEMEN...';this.style.opacity='0.6';document.getElementById('rematchStatus').innerText='🔁 Kamu udah klik, nunggu temen...';socket.emit('rematch',{code:myCode});">🔁 REMATCH - MAIN LAGI (ORANG SAMA)</button><button class="btn btn-dark" onclick="cancelRematchAndHome()">🏠 BALIK KE HOME</button></div></div>
+<<div id="huFx"><div id="huFxTile"></div><div id="huFxText"><div class="huBig">🀄 HU!!</div><div class="huName" id="huFxName"></div></div></div>
+<div id="winModal"><div class="winBox"><div id="winAvatar" style="font-size:64px;line-height:1"></div><div style="font-size:48px">🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2><p id="winMsg">...</p><div id="winHand" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:12px 0 4px"></div><div id="winMeldLabel" style="font-size:11px;color:#92400e;font-weight:800"></div><div id="rematchStatus" style="font-size:13px;font-weight:900;color:#92400e;margin-top:8px"></div><button id="rematchBtn" class="btn btn-gold" onclick="this.innerText='⏳ UDAH KLIK, NUNGGU TEMEN...';this.style.opacity='0.6';document.getElementById('rematchStatus').innerText='🔁 Kamu udah klik, nunggu temen...';socket.emit('rematch',{code:myCode});">🔁 REMATCH - MAIN LAGI (ORANG SAMA)</button><button class="btn btn-dark" onclick="cancelRematchAndHome()">🏠 BALIK KE HOME</button></div></div>
 <div id="reconnectBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#dc2626;color:#fff;text-align:center;padding:10px;font-weight:900;font-size:13px">📶 PUTUS! Lagi nyambung lagi... jangan tutup / reload!</div>
 <div id="toast"></div>
 <div id="turnPopup"><div style="font-size:28px">🎯</div><div style="font-size:11px;letter-spacing:2px;color:#fde68a;font-weight:800">GILIRAN SEKARANG</div><div class="tpName" id="turnPopupName">-</div><div class="tpSub" id="turnPopupSub">Siap-siap buang tile!</div></div>
@@ -2059,6 +2058,9 @@ socket.on('gameOver', d=>{
   }, 2200);
 });
 function showWinModal(d){
+  el('winModal').style.display = '';
+  let wp = (currentPlayers||[]).find(x=>x.name===d.winner);
+  if(el('winAvatar')) el('winAvatar').innerHTML = avatarHTML(wp && wp.avatar ? wp.avatar : '🧑', 64);
   playMjSound('hu');
   el('winTitle').innerText = d.winner ? (d.winner===myName ? '🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!';
   el('winMsg').innerText = d.message;
