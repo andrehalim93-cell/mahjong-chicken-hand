@@ -1781,6 +1781,7 @@ ssocket.on('rejoinedRoom', d=>{
 });
 
 let rejoinTryCount = 0;
+let rejoinTryCount = 0;
 socket.on('rejoinFailed', m=>{
   rejoinTryCount = rejoinTryCount + 1;
   if(rejoinTryCount < 3){
@@ -1795,7 +1796,7 @@ socket.on('rejoinFailed', m=>{
   toast(m);
   backToHome();
 });
-socket.on('roomCreated', d=>{ myCode=d.code; sessionStorage.setItem('mahjong_room', JSON.stringify({code: myCode, name: myName})); el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
+socket.on('roomCreated', d=>{ myCode=d.code; try{ sessionStorage.setItem('mahjong_room', JSON.stringify({code:d.code, name:myName})); }catch(e){} el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
 socket.on('roomList', d=>{ renderPublicRooms(d); });
 socket.on('roomListUpdated', ()=>{ refreshRooms(); });
 socket.on('joinedRoom', d=>{ myCode=d.code; sessionStorage.setItem('mahjong_room', JSON.stringify({code: myCode, name: myName})); el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
