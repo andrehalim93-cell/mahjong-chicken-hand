@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*", methods: ["GET","POST"] } });
+const io = new Server(server, { cors: { origin: "*", methods: ["GET","POST"] }, pingTimeout: 60000, pingInterval: 25000 });
 const PORT = process.env.PORT || 3000;
 // ============ TAMBAHAN BARU: AUTH + SUPABASE + HASH - JANGAN UBAH YANG LAIN ============
 const bcrypt = require('bcryptjs');
@@ -196,6 +196,19 @@ function startTurnTimer(room){
     let cur = room.players[room.turnIdx];
     if(!cur) return;
     if(room.waitingClaim) return;
+
+    // FIX PUTUS: Kalau yang giliran lagi putus, JANGAN auto-buang kartunya.
+    // Tunggu dia balik. Cek lagi tiap 5 detik.
+    // Kalau udah putus lebih dari 120 detik, baru boleh auto-buang biar game gak macet selamanya.
+    if(cur.disconnected){
+      let putusBerapaLama = Date.now() - (cur.disconnectedAt || Date.now());
+      if(putusBerapaLama < 120000){
+        room.turnTimer = setTimeout(()=>{ startTurnTimer(room); }, 5000);
+        return;
+      }
+      // Udah 120 detik gak balik, baru lanjut ke auto-buang di bawah
+    }
+
     // Waktu habis -> auto buang 1 tile random (biar game gak macet)
     if(cur.isBot){ maybeBotTurn(room); return; }
     if(cur.hand.length>0){
@@ -944,7 +957,7 @@ socket.on('jiaKong', ({ code, tileId })=>{
       io.emit('roomListUpdated');
     }
   });
-    socket.on('rejoinRoom', ({ name, code, avatar })=>{
+      socket.on('rejoinRoom', ({ name, code, avatar })=>{
     code = (code||'').toUpperCase().trim();
     let room = rooms[code]; if(!room) return socket.emit('rejoinFailed', 'Meja udah bubar!');
     let cleanName = (name||'').trim();
@@ -960,8 +973,12 @@ socket.on('jiaKong', ({ code, tileId })=>{
     socket.join(code);
     socket.emit('rejoinedRoom', { code, phase: room.phase, players: publicPlayers(room) });
     emitLobby(room);
-    // Kalau lagi main, kirim lagi tangan dia
-    if(room.phase==='playing') sendHand(room, p);
+    // Kalau lagi main, kirim lagi tangan dia + kasih tau lagi giliran siapa
+    if(room.phase==='playing'){
+      sendHand(room, p);
+      socket.emit('turnChanged', { turn: room.players[room.turnIdx]?.name, wallLeft: room.wall.length });
+      socket.emit('playerDrew', { player: p.name, wallLeft: room.wall.length });
+    }
     addLog(room, `🔄 ${p.name} nyambung lagi!`);
     io.emit('roomListUpdated');
   });
@@ -977,6 +994,9 @@ socket.on('jiaKong', ({ code, tileId })=>{
       emitLobby(room);
       // Kalau 30 detik gak balik, baru beneran hapus
       p.disconnectTimer = setTimeout(()=>{
+        // JANGAN hapus kursi kalau game lagi jalan - biar bisa balik kapanpun
+        if(room.phase==='playing') return;
+        let idx = room.players.findIndex(x=>x.name===p.name && x.disconnected);
         let idx = room.players.findIndex(x=>x.name===p.name && x.disconnected);
         if(idx<0) return;
         let left = room.players[idx];
@@ -1022,8 +1042,8 @@ setInterval(()=>{
       changed = true;
       continue;
     }
-    if(activeHumans.length===0 && humans.length>0){
-      let allOld = humans.every(p=>p.disconnectedAt && (Date.now() - p.disconnectedAt > 30000));
+        if(room.phase!=='playing' && activeHumans.length===0 && humans.length>0){
+      let allOld = humans.every(p=>p.disconnectedAt && (Date.now() - p.disconnectedAt > 120000));
       if(allOld){
         clearTurnTimer(room);
         delete rooms[code];
