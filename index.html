@@ -784,6 +784,58 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   /* Tile bunga tetep tulisan aja */
   #gameScreen #myFlowers .t, #gameScreen #myFlowers .mTile, #gameScreen #myFlowers img{display:none !important}
 }
+/* ===== V32 - CUMA 4 INI AJA, JANGAN SENTUH YANG LAIN ===== */
+@media (max-width:768px){
+  /* 1. TILE BUANGAN KECILIN DIKIT - dari 52x72 jadi 44x60 */
+  #gameScreen #poolAllTiles .mTile:last-child{
+    width:44px !important; height:60px !important;
+  }
+
+  /* 2. URUTAN BUNGA BENER: Nama (luar) : Bunga : Tile : Meld ke tengah */
+  /* ATAS: dari atas ke bawah = Nama - Bunga - Tile - Meld */
+  #gameScreen .seatPos.top{display:flex !important; flex-direction:column !important; align-items:center !important}
+  #gameScreen .seatPos.top .playerChip{order:1 !important}
+  #gameScreen .seatPos.top .oppFlower{order:2 !important; position:static !important; writing-mode:horizontal-tb !important; transform:none !important; margin:2px auto !important}
+  #gameScreen .seatPos.top .miniHand{order:3 !important}
+
+  /* KIRI: dari kiri ke kanan = Nama - Bunga - Tile - Meld */
+  #gameScreen .seatPos.left{display:flex !important; flex-direction:row !important; align-items:center !important; gap:4px !important}
+  #gameScreen .seatPos.left .playerChip{order:1 !important}
+  #gameScreen .seatPos.left .oppFlower{order:2 !important; position:static !important; writing-mode:vertical-rl !important; transform:none !important; margin:0 !important}
+  #gameScreen .seatPos.left .miniHand{order:3 !important}
+  /* Meld kiri geser ke tengah, biar setelah tile */
+  #gameScreen .meldLeftBottom{left:74px !important}
+
+  /* KANAN: dari kanan ke kiri = Nama - Bunga - Tile - Meld */
+  #gameScreen .seatPos.right{display:flex !important; flex-direction:row-reverse !important; align-items:center !important; gap:4px !important}
+  #gameScreen .seatPos.right .playerChip{order:1 !important}
+  #gameScreen .seatPos.right .oppFlower{order:2 !important; position:static !important; writing-mode:vertical-rl !important; transform:none !important; margin:0 !important}
+  #gameScreen .seatPos.right .miniHand{order:3 !important}
+  /* Meld kanan geser ke tengah, biar setelah tile */
+  #gameScreen .meldRightBottom{right:74px !important}
+
+  /* 3. NAMA KETENGAH SEMUA */
+  #gameScreen .seatPos.top .playerChip,
+  #gameScreen .seatPos.left .playerChip,
+  #gameScreen .seatPos.right .playerChip{
+    justify-content:center !important; align-items:center !important; text-align:center !important; margin:0 auto !important;
+  }
+  #gameScreen .seatPos.top{left:50% !important; transform:translateX(-50%) !important}
+  #gameScreen .seatPos.left, #gameScreen .seatPos.right{top:50% !important; transform:translateY(-50%) !important}
+
+  /* 4. TULISAN GILIRAN DIHAPUS - yang di bawah nama kamu "Giliran: berlawanan jarum jam" + "WAKTU HABIS!" */
+  #gameScreen .turnArrowTxt, #gameScreen .turnTxt, #gameScreen #turnInfo, #gameScreen .turnInfo{
+    display:none !important;
+  }
+}
+/* ===== V33 - HAPUS TULISAN "Giliran: berlawanan jarum jam" AJA ===== */
+@media (max-width:768px){
+  #gameScreen .turnDirection, #gameScreen #turnDirection,
+  #gameScreen .directionTxt, #gameScreen .directionLabel,
+  #gameScreen .turnArrowTxt, #gameScreen .turnTxt{
+    display:none !important;
+  }
+}
 </style>
 </head>
 <body>
