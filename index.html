@@ -789,6 +789,46 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   /* Tulisan "Giliran: berlawanan jarum jam" tetep hilang */
   #gameScreen .turnArrowTxt{display:none !important}
 }
+/* ===== V36+37 GABUNGAN - COPY INI AJA, 1X ===== */
+@media (max-width:768px){
+  /* 1. MEJA KECILIN DIKIT + KASIH JARAK ATAS BIAR NAMA MASUK, GAK KETIMPA */
+  #gameScreen .table{
+    width:80% !important; max-width:80% !important;
+    margin:22px auto 4px auto !important;
+    min-height:260px !important;
+  }
+  /* Nama atas turun dikit, gak nempel pil Giliran lagi */
+  #gameScreen .seatPos.top{
+    top:6px !important;
+  }
+  #gameScreen .seatPos.top .playerChip{
+    margin-top:2px !important;
+  }
+
+  /* 2. BUNGA KIRI - URUTAN BENER: Pemain (luar) : Bunga : Tile pegangan */
+  /* Tulisannya aja yang dibenerin, biar gak kebalik / muter 180 */
+  #gameScreen .seatPos.left{
+    display:flex !important; flex-direction:row !important; align-items:center !important; gap:4px !important;
+  }
+  #gameScreen .seatPos.left .playerChip{order:1 !important}
+  #gameScreen .seatPos.left .oppFlower{
+    order:2 !important;
+    writing-mode:vertical-rl !important; transform:none !important; rotate:0deg !important;
+    white-space:nowrap !important; margin:0 !important; position:static !important;
+  }
+  #gameScreen .seatPos.left .miniHand{order:3 !important}
+
+  /* Bunga atas + kanan + bawah JANGAN DIUBAH, udah oke */
+  #gameScreen .seatPos.top .oppFlower, #gameScreen .seatPos.right .oppFlower{
+    writing-mode:horizontal-tb !important;
+  }
+
+  /* 3. BUANGAN TARO DI BAWAH UJUNG MEJA TENGAH */
+  #gameScreen #centerBox{
+    top:auto !important; bottom:6px !important;
+    left:50% !important; transform:translateX(-50%) !important;
+  }
+}
 </style>
 </head>
 <body>
