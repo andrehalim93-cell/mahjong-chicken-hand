@@ -630,8 +630,23 @@ io.on('connection', (socket)=>{
     if(room.players.length>=4){ socket.emit('errorMsg', 'Room penuh!'); return; }
     if(room.phase==='playing'){ socket.emit('errorMsg', 'Game sudah mulai!'); return; }
     if(room.isPrivate && room.password!==(password||'')){ socket.emit('errorMsg','Password salah!'); return; }
-    let cleanName = (name||'Player').trim() || 'Player';
-    if(room.players.some(x=>x.name===cleanName)){ socket.emit('errorMsg','Nama udah dipake! Ganti nama lain!'); return; }
+        let cleanName = (name||'Player').trim() || 'Player';
+    let oldP = room.players.find(x=>x.name===cleanName && !x.isBot);
+    if(oldP){
+      if(oldP.disconnected){
+        if(oldP.disconnectTimer){ clearTimeout(oldP.disconnectTimer); oldP.disconnectTimer = null; }
+        oldP.id = socket.id;
+        oldP.disconnected = false;
+        oldP.disconnectedAt = null;
+        if(avatar) oldP.avatar = avatar;
+        socket.join(code);
+        socket.emit('rejoinedRoom', { code, phase: room.phase, players: publicPlayers(room) });
+        emitLobby(room);
+        if(room.phase==='playing') sendHand(room, oldP);
+        return;
+      }
+      socket.emit('errorMsg','Nama udah dipake! Ganti nama lain!'); return;
+    }
     let p = { id:socket.id, name:cleanName, isBot:false, isHost:false, hand:[], melds:[], discards:[], flowers:[], level:'', avatar: avatar || '🧑' };
     room.players.push(p);
     socket.join(code);
