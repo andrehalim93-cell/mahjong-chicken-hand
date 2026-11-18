@@ -1355,7 +1355,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
   <div style="display:flex;gap:6px;padding:8px;border-top:1px solid rgba(255,255,255,.15)"><input id="chatInput" placeholder="Silahkan chat disini" style="flex:1;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:13px;outline:none"><button onclick="sendChat()" style="padding:11px 16px;border-radius:10px;background:#facc15;color:#422006;font-weight:900;font-size:13px">KIRIM ➡️</button></div>
 </div>
-<div id="winModal"><div class="winBox"><div style="font-size:48px">🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2><p id="winMsg">...</p><div id="winHand" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:12px 0 4px"></div><div id="winMeldLabel" style="font-size:11px;color:#92400e;font-weight:800"></div><button class="btn btn-gold" onclick="playAgain()">🔁 MAIN LAGI (MEJA SAMA)</button><button class="btn btn-dark" onclick="backToHome()">🏠 BALIK KE HOME</button></div></div>
+<div id="winModal"><div class="winBox"><div style="font-size:48px">🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2><p id="winMsg">...</p><div id="winHand" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:12px 0 4px"></div><div id="winMeldLabel" style="font-size:11px;color:#92400e;font-weight:800"></div><div id="rematchStatus" style="font-size:13px;font-weight:900;color:#92400e;margin-top:8px"></div><button id="rematchBtn" class="btn btn-gold" onclick="doRematch()">🔁 REMATCH - MAIN LAGI </button><button class="btn btn-dark" onclick="cancelRematchAndHome()">🏠 BALIK KE HOME</button></div></div>
 <div id="reconnectBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#dc2626;color:#fff;text-align:center;padding:10px;font-weight:900;font-size:13px">📶 PUTUS! Lagi nyambung lagi... jangan tutup / reload!</div>
 <div id="toast"></div>
 <div id="turnPopup"><div style="font-size:28px">🎯</div><div style="font-size:11px;letter-spacing:2px;color:#fde68a;font-weight:800">GILIRAN SEKARANG</div><div class="tpName" id="turnPopupName">-</div><div class="tpSub" id="turnPopupSub">Siap-siap buang tile!</div></div>
@@ -1734,7 +1734,18 @@ function closeStartConfirm(){
   document.getElementById('startConfirmModal').style.display = 'none';
   // Balik ke lobby, gak jadi start
 }
-function playAgain(){ socket.emit('playAgain',{code:myCode}); el('winModal').classList.remove('show'); }
+let rematchClicked = false;
+function doRematch(){
+  if(rematchClicked) return;
+  rematchClicked = true;
+  el('rematchBtn').innerText = '⏳ UDAH KLIK, NUNGGU TEMEN...';
+  el('rematchBtn').style.opacity = '0.6';
+  socket.emit('rematch', { code: myCode });
+}
+function cancelRematchAndHome(){
+  socket.emit('cancelRematch', { code: myCode });
+  backToHome();
+}
 let hasConnectedBefore = false;
 let wasInRoom = false;
 
@@ -1986,6 +1997,16 @@ socket.on('youHu', async d=>{
 });
 socket.on('gameOver', d=>{ clearInterval(turnTimerInt);  if(el('turnCountdown')) el('turnCountdown').style.display='none'; if(el('meldPopup')) el('meldPopup').style.display='none'; playMjSound('hu'); el('winTitle').innerText = d.winner ? (d.winner===myName ? '🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!'; el('winMsg').innerText = d.message; let wh=el('winHand'); let wl=el('winMeldLabel'); if(d.hand && d.hand.length){ wh.innerHTML = groupHuTiles(d.hand).map(function(g){ return '<div class="huGroup">'+g.map(function(tt){ return tileHTML(tt); }).join('')+'</div>'; }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = ''; } else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; } el('winModal').classList.add('show'); addLog('🏁 '+d.message); });
 socket.on('playAgainReady', d=>{ el('winModal').classList.remove('show'); el('gameScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden');   el('chatFab').classList.remove('showInGame'); el('chatPanel').classList.remove('show'); chatOpen=false; myHand=[]; myMelds=[]; myFlowers=[]; usedBotNames=[]; if(el('winHand')) el('winHand').innerHTML=''; if(el('winMeldLabel')) el('winMeldLabel').innerText=''; renderMyHand(); });
+socket.on('rematchUpdate', d=>{
+  if(d.count===0){ el('rematchStatus').innerText = ''; return; }
+  el('rematchStatus').innerText = '🔁 ' + d.count + '/' + d.total + ' udah klik REMATCH';
+  if(d.count >= d.total) el('rematchStatus').innerText = '🔁 Semua setuju! Acak kartu baru...';
+});
+socket.on('gameStarted', ()=>{
+  rematchClicked = false;
+  if(el('rematchBtn')){ el('rematchBtn').innerText = '🔁 REMATCH - MAIN LAGI (ORANG SAMA)'; el('rematchBtn').style.opacity = '1'; }
+  if(el('rematchStatus')) el('rematchStatus').innerText = '';
+});
 function addLog(m){ let l=el('gameLog'); l.innerHTML = m + '<br>' + l.innerHTML; }
 function renderSeats(players, turn){
   let others = players.filter(p=>p.name!==myName);
