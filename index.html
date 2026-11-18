@@ -1764,7 +1764,8 @@ socket.on('disconnect', ()=>{
   }
 });
 
-ssocket.on('rejoinedRoom', d=>{
+let rejoinTryCount = 0;
+socket.on('rejoinedRoom', d=>{
   rejoinTryCount = 0;
   el('reconnectBanner').style.display = 'none';
   toast('✅ Balik lagi ke meja!');
@@ -1779,9 +1780,6 @@ ssocket.on('rejoinedRoom', d=>{
     el('lobbyScreen').classList.remove('hidden');
   }
 });
-
-let rejoinTryCount = 0;
-let rejoinTryCount = 0;
 socket.on('rejoinFailed', m=>{
   rejoinTryCount = rejoinTryCount + 1;
   if(rejoinTryCount < 3){
