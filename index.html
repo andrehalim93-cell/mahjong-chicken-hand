@@ -1129,6 +1129,20 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   #gameScreen .centerBox{ padding:3px !important; }
   #gameScreen .centerBox .t{ width:26px !important; height:34px !important; }
 }
+/* ===== V48 - MELD HANI (ATAS) BALIK KE TENGAH, MULAI DARI TENGAH ===== */
+@media (max-width:768px){
+  #gameScreen .meldTopRight{
+    top:44px !important; bottom:auto !important;
+    left:50% !important; right:auto !important;
+    transform:translateX(-50%) !important;
+    width:max-content !important; max-width:76% !important;
+    display:flex !important; flex-direction:row !important; flex-wrap:wrap !important;
+    gap:4px !important; justify-content:center !important; align-items:flex-start !important;
+  }
+  #gameScreen .meldTopRight .meld{
+    justify-content:center !important;
+  }
+}
 </style>
 </head>
 <body>
