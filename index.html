@@ -836,6 +836,57 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     display:none !important;
   }
 }
+/* ===== V34 - CUMA 3 INI AJA ===== */
+@media (max-width:768px){
+  /* 1. BUANGAN: hapus tile kecil, kecilin tile besar */
+  /* Tile kecil itu icon kecil di dalam tulisan "Dari: ZARA" */
+  #gameScreen .centerBox img,
+  #gameScreen .centerBox .miniTile,
+  #gameScreen .centerBox .smallTile,
+  #gameScreen .centerBox .discardIcon{
+    display:none !important;
+  }
+  #gameScreen #poolAllTiles .mTile{display:none !important}
+  #gameScreen #poolAllTiles .mTile:last-child{
+    display:flex !important; width:38px !important; height:52px !important;
+  }
+  /* Tulisan "Dari: ZARA / Angin Selatan" biar gak numpuk tile */
+  #gameScreen .centerBox{display:flex !important; flex-direction:column !important; align-items:center !important; gap:2px !important}
+  #gameScreen .centerBox > div{text-align:center !important}
+
+  /* 2. NAMA BELUM CENTER - paksa center beneran */
+  /* ATAS: VINA harus pas tengah meja */
+  #gameScreen .seatPos.top{
+    left:50% !important; transform:translateX(-50%) !important;
+    display:flex !important; flex-direction:column !important; align-items:center !important;
+  }
+  #gameScreen .seatPos.top .playerChip{margin:0 auto !important; text-align:center !important}
+  /* KIRI: ZARA harus pas tengah kiri, bukan di atas */
+  #gameScreen .seatPos.left{
+    left:2px !important; top:50% !important; transform:translateY(-50%) !important;
+    display:flex !important; flex-direction:row !important; align-items:center !important;
+  }
+  /* KANAN: KIKI harus pas tengah kanan, bukan di atas */
+  #gameScreen .seatPos.right{
+    right:2px !important; top:50% !important; transform:translateY(-50%) !important;
+    display:flex !important; flex-direction:row-reverse !important; align-items:center !important;
+  }
+  #gameScreen .seatPos.left .playerChip,
+  #gameScreen .seatPos.right .playerChip{
+    display:flex !important; justify-content:center !important; align-items:center !important; text-align:center !important;
+  }
+
+  /* 3. YANG LU LINGKARIN IJO - itu sisa baris ke-3 */
+  /* Tile kamu 14, dibagi 6 + 6 + 2, jadi baris ke-3 cuma isi 2 tile, kanannya kosong */
+  /* Gak bisa dipake buat naruh tile baru, tapi bisa dibikin rata tengah biar gak jomplang */
+  #gameScreen .myHand{
+    display:flex !important; flex-wrap:wrap !important;
+    justify-content:center !important; align-content:center !important;
+  }
+  #gameScreen .myHand .mTile, #gameScreen .myHand .t{
+    width:52px !important; height:72px !important;
+  }
+}
 </style>
 </head>
 <body>
