@@ -975,6 +975,51 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     width:100% !important; height:100% !important;
   }
 }
+/* ===== V43 FINAL - BALIKIN POLA ASLI: KOTAK TIDURAN, ISI DIPUTER, MELD KE BAWAH ===== */
+@media (max-width:768px){
+  /* 1. ZONA - balik ke pinggir, tengah vertikal, JANGAN ke bawah tengah lagi */
+  #gameScreen .meldLeftBottom{
+    left:104px !important; right:auto !important;
+    top:50% !important; bottom:auto !important;
+    transform:translateY(-50%) !important;
+    width:72px !important; max-width:72px !important;
+    display:flex !important; flex-direction:column !important; gap:6px !important;
+  }
+  #gameScreen .meldRightBottom{
+    right:104px !important; left:auto !important;
+    top:50% !important; bottom:auto !important;
+    transform:translateY(-50%) !important;
+    width:72px !important; max-width:72px !important;
+    display:flex !important; flex-direction:column !important; gap:6px !important;
+  }
+  /* 2. TIAP MELD - susun ke bawah, BUKAN ke samping */
+  #gameScreen .meldLeftBottom .meld, #gameScreen .meldRightBottom .meld{
+    display:flex !important; flex-direction:column !important; gap:2px !important;
+    transform:none !important; rotate:0deg !important;
+  }
+  /* 3. KOTAK TILE - tiduran, sekecil meld KIKI (28x20) */
+  #gameScreen .meldLeftBottom .meld .mTile, #gameScreen .meldLeftBottom .meld .t,
+  #gameScreen .meldRightBottom .meld .mTile, #gameScreen .meldRightBottom .meld .t{
+    width:28px !important; height:20px !important; flex:none !important;
+    transform:none !important; rotate:0deg !important;
+    overflow:hidden !important; display:flex !important; align-items:center !important; justify-content:center !important;
+  }
+  /* 4. ISI TILE - tegak 20x28, baru diputer ngadep pemiliknya */
+  /* KIRI (VINA/BAMBANG) puter +90°, KANAN (TONI/OPA) puter -90° */
+  #gameScreen .meldLeftBottom .meld .mTile img, #gameScreen .meldLeftBottom .meld .mTile .face,
+  #gameScreen .meldLeftBottom .meld .t img, #gameScreen .meldLeftBottom .meld .t .face{
+    width:20px !important; height:28px !important; flex:none !important;
+    transform:rotate(90deg) !important; rotate:0deg !important;
+  }
+  #gameScreen .meldRightBottom .meld .mTile img, #gameScreen .meldRightBottom .meld .mTile .face,
+  #gameScreen .meldRightBottom .meld .t img, #gameScreen .meldRightBottom .meld .t .face{
+    width:20px !important; height:28px !important; flex:none !important;
+    transform:rotate(-90deg) !important; rotate:0deg !important;
+  }
+  #gameScreen .meldLeftBottom .meld .face *, #gameScreen .meldRightBottom .meld .face *{
+    transform:none !important;
+  }
+}
 </style>
 </head>
 <body>
