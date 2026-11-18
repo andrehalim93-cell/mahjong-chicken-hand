@@ -856,9 +856,9 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     min-height:0 !important; margin-top:2px !important; margin-bottom:0 !important; padding:0 !important;
   }
 }
-/* ===== V39 - CUMA MELD KIRI-KANAN + KUNCI MEJA ===== */
+/* ===== V39 MELD AJA - TANPA KUNCI MEJA ===== */
 @media (max-width:768px){
-  /* 1. MELD KIRI + KANAN DIBIKIN HORIZONTAL, TILE TEGAK, KARAKTER KE BACA */
+  /* MELD KIRI + KANAN DIBIKIN HORIZONTAL, TILE TEGAK, KARAKTER KE BACA */
   /* Meld-nya jejer ke samping kayak yang atas, bukan numpuk ke bawah */
   #gameScreen .meldLeftBottom, #gameScreen .meldRightBottom{
     display:flex !important; flex-direction:row !important; gap:6px !important;
@@ -882,12 +882,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   /* Biar karakter di dalam tile gak ikut keputer */
   #gameScreen .meldLeftBottom .meld .face *, #gameScreen .meldRightBottom .meld .face *{
     transform:none !important; rotate:0deg !important;
-  }
-
-  /* 2. KUNCI MEJA BIAR GAK BERUBAH-UBAH BESAR-KECIL */
-  #gameScreen .table{
-    flex:none !important; height:300px !important; min-height:300px !important; max-height:300px !important;
-    width:80% !important; overflow:hidden !important;
   }
 }
 </style>
