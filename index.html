@@ -1539,7 +1539,8 @@ let tutIdx = 0;
 let TUTS = [
   {icon:'🀄', title:'Tujuan HU', text:'Kumpulin 14 tile: 4 set (Pong / Chow) + 1 pasang. Siapa paling cepet HU, dia menang!'},
   {icon:'🃏', title:'Buang & Ambil', text:'Giliran kamu: ambil 1 tile dari tembok, lalu buang 1 tile yang gak kepake. Perhatiin buangan lawan, bisa jadi HU kamu!'},
-  {icon:'✨', title:'Pong / Chow / Kong', text:'PONG = 3 tile sama. CHOW = 3 tile urut sejenis. KONG = 4 tile sama. Kalau bisa HU dari buangan lawan, langsung pencet HU!'}
+    {icon:'✨', title:'Pong / Chow / Kong', text:'PONG = 3 tile sama. CHOW = 3 tile urut sejenis. KONG = 4 tile sama. Kalau bisa HU dari buangan lawan, langsung pencet HU!'},
+  {icon:'🀄', title:'Kenal Tile', text:'Ini semua tile yang dipake. Bunga & Musim gak dipake di mode ini, jadi gak usah dihafalin.', isTiles:true}
 ];
 function openTutorial(){ tutIdx = 0; renderTut(); el('tutorialModal').style.display = 'flex'; }
 function closeTutorial(){ el('tutorialModal').style.display = 'none'; }
@@ -1548,9 +1549,25 @@ function renderTut(){
   el('tutIcon').innerText = t.icon; el('tutTitle').innerText = t.title; el('tutText').innerText = t.text;
   el('tutDots').innerText = TUTS.map((_,i)=> i===tutIdx ? '●' : '○').join(' ');
   el('tutPrevBtn').style.opacity = tutIdx===0 ? '0.4' : '1';
-  el('tutNextBtn').innerText = tutIdx===2 ? '✅ MENGERTI' : 'SELANJUTNYA ➡️';
+  el('tutNextBtn').innerText = tutIdx===TUTS.length-1 ? '✅ MENGERTI' : 'SELANJUTNYA ➡️';
+  // Halaman tile: gambar semua tile pake aset yang udah ada
+  let box = el('tutTiles');
+  if(!box) return;
+  if(t.isTiles){
+    let row = (label, tiles)=> '<div style="text-align:left;margin-top:10px"><div style="font-size:11px;font-weight:900;color:#fde68a;margin-bottom:4px">'+label+'</div><div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center">'+tiles.map(x=>tileHTML(x)).join('')+'</div></div>';
+    let suit = (s)=> { let a=[]; for(let n=1;n<=9;n++) a.push({type:'suit', suit:s, num:n, id:'tut-'+s+'-'+n}); return a; };
+    box.innerHTML =
+      row('🀄 KARAKTER (Man) - 1 sampai 9', suit(2)) +
+      row('🔴 DOT (Pin) - 1 sampai 9', suit(1)) +
+      row('🎋 BAMBU (Sou) - 1 sampai 9', suit(0)) +
+      row('🧭 ANGIN - Timur, Selatan, Barat, Utara', [0,1,2,3].map(n=>({type:'wind', num:n, id:'tut-w'+n}))) +
+      row('🐉 NAGA - Merah, Hijau, Putih', [0,1,2].map(n=>({type:'dragon', num:n, id:'tut-d'+n})));
+    box.style.display = 'block';
+  } else {
+    box.innerHTML = ''; box.style.display = 'none';
+  }
 }
-function tutNext(){ if(tutIdx < 2){ tutIdx++; renderTut(); } else closeTutorial(); }
+function tutNext(){ if(tutIdx < TUTS.length-1){ tutIdx++; renderTut(); } else closeTutorial(); }
 function tutPrev(){ if(tutIdx > 0){ tutIdx--; renderTut(); } }
 function tutPlayBot(){ closeTutorial(); openCreateModal(); }
 function shareRoom(){
@@ -2262,7 +2279,8 @@ document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.activeE
   <div class="card" style="max-width:460px;width:100%;margin:0;text-align:center">
     <div id="tutIcon" style="font-size:56px">🀄</div>
     <h2 id="tutTitle" style="margin:8px 0 4px">Tujuan HU</h2>
-    <p id="tutText" style="font-size:14px;line-height:1.6;color:#a7f3d0">Kumpulin 14 tile: 4 set (Pong / Chow) + 1 pasang. Siapa paling cepet HU, dia menang!</p>
+       <p id="tutText" style="font-size:14px;line-height:1.6;color:#a7f3d0">Kumpulin 14 tile: 4 set (Pong / Chow) + 1 pasang. Siapa paling cepet HU, dia menang!</p>
+    <div id="tutTiles" style="display:none;max-height:280px;overflow-y:auto"></div>
     <div id="tutDots" style="margin:12px 0;font-size:18px">● ○ ○</div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-dark" onclick="tutPrev()" id="tutPrevBtn" style="flex:1">⬅️ SEBELUMNYA</button>
