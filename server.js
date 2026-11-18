@@ -168,7 +168,7 @@ function genCode(){ let c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let r=''; for(let 
 // ============ ROOM HELPERS ============
 function emitToRoom(room, ev, data){ io.to(room.code).emit(ev, data); }
 function emitLobby(room){
-  let payload = { code: room.code, players: publicPlayers(room), hostId: room.players.find(x=>x.isHost)?.id, turnTimeSec: room.turnTimeSec, turnTime: room.turnTimeSec, mode: room.mode || 'latihan', roomName: room.roomName || 'Meja Mahjong', name: room.roomName || 'Meja Mahjong' };
+  let payload = { code: room.code, players: publicPlayers(room), hostId: room.players.find(x=>x.isHost)?.id, turnTimeSec: room.turnTimeSec, turnTime: room.turnTimeSec, mode: room.mode || 'latihan', roomName: room.roomName || 'Meja Mahjong', name: room.roomName || 'Meja Mahjong', skin: room.skin || 'hijau' };
   io.to(room.code).emit('lobbyUpdate', payload);
   io.to(room.code).emit('updateLobby', payload);
 }
@@ -610,7 +610,7 @@ io.on('connection', (socket)=>{
 
   socket.on('createRoom', ({ name, roomName, isPrivate, password, mode, avatar })=>{
   let code = genCode();
-  let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec:30, turnTimer:null, lastDice:null, passCount:0, passNeeded:0, passedNames:[], claimTimer:null,
+  let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec:30, turnTimer:null, lastDice:null, passCount:0, passNeeded:0, passedNames:[], claimTimer:null, skin:'hijau',
     roomName: (roomName||'Meja '+(name||'Player')).trim(),
     isPrivate: !!isPrivate, password: isPrivate ? (password||'') : '',
     mode: mode==='tanding' ? 'tanding' : 'latihan',
@@ -722,6 +722,19 @@ socket.on('fillBots', ({ code, level })=>{
     emitToRoom(room, 'turnTimeUpdated', { seconds:sec });
     emitLobby(room);
     addLog(room, `⏱️ Waktu giliran diganti jadi ${sec===0?'Tanpa Batas':sec+' detik'}!`);
+  });
+
+  socket.on('setSkin', ({ code, skin })=>{
+    let room = rooms[(code||'').toUpperCase()];
+    if(!room) return;
+    let me = room.players.find(p=>p.id===socket.id);
+    if(!me || !me.isHost){ socket.emit('errorMsg','Cuma HOST yang bisa ganti skin!'); return; }
+    let ok = ['hijau','merah','biru','kayu'];
+    if(!ok.includes(skin)) return;
+    room.skin = skin;
+    emitToRoom(room, 'skinUpdated', { skin });
+    emitLobby(room);
+    addLog(room, `🎨 Skin meja diganti jadi ${skin}!`);
   });
 
   socket.on('startGame', ({ code, turnTimeSec })=>{
