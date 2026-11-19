@@ -1300,8 +1300,9 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 </div>
 <!-- POPUP PROFIL -->
-<div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:210;align-items:center;justify-content:center;padding:16px">
-  <div class="card" style="max-width:420px;width:100%;margin:0;text-align:center">
+<div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:210;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) closeProfile()">
+  <div class="card" style="max-width:420px;width:100%;margin:0;text-align:center;position:relative">
+    <button onclick="closeProfile()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:#fff;font-size:20px;font-weight:900;cursor:pointer">✕</button>
     <div id="profileAvatarBig" style="font-size:64px">🧑</div>
     <h2 id="profileName" style="margin:6px 0 2px">-</h2>
     <div id="profileId" style="color:#a7f3d0;font-size:13px">@-</div>
@@ -1556,7 +1557,7 @@ function loginSuccess(user, passwordForSave, showProfile){
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
     toast('Halo '+user.display_name+'!');
-  if(showProfile) setTimeout(()=>{ openProfile(false); }, 400);
+  if(showProfile){ clearTimeout(window._profileTimer); window._profileTimer = setTimeout(()=>{ openProfile(false); }, 400); }
   refreshRooms();
   try{
     let savedRoom = JSON.parse(sessionStorage.getItem('mahjong_room'));
@@ -1598,8 +1599,9 @@ async function openProfile(allowEdit){
       currentUser.hu = j.hu;
       el('profileHu').innerHTML = '<b style="font-size:18px">' + getGelar(j.hu).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + j.hu + '</span><br><span style="font-size:11px;color:#a7f3d0">' + (getGelar(j.hu).next ? 'Berikutnya: ' + getGelar(j.hu).next : 'Gelar tertinggi!') + '</span>';
     }
-  }catch(e){}
+    }catch(e){}
 }
+function closeProfile(){ clearTimeout(window._profileTimer); let m = el('profileModal'); if(m) m.style.display = 'none'; }
 async function changeAvatar(a){
   currentUser.avatar = a; el('profileAvatarBig').innerHTML = avatarHTML(a, 64);
   if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(a, 24) + ' ' + esc(currentUser.display_name) + ' (' + esc(currentUser.id) + ')';
