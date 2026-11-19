@@ -1273,19 +1273,28 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     <div id="homeErr" style="display:none;margin-top:10px;background:#7f1d1d;color:#fecaca;padding:10px;border-radius:10px;font-size:13px"></div>
   </div>
 </div>
-<<!-- LEADERBOARD FULL SCREEN -->
-<div id="leaderboardModal" style="display:none;position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,#1a4d2e 0%,#07130c 100%);z-index:210;overflow-y:auto">
-  <div style="max-width:720px;margin:0 auto;padding:16px 14px 90px">
-    <div style="text-align:center;padding:18px 10px 10px">
-      <div style="font-size:52px">🏆</div>
-      <h2 style="margin:6px 0 4px;font-size:28px;color:#fde68a">LEADERBOARD HU</h2>
-      <div style="color:#a7f3d0;font-size:13px;line-height:1.5">Semua pemain terdaftar — urut HU terbanyak<br><span style="color:#fde68a">HU cuma dihitung dari mode TANDING full 4 orang asli</span></div>
+<!-- LEADERBOARD TABEL FULL SCREEN -->
+<div id="leaderboardModal" style="display:none;position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,#1a4d2e 0%,#07130c 100%);z-index:210;overflow-y:auto" onclick="if(event.target===this) closeLeaderboard()">
+  <div style="max-width:720px;margin:0 auto;padding:16px 14px 90px;position:relative">
+    <button onclick="closeLeaderboard()" style="position:absolute;top:14px;right:16px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:18px;font-weight:900;width:36px;height:36px;border-radius:50%;cursor:pointer;z-index:2">✕</button>
+    <div style="text-align:center;padding:14px 10px 10px">
+      <div style="font-size:48px">🏆</div>
+      <h2 style="margin:6px 0 4px;font-size:26px;color:#fde68a">LEADERBOARD HU</h2>
+      <div style="color:#a7f3d0;font-size:12px;line-height:1.5">Semua pemain terdaftar — urut HU terbanyak<br><span style="color:#fde68a">HU cuma dihitung dari mode TANDING full 4 orang asli</span></div>
       <div id="leaderboardMyRank" style="margin:12px auto 0;max-width:480px"></div>
     </div>
-    <div id="leaderboardPodium" style="display:flex;gap:8px;align-items:flex-end;justify-content:center;margin:16px 0 14px"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:0 6px 6px;color:#fde68a;font-size:11px;font-weight:900;letter-spacing:1px"><span>PERINGKAT</span><span>HU TANDING</span></div>
-    <div id="leaderboardList" style="display:flex;flex-direction:column;gap:8px">Memuat...</div>
-    <button class="btn btn-gold" style="margin-top:18px;position:sticky;bottom:14px" onclick="closeLeaderboard()">✅ TUTUP</button>
+    <table style="width:100%;border-collapse:collapse;background:rgba(0,0,0,.45);border:1px solid rgba(250,204,21,.35);border-radius:14px;overflow:hidden;font-size:13px">
+      <thead>
+        <tr style="background:#facc15;color:#422006">
+          <th style="padding:10px 6px;text-align:center;width:56px">AVATAR</th>
+          <th style="padding:10px 8px;text-align:left">NAMA</th>
+          <th style="padding:10px 8px;text-align:center;width:110px">GELAR</th>
+          <th style="padding:10px 8px;text-align:center;width:110px">TOTAL HU<br>MENANG</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboardList"><tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Memuat...</td></tr></tbody>
+    </table>
+    <button class="btn btn-gold" style="margin-top:18px" onclick="closeLeaderboard()">✅ TUTUP</button>
   </div>
 </div>
 <!-- POPUP NAIK GELAR No.3 -->
@@ -2017,41 +2026,32 @@ function renderPublicRooms(list){
 }
 function openLeaderboard(){
   el('leaderboardModal').style.display = 'block';
-  el('leaderboardList').innerHTML = 'Memuat...';
-  el('leaderboardPodium').innerHTML = '';
+  el('leaderboardList').innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Memuat...</td></tr>';
   el('leaderboardMyRank').innerHTML = '';
   fetch('/api/leaderboard').then(r=>r.json()).then(j=>{
     let list = j.users || j.leaderboard || [];
-    if(!list.length){ el('leaderboardList').innerHTML = '<div style="text-align:center;color:#94a3b8">Belum ada pemain.</div>'; return; }
-    // Podium Top 3
-    let top3 = list.slice(0,3);
-    let podiumOrder = [1,0,2]; // biar Juara 1 di tengah, lebih tinggi
-    el('leaderboardPodium').innerHTML = podiumOrder.map(pi=>{
-      let u = top3[pi]; if(!u) return '';
-      let medal = pi===0?'🥇':pi===1?'🥈':'🥉';
-      let h = pi===0?'96px':pi===1?'72px':'60px';
-      let isMe = currentUser && u.id===currentUser.id;
-      return '<div style="flex:1;max-width:180px;text-align:center;background:'+(isMe?'#facc15':'rgba(0,0,0,.45)')+';color:'+(isMe?'#422006':'#fff')+';border:1px solid rgba(250,204,21,.5);border-radius:16px 16px 0 0;padding:12px 6px 8px"><div style="font-size:28px">'+medal+'</div><div style="font-size:34px">'+avatarHTML(u.avatar, 40)+'</div><b style="display:block;margin-top:4px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(u.display_name||u.id)+'</b><div style="font-size:11px;opacity:.8">'+gelarLabel(u.hu||0)+'</div><div style="font-weight:900;color:#fde68a;margin-top:2px">🏆 '+(u.hu||0)+'</div><div style="height:'+h+';background:linear-gradient(180deg,#facc15,#92400e);border-radius:10px 10px 0 0;margin-top:8px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#422006">'+(pi+1)+'</div></div>';
-    }).join('');
-    // Ranking lu sendiri, biar keliatan walau gak Top 10
+    if(!list.length){ el('leaderboardList').innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Belum ada pemain.</td></tr>'; return; }
     let myIdx = list.findIndex(u=>currentUser && u.id===currentUser.id);
     if(myIdx >= 0){
       let u = list[myIdx];
-      el('leaderboardMyRank').innerHTML = '<div style="background:#facc15;color:#422006;border-radius:12px;padding:10px 12px;font-weight:900;font-size:13px">⭐ Kamu peringkat #' + (myIdx+1) + ' — ' + gelarLabel(u.hu||0) + ' • 🏆 ' + (u.hu||0) + ' HU<br><span style="font-weight:400;font-size:11px">' + (getGelar(u.hu||0).next ? 'Sub judul: Kejar ' + getGelar(u.hu||0).next + ' biar naik gelar!' : 'Sub judul: Gelar tertinggi, pertahanin!') + '</span></div>';
+      el('leaderboardMyRank').innerHTML = '<div style="background:#facc15;color:#422006;border-radius:12px;padding:10px 12px;font-weight:900;font-size:13px">⭐ Kamu peringkat #' + (myIdx+1) + ' — ' + gelarLabel(u.hu||0) + ' • 🏆 ' + (u.hu||0) + ' HU</div>';
     }
-    // List lengkap, dari peringkat 4 ke bawah biar gak dobel sama podium
-    let rest = list.slice(3);
-    if(!rest.length){ el('leaderboardList').innerHTML = '<div style="text-align:center;color:#94a3b8;font-size:12px">Baru 3 pemain, yang lain masih 0 HU.</div>'; return; }
-    el('leaderboardList').innerHTML = rest.map((u,i)=>{
-      let rank = i+4;
+    el('leaderboardList').innerHTML = list.map((u,i)=>{
+      let rank = i+1;
       let isMe = currentUser && u.id===currentUser.id;
-      let g = getGelar(u.hu||0);
-      // SUB JUDUL per pemain: gelar sekarang + target berikutnya
-      let sub = g.next ? '🎯 Berikutnya: ' + g.next + ' — butuh total ' + (u.hu||0) + ' HU, terusin!' : '👑 Udah mentok, gelar tertinggi!';
-      return '<div style="display:flex;justify-content:space-between;align-items:center;background:'+(isMe?'#facc15':'rgba(0,0,0,.45)')+';color:'+(isMe?'#422006':'#fff')+';border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px"><span style="display:flex;align-items:center;gap:10px;min-width:0"><b style="width:28px;text-align:center;font-size:16px;color:#fde68a">'+rank+'.</b>'+avatarHTML(u.avatar, 32)+'<span style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(u.display_name||u.id)+'</b><span style="font-size:11px;opacity:.75;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">@'+esc(u.id)+' • '+sub+'</span></span></span><span style="text-align:right;flex:none;margin-left:8px"><span class="rankBadge">'+gelarLabel(u.hu||0)+'</span><b style="display:block;margin-top:2px">🏆 '+(u.hu||0)+'</b></span></div>';
+      let rowBg = rank===1 ? 'linear-gradient(90deg,#facc15,#f59e0b)' : rank===2 ? 'linear-gradient(90deg,#e2e8f0,#94a3b8)' : rank===3 ? 'linear-gradient(90deg,#d97706,#92400e)' : (isMe ? '#facc15' : 'transparent');
+      let rowColor = (rank<=3 || isMe) ? '#422006' : '#fff';
+      let medal = rank===1 ? '🥇 ' : rank===2 ? '🥈 ' : rank===3 ? '🥉 ' : '';
+      return '<tr style="background:'+rowBg+';color:'+rowColor+';border-top:1px solid rgba(255,255,255,.12)">'
+        + '<td style="padding:8px 6px;text-align:center">' + avatarHTML(u.avatar, 32) + '</td>'
+        + '<td style="padding:8px;text-align:left"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">' + medal + esc(u.display_name||u.id) + '</b><span style="font-size:11px;opacity:.75">@' + esc(u.id) + '</span></td>'
+        + '<td style="padding:8px;text-align:center"><span class="rankBadge">' + gelarLabel(u.hu||0) + '</span></td>'
+        + '<td style="padding:8px;text-align:center"><b>🏆 ' + (u.hu||0) + '</b></td>'
+        + '</tr>';
     }).join('');
-  }).catch(e=>{ el('leaderboardList').innerHTML = '<div style="text-align:center;color:#fecaca">Gagal memuat leaderboard.</div>'; });
+  }).catch(e=>{ el('leaderboardList').innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;color:#fecaca">Gagal memuat leaderboard.</td></tr>'; });
 }
+function closeLeaderboard(){ let m = el('leaderboardModal'); if(m) m.style.display = 'none'; }
 function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim().toUpperCase(); let password=el('joinPassInput')?el('joinPassInput').value.trim():''; if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName,password,avatar: currentUser?currentUser.avatar:'🧑'}); }
 function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:myCode, level, botName}); }
 function fillBots(){ let need=4 - (currentPlayers.length||0); if(need<=0) need=3; for(let i=0;i<need;i++){ setTimeout(()=>addBot('normal'), i*150); } }
