@@ -1470,7 +1470,7 @@ async function refreshMyGelar(){
       let home = el('homeUserLabel');
       if(home) home.innerHTML = avatarHTML(currentUser.avatar, 24) + ' ' + esc(currentUser.display_name) + ' <span class="rankBadge">' + gelarLabel(currentUser.hu) + '</span>';
       let ph = el('profileHu');
-      if(ph) ph.innerHTML = '<span style="font-size:28px">' + getGelar(currentUser.hu).emoji + '</span><br><b style="font-size:18px">' + getGelar(currentUser.hu).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + currentUser.hu + '</span><br><span style="font-size:11px;color:#a7f3d0">' + (getGelar(currentUser.hu).next ? 'Berikutnya: ' + getGelar(currentUser.hu).next : 'Gelar tertinggi!') + '</span>';
+     if(ph) ph.innerHTML = '<b style="font-size:18px">' + getGelar(currentUser.hu).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + currentUser.hu + '</span><br><span style="font-size:11px;color:#a7f3d0">' + (getGelar(currentUser.hu).next ? 'Berikutnya: ' + getGelar(currentUser.hu).next : 'Gelar tertinggi!') + '</span>';
     }
   }catch(e){}
 }
@@ -1569,7 +1569,7 @@ async function openProfile(){
   el('profileName').innerText = currentUser.display_name || '-';
   el('profileId').innerText = '@' + currentUser.id;
   // Profil: gelar di atas, TOTAL HU tetep ada di bawahnya, gak ada yang dihapus
-  el('profileHu').innerHTML = '<span style="font-size:28px">' + getGelar(currentUser.hu || 0).emoji + '</span><br><b style="font-size:18px">' + getGelar(currentUser.hu || 0).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + (currentUser.hu || 0) + '</span>';
+  el('profileHu').innerHTML = '<b style="font-size:18px">' + getGelar(currentUser.hu || 0).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + (currentUser.hu || 0) + '</span>';
   let pick = el('profileAvatarPick'); pick.innerHTML = '';
   profileAvatars.forEach(a=>{
     let b = document.createElement('button');
@@ -1583,7 +1583,7 @@ async function openProfile(){
     let j = await r.json();
     if(j.ok){
       currentUser.hu = j.hu;
-      el('profileHu').innerHTML = '<span style="font-size:28px">' + getGelar(j.hu).emoji + '</span><br><b style="font-size:18px">' + getGelar(j.hu).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + j.hu + '</span><br><span style="font-size:11px;color:#a7f3d0">' + (getGelar(j.hu).next ? 'Berikutnya: ' + getGelar(j.hu).next : 'Gelar tertinggi!') + '</span>';
+      el('profileHu').innerHTML = '<b style="font-size:18px">' + getGelar(j.hu).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + j.hu + '</span><br><span style="font-size:11px;color:#a7f3d0">' + (getGelar(j.hu).next ? 'Berikutnya: ' + getGelar(j.hu).next : 'Gelar tertinggi!') + '</span>';
     }
   }catch(e){}
 }
