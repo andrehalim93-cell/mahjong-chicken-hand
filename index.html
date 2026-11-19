@@ -1984,7 +1984,7 @@ function openLeaderboard(){
     el('leaderboardList').innerHTML = list.map((u,i)=>{
       let medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
       let isMe = currentUser && u.id===currentUser.id;
-      return '<div style="display:flex;justify-content:space-between;align-items:center;background:'+(isMe?'#facc15':'#1e293b')+';color:'+(isMe?'#422006':'#fff')+';border-radius:10px;padding:8px 10px"><span style="display:flex;align-items:center;gap:6px">'+medal+' '+avatarHTML(u.avatar, 28)+' <b>'+esc(u.display_name||u.id)+'</b> <span style="font-size:11px;opacity:.7">@'+esc(u.id)+'</span></span><b>🏆 '+(u.hu||0)+'</b></div>';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;background:'+(isMe?'#facc15':'#1e293b')+';color:'+(isMe?'#422006':'#fff')+';border-radius:10px;padding:8px 10px"><span style="display:flex;align-items:center;gap:6px">'+medal+' '+avatarHTML(u.avatar, 28)+' <b>'+esc(u.display_name||u.id)+'</b> <span style="font-size:11px;opacity:.7">@'+esc(u.id)+'</span></span><span style="display:flex;gap:6px;align-items:center"><span class="rankBadge">'+gelarLabel(u.hu||0)+'</span><b>🏆 '+(u.hu||0)+'</b></span></div>';
     }).join('');
   }).catch(e=>{ el('leaderboardList').innerHTML = '<div style="text-align:center;color:#fecaca">Gagal memuat leaderboard.</div>'; });
 }
