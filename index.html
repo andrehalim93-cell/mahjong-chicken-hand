@@ -1536,16 +1536,21 @@ async function changeAvatar(a){
   openProfile();
 }
 let TUTS = [
-  {icon:'🀄', title:'1. Kenal Tile', text:'Total 136 tile. Hafalin ini aja, Bunga & Musim GAK dipake di game ini.', isTiles:true, html:`
+  {icon:'🀄', title:'1. Kenal Tile', text:'Total 136 tile. Hafalin ini aja, Bunga & Musim GAK dipake di game ini.', html:`
     <div style="text-align:left;font-size:13px;line-height:1.6;color:#e2e8f0">
     <b style="color:#fde68a">3 Jenis Suit (angka 1-9):</b><br>
     🀄 <b>Karakter / Man</b> — ada tulisan Cina-nya<br>
+    <div class="tutEx" data-ex="man"></div>
     🔴 <b>Dot / Pin</b> — gambar lingkaran<br>
+    <div class="tutEx" data-ex="dot"></div>
     🎋 <b>Bambu / Sou</b> — gambar bambu<br>
+    <div class="tutEx" data-ex="bambu"></div>
     Tiap angka ada 4 kembaran. Contoh: 5 Man ada 4 biji.<br><br>
     <b style="color:#fde68a">2 Jenis Kehormatan / Honor:</b><br>
     🧭 <b>Angin:</b> Timur, Selatan, Barat, Utara — masing-masing 4 biji<br>
-    🐉 <b>Naga:</b> Merah, Hijau, Putih — masing-masing 4 biji<br><br>
+    <div class="tutEx" data-ex="wind"></div>
+    🐉 <b>Naga:</b> Merah, Hijau, Putih — masing-masing 4 biji<br>
+    <div class="tutEx" data-ex="dragon"></div>
     ❌ <b>Bunga & Musim GAK dipake</b>, jadi kalau dapet itu di game lain, di sini gak usah dihafalin.
     </div>`},
   {icon:'✨', title:'2. Pong / Chow / Kong', text:'Ini cara bikin set. Pong & Chow bikin set 3, Kong bikin set 4.', html:`
@@ -1614,6 +1619,11 @@ function renderTut(){
   let W = (num,id)=> ({type:'wind', num, id});
   // Daftar contoh tile — kuncinya sama kayak data-ex di atas
   let EX = {
+    man: tilesRow([S(2,1,'ex-man1'), S(2,2,'ex-man2'), S(2,3,'ex-man3'), S(2,4,'ex-man4'), S(2,5,'ex-man5'), S(2,6,'ex-man6'), S(2,7,'ex-man7'), S(2,8,'ex-man8'), S(2,9,'ex-man9')]),
+    dot: tilesRow([S(1,1,'ex-dot1'), S(1,2,'ex-dot2'), S(1,3,'ex-dot3'), S(1,4,'ex-dot4'), S(1,5,'ex-dot5'), S(1,6,'ex-dot6'), S(1,7,'ex-dot7'), S(1,8,'ex-dot8'), S(1,9,'ex-dot9')]),
+    bambu: tilesRow([S(0,1,'ex-bam1'), S(0,2,'ex-bam2'), S(0,3,'ex-bam3'), S(0,4,'ex-bam4'), S(0,5,'ex-bam5'), S(0,6,'ex-bam6'), S(0,7,'ex-bam7'), S(0,8,'ex-bam8'), S(0,9,'ex-bam9')]),
+    wind: tilesRow([W(0,'ex-wind0'), W(1,'ex-wind1'), W(2,'ex-wind2'), W(3,'ex-wind3')]),
+    dragon: tilesRow([D(0,'ex-drag0'), D(1,'ex-drag1'), D(2,'ex-drag2')]),
     pong: tilesRow([S(2,5,'ex-pong1'), S(2,5,'ex-pong2'), S(2,5,'ex-pong3')]),
     chow: tilesRow([S(1,3,'ex-chow1'), S(1,4,'ex-chow2'), S(1,5,'ex-chow3')]),
     kong: tilesRow([S(0,8,'ex-kong1'), S(0,8,'ex-kong2'), S(0,8,'ex-kong3'), S(0,8,'ex-kong4')]),
