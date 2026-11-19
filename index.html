@@ -1901,8 +1901,8 @@ function mjToneFallback(type){
       o.start(t + start); o.stop(t + start + dur + 0.05);
     }
     // Fallback kalau file mp3 belum didownload - tetep beda per aksi
-    if(type === 'discard'){ tone(800, 0, 0.08, 0.15, 'square'); }
-    if(type === 'draw'){ tone(600, 0, 0.06, 0.12, 'sine'); }
+    if(type === 'discard'){ tone(800, 0, 0.15, 0.3, 'square'); tone(500, 0.08, 0.15, 0.3, 'square'); }
+    if(type === 'draw'){ tone(600, 0, 0.15, 0.3, 'sine'); tone(900, 0.08, 0.15, 0.3, 'sine'); }
     if(type === 'pong'){ tone(150, 0, 0.15, 0.3, 'square'); tone(80, 0.1, 0.3, 0.3, 'square'); }
     if(type === 'chow'){ tone(523, 0, 0.15, 0.2, 'sine'); tone(659, 0.12, 0.2, 0.2, 'sine'); }
     if(type === 'kong'){ tone(120, 0, 0.2, 0.35, 'square'); tone(90, 0.2, 0.3, 0.35, 'square'); }
@@ -2189,7 +2189,7 @@ socket.on('gameStarted', d=>{
   addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!');
   renderSeats(d.players, d.turn); renderCentralPool(d.players);
 });
-socket.on('youDrew', d=>{ if(d.tile){ lastDrawnTileId=d.tile.id; if(!myHand.some(x=>x.id===d.tile.id)){ myHand.push(d.tile); } } renderMyHand(); });
+socket.on('youDrew', d=>{ playMjSound('draw'); if(d.tile){ lastDrawnTileId=d.tile.id; if(!myHand.some(x=>x.id===d.tile.id)){ myHand.push(d.tile); } } renderMyHand(); });
 function canHuLocal(){
   let tiles=[...myHand];
   let needSets=4-myMelds.length; // kamu butuh 1 set lagi dari tangan
@@ -2518,7 +2518,7 @@ function renderMyHand(){
   let sorted=[...myHand].sort((a,b)=>{ let order=t=> t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); if(order(a)!==order(b)) return order(a)-order(b); if(a.type==='suit' && b.type==='suit'){ if(a.suit!==b.suit) return a.suit-b.suit; return a.num-b.num; } return (a.num||0)-(b.num||0); });
   let handEl=el('myHand');
   handEl.innerHTML = sorted.map(t=>tileHTML(t, (selectedTile===t.id?'sel ':'') + (lastDrawnTileId===t.id?'newTile ':'') + (hintTileId===t.id?'hintTile ':'') + (isMyTurn?' myTurn':''))).join('');
-  handEl.querySelectorAll('.t').forEach(div=>{ div.onclick=()=>{ if(!isMyTurn) return toast('Bukan giliran kamu! Tunggu dulu...'); let id=div.dataset.id; if(selectedTile===id){ lastDrawnTileId=null; clearHint(); socket.emit('discard',{code:myCode, tileId:id}); selectedTile=null; renderMyHand(); } else { selectedTile=id; renderMyHand(); } }; });
+  handEl.querySelectorAll('.t').forEach(div=>{ div.onclick=()=>{ if(!isMyTurn) return toast('Bukan giliran kamu! Tunggu dulu...'); let id=div.dataset.id; if(selectedTile===id){ lastDrawnTileId=null; clearHint(); playMjSound('discard'); socket.emit('discard',{code:myCode, tileId:id}); selectedTile=null; renderMyHand(); } else { selectedTile=id; renderMyHand(); } }; });
   el('myCount').innerText = myHand.length+' tile'; el('myMeldCount').innerText = myMelds.length+' set';
   updateHintButton();
   el('myMelds').innerHTML = myMelds.map(m=>`<div class="meld">${m.tiles.map(t=>tileHTML(t)).join('')}</div>`).join('');
