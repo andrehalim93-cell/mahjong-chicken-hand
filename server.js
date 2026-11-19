@@ -598,10 +598,21 @@ function advanceTurn(room, fromPlayer){
     emitToRoom(room, 'playerDrew', { player:nextP.name, wallLeft:room.wall.length });
   }
 }
+// BUKA KARTU: tangan akhir semua pemain (meld kebuka + sisa tangan + tile HU buat pemenang)
+function buildFinalHands(room, winnerName, winningTile){
+  return room.players.map(p=>{
+    let full = [];
+    (p.melds||[]).forEach(m=>{ (m.tiles||[]).forEach(t=>full.push(t)); });
+    (p.hand||[]).forEach(t=>full.push(t));
+    let isWinner = p.name===winnerName;
+    if(isWinner && winningTile && !full.some(t=>t.id===winningTile.id)) full.push(winningTile);
+    return { name: p.name, avatar: p.avatar||'🧑', isWinner: isWinner, isBot: !!p.isBot, hand: sortHand(full), winTileId: (isWinner && winningTile) ? winningTile.id : null };
+  });
+}
 function endGameDraw(room){
   clearTurnTimer(room);
   room.phase='finished';
-  emitToRoom(room, 'gameOver', { winner:null, message:'Tembok habis! Seri!', reason:'draw', msg:'Tembok habis! Seri!' });
+  emitToRoom(room, 'gameOver', { winner:null, message:'Tembok habis! Seri!', reason:'draw', msg:'Tembok habis! Seri!', finalHands: buildFinalHands(room, null, null) });
   addLog(room, '🏳️ Tembok habis, seri!');
 }
 function endGameWin(room, winnerName, msg, winningTile){
@@ -619,7 +630,7 @@ function endGameWin(room, winnerName, msg, winningTile){
   // BARU: hitung berapa orang asli (bot gak dihitung) + HU dihitung apa engga
   let realCount = room.players.filter(p=>!p.isBot).length;
   let counted = (room.mode==='tanding' && realCount===4);
-  emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: fullHand, melds: winner?winner.melds:[], winningTile: winningTile||null, mode: room.mode, playerCount: realCount, counted: counted });
+  emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: fullHand, melds: winner?winner.melds:[], winningTile: winningTile||null, mode: room.mode, playerCount: realCount, counted: counted, finalHands: buildFinalHands(room, winnerName, winningTile) });
   addLog(room, '🏆 '+msg);
     if(winner && !winner.isBot){
     io.to(winner.id).emit('youHu', { mode: room.mode, playerCount: realCount, counted: counted });
