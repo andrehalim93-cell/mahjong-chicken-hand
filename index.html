@@ -1294,7 +1294,20 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
       </thead>
       <tbody id="leaderboardList"><tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Memuat...</td></tr></tbody>
     </table>
-    <button class="btn btn-gold" style="margin-top:18px" onclick="closeLeaderboard()">✅ TUTUP</button>
+    <button class="btn btn-dark" style="margin-top:12px" onclick="openGelarGuide()">📖 PANDUAN GELAR</button>
+    <button class="btn btn-gold" style="margin-top:8px" onclick="closeLeaderboard()">✅ TUTUP</button>
+  </div>
+</div>
+
+<!-- POPUP PANDUAN GELAR -->
+<div id="gelarGuideModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:220;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) closeGelarGuide()">
+  <div style="background:linear-gradient(180deg,#1a4d2e,#07130c);border:1px solid rgba(250,204,21,.5);border-radius:18px;max-width:460px;width:100%;padding:18px 14px;text-align:center;position:relative;max-height:85vh;overflow-y:auto">
+    <button onclick="closeGelarGuide()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:#fff;font-size:20px;font-weight:900;cursor:pointer">✕</button>
+    <div style="font-size:40px">📖</div>
+    <h2 style="margin:6px 0 4px;color:#fde68a;font-size:22px">PANDUAN GELAR</h2>
+    <div style="color:#a7f3d0;font-size:12px;line-height:1.5;margin-bottom:12px">Gelar naik otomatis kalau TOTAL HU TANDING lu nambah.<br>HU cuma dihitung dari mode TANDING full 4 orang asli.</div>
+    <div id="gelarGuideList" style="display:flex;flex-direction:column;gap:8px;text-align:left">Memuat...</div>
+    <button class="btn btn-gold" style="margin-top:14px" onclick="closeGelarGuide()">✅ NGERTI</button>
   </div>
 </div>
 <!-- POPUP NAIK GELAR No.3 -->
@@ -2052,6 +2065,40 @@ function openLeaderboard(){
   }).catch(e=>{ el('leaderboardList').innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;color:#fecaca">Gagal memuat leaderboard.</td></tr>'; });
 }
 function closeLeaderboard(){ let m = el('leaderboardModal'); if(m) m.style.display = 'none'; }
+function openGelarGuide(){
+  let listEl = el('gelarGuideList');
+  let m = el('gelarGuideModal');
+  if(m) m.style.display = 'flex';
+  if(!listEl) return;
+  // Baca daftar gelar LANGSUNG dari getGelar() lu, biar angkanya gak ngarang
+  try{
+    let found = [];
+    let lastLabel = '';
+    for(let hu=0; hu<=1000; hu++){
+      let g = getGelar(hu);
+      let label = g && g.label ? g.label : gelarLabel(hu);
+      if(label !== lastLabel){
+        found.push({ hu: hu, label: label });
+        lastLabel = label;
+        // Kalau udah mentok (gak ada next), berhenti
+        if(g && !g.next) break;
+      }
+    }
+    if(!found.length) throw new Error('kosong');
+    listEl.innerHTML = found.map((g,i)=>{
+      let next = found[i+1];
+      let range = next ? g.hu + ' - ' + (next.hu - 1) + ' HU' : g.hu + ' HU ke atas 👑';
+      let isMax = !next;
+      return '<div style="display:flex;justify-content:space-between;align-items:center;background:' + (isMax ? '#facc15' : 'rgba(0,0,0,.45)') + ';color:' + (isMax ? '#422006' : '#fff') + ';border:1px solid rgba(250,204,21,.4);border-radius:12px;padding:10px 12px">'
+        + '<span><b style="font-size:14px">' + g.label + '</b><br><span style="font-size:11px;opacity:.8">' + (isMax ? 'Gelar tertinggi, pertahanin!' : 'Naik dari ' + range) + '</span></span>'
+        + '<b style="font-size:13px;white-space:nowrap;margin-left:8px">🏆 ' + range + '</b></div>';
+    }).join('');
+  }catch(e){
+    // Kalau getGelar() lu beda bentuk, tampilin cara hitungnya aja, biar gak kosong
+    listEl.innerHTML = '<div style="text-align:center;color:#fecaca;font-size:13px">Gagal baca daftar gelar.<br>HU dihitung dari mode TANDING full 4 orang.</div>';
+  }
+}
+function closeGelarGuide(){ let m = el('gelarGuideModal'); if(m) m.style.display = 'none'; }
 function joinRoom(){ myName=el('nameInput').value.trim(); let code=el('codeInput').value.trim().toUpperCase(); let password=el('joinPassInput')?el('joinPassInput').value.trim():''; if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName,password,avatar: currentUser?currentUser.avatar:'🧑'}); }
 function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:myCode, level, botName}); }
 function fillBots(){ let need=4 - (currentPlayers.length||0); if(need<=0) need=3; for(let i=0;i<need;i++){ setTimeout(()=>addBot('normal'), i*150); } }
