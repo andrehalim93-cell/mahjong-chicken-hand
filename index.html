@@ -1551,28 +1551,26 @@ let TUTS = [
   {icon:'✨', title:'2. Pong / Chow / Kong', text:'Ini cara bikin set. Pong & Chow bikin set 3, Kong bikin set 4.', html:`
     <div style="text-align:left;font-size:13px;line-height:1.6;color:#e2e8f0">
     <b style="color:#fde68a">PONG = 3 tile KEMBAR persis</b><br>
+    <div class="tutEx" data-ex="pong"></div>
     Di tangan lu udah ada 2, lawan buang yang ke-3, pencet PONG. Boleh ambil buangan SIAPA AJA.<br><br>
     <b style="color:#fde68a">CHOW = 3 tile URUT, jenis sama</b><br>
+    <div class="tutEx" data-ex="chow"></div>
     Contoh salah: 3 Dot + 4 Dot + 6 Dot ❌ / 3 Dot + 4 Bambu + 5 Dot ❌<br>
     Syarat: <b>CUMA boleh ambil dari pemain SEBELUM lu</b> (yang baru aja buang).<br><br>
     <b style="color:#fde68a">KONG = 4 tile KEMBAR persis</b><br>
+    <div class="tutEx" data-ex="kong"></div>
     Kayak Pong tapi 4, lebih kuat, dan lu dapet <b>1 tile ganti</b> dari tembok abis Kong.<br><br>
     <b style="color:#fde68a">3 MACAM KONG:</b><br>
     <b>1. MING KONG (Terbuka) — dari buangan lawan</b><br>
+    <div class="tutEx" data-ex="ming"></div>
     Di tangan: 8 Bambu x 3. Lawan buang 8 Bambu. Pencet KONG. 4 tile kebuka, semua orang liat.<br><br>
     <b>2. AN KONG (Tertutup) — dari tangan sendiri</b><br>
+    <div class="tutEx" data-ex="an"></div>
     Di tangan: Naga Merah x 4. Gak ada yang buang. Pas giliran lu, pencet KONG. 4 tile TERTUTUP, lawan gak tau tile apa.<br><br>
     <b>3. JIA KONG / PENG GANG (Tambahan) — Pong dulu, baru nambah</b><br>
+    <div class="tutEx" data-ex="jia"></div>
     Lu udah PONG 7 Dot (udah kebuka 3 di meja). Terus lu AMBIL lagi 7 Dot yang ke-4 dari tembok. Pencet KONG, tile ke-4 nempel ke Pong lu jadi Kong.
-    </div>`,
-    // CONTOH TILE BENERAN — dibaca sama renderTut di bawah
-    tileRows: [
-      {label:'✅ PONG: 5 Man + 5 Man + 5 Man', tiles:[{type:'suit',suit:2,num:5,id:'ex-pong1'},{type:'suit',suit:2,num:5,id:'ex-pong2'},{type:'suit',suit:2,num:5,id:'ex-pong3'}]},
-      {label:'✅ CHOW: 3 Dot + 4 Dot + 5 Dot', tiles:[{type:'suit',suit:1,num:3,id:'ex-chow1'},{type:'suit',suit:1,num:4,id:'ex-chow2'},{type:'suit',suit:1,num:5,id:'ex-chow3'}]},
-      {label:'✅ MING KONG: 8 Bambu x 4 (1 dari buangan lawan)', tiles:[{type:'suit',suit:0,num:8,id:'ex-ming1'},{type:'suit',suit:0,num:8,id:'ex-ming2'},{type:'suit',suit:0,num:8,id:'ex-ming3'},{type:'suit',suit:0,num:8,id:'ex-ming4'}]},
-      {label:'✅ AN KONG: Naga Merah x 4 (dari tangan sendiri)', tiles:[{type:'dragon',num:0,id:'ex-an1'},{type:'dragon',num:0,id:'ex-an2'},{type:'dragon',num:0,id:'ex-an3'},{type:'dragon',num:0,id:'ex-an4'}]},
-      {label:'✅ JIA KONG: Pong 7 Dot + 1 lagi jadi 4', tiles:[{type:'suit',suit:1,num:7,id:'ex-jia1'},{type:'suit',suit:1,num:7,id:'ex-jia2'},{type:'suit',suit:1,num:7,id:'ex-jia3'},{type:'suit',suit:1,num:7,id:'ex-jia4'}]}
-    ]},
+    </div>`},
   {icon:'🃏', title:'3. Buang & Ambil', text:'Inti 1 giliran: Ambil 1, Buang 1. Jangan asal buang, buangan lu bisa jadi HU lawan.', html:`
     <div style="text-align:left;font-size:13px;line-height:1.6;color:#e2e8f0">
     <b style="color:#fde68a">Pas giliran lu:</b><br>
@@ -1591,18 +1589,14 @@ let TUTS = [
     <div style="text-align:left;font-size:13px;line-height:1.6;color:#e2e8f0">
     <b style="color:#fde68a">Rumus HU = 4 SET + 1 PASANG = 14 TILE</b><br>
     SET = Pong / Chow / Kong. PASANG = 2 tile kembar.<br><br>
+    <b style="color:#fde68a">Contoh tangan HU (14 tile):</b><br>
+    <div class="tutEx" data-ex="huAll"></div>
+    <br>
     <b style="color:#fde68a">2 cara HU:</b><br>
     <b>1. HU dari buangan lawan:</b> Lu udah 13 tile + kurang 1. Lawan buang tile itu, pencet HU.<br>
     <b>2. SELF HU / HU sendiri:</b> Lu ambil tile dari tembok pas giliran lu, ternyata itu tile yang bikin lu HU, pencet HU.<br><br>
     ⚠️ Kong dihitung 1 set, tapi tile-nya 4. Jadi kalau lu punya 1 Kong, total tile tangan lu tetep dihitung 14 buat HU.
-    </div>`,
-    tileRows: [
-      {label:'CHOW: 1 Man - 2 Man - 3 Man', tiles:[{type:'suit',suit:2,num:1,id:'ex-hu1'},{type:'suit',suit:2,num:2,id:'ex-hu2'},{type:'suit',suit:2,num:3,id:'ex-hu3'}]},
-      {label:'CHOW: 4 Dot - 5 Dot - 6 Dot', tiles:[{type:'suit',suit:1,num:4,id:'ex-hu4'},{type:'suit',suit:1,num:5,id:'ex-hu5'},{type:'suit',suit:1,num:6,id:'ex-hu6'}]},
-      {label:'PONG: 8 Bambu x 3', tiles:[{type:'suit',suit:0,num:8,id:'ex-hu7'},{type:'suit',suit:0,num:8,id:'ex-hu8'},{type:'suit',suit:0,num:8,id:'ex-hu9'}]},
-      {label:'PONG: Naga Merah x 3', tiles:[{type:'dragon',num:0,id:'ex-hu10'},{type:'dragon',num:0,id:'ex-hu11'},{type:'dragon',num:0,id:'ex-hu12'}]},
-      {label:'PASANG: Angin Timur x 2 — TOTAL 14 TILE ✅', tiles:[{type:'wind',num:0,id:'ex-hu13'},{type:'wind',num:0,id:'ex-hu14'}]}
-    ]}
+    </div>`}
 ];
 function openTutorial(){ tutIdx = 0; renderTut(); el('tutorialModal').style.display = 'flex'; }
 function closeTutorial(){ el('tutorialModal').style.display = 'none'; }
@@ -1613,22 +1607,42 @@ function renderTut(){
   el('tutDots').innerText = TUTS.map((_,i)=> i===tutIdx ? '●' : '○').join(' ');
   el('tutPrevBtn').style.opacity = tutIdx===0 ? '0.4' : '1';
   el('tutNextBtn').innerText = tutIdx===TUTS.length-1 ? '✅ MENGERTI' : 'SELANJUTNYA ➡️';
+  // Helper: bikin 1 baris tile beneran
+  let tilesRow = (tiles)=> '<div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:flex-start;margin:6px 0 8px">'+tiles.map(x=>tileHTML(x)).join('')+'</div>';
+  let S = (suit,num,id)=> ({type:'suit', suit, num, id});
+  let D = (num,id)=> ({type:'dragon', num, id});
+  let W = (num,id)=> ({type:'wind', num, id});
+  // Daftar contoh tile — kuncinya sama kayak data-ex di atas
+  let EX = {
+    pong: tilesRow([S(2,5,'ex-pong1'), S(2,5,'ex-pong2'), S(2,5,'ex-pong3')]),
+    chow: tilesRow([S(1,3,'ex-chow1'), S(1,4,'ex-chow2'), S(1,5,'ex-chow3')]),
+    kong: tilesRow([S(0,8,'ex-kong1'), S(0,8,'ex-kong2'), S(0,8,'ex-kong3'), S(0,8,'ex-kong4')]),
+    ming: tilesRow([S(0,8,'ex-ming1'), S(0,8,'ex-ming2'), S(0,8,'ex-ming3'), S(0,8,'ex-ming4')]),
+    an: tilesRow([D(0,'ex-an1'), D(0,'ex-an2'), D(0,'ex-an3'), D(0,'ex-an4')]),
+    jia: tilesRow([S(1,7,'ex-jia1'), S(1,7,'ex-jia2'), S(1,7,'ex-jia3'), S(1,7,'ex-jia4')]),
+    huAll:
+      '<div style="font-size:11px;font-weight:900;color:#fde68a;margin-top:4px">CHOW: 1-2-3 Man</div>' + tilesRow([S(2,1,'ex-hu1'), S(2,2,'ex-hu2'), S(2,3,'ex-hu3')]) +
+      '<div style="font-size:11px;font-weight:900;color:#fde68a">CHOW: 4-5-6 Dot</div>' + tilesRow([S(1,4,'ex-hu4'), S(1,5,'ex-hu5'), S(1,6,'ex-hu6')]) +
+      '<div style="font-size:11px;font-weight:900;color:#fde68a">PONG: 8 Bambu x 3</div>' + tilesRow([S(0,8,'ex-hu7'), S(0,8,'ex-hu8'), S(0,8,'ex-hu9')]) +
+      '<div style="font-size:11px;font-weight:900;color:#fde68a">PONG: Naga Merah x 3</div>' + tilesRow([D(0,'ex-hu10'), D(0,'ex-hu11'), D(0,'ex-hu12')]) +
+      '<div style="font-size:11px;font-weight:900;color:#fde68a">PASANG: Angin Timur x 2 — TOTAL 14 ✅</div>' + tilesRow([W(0,'ex-hu13'), W(0,'ex-hu14')])
+  };
+  // Isi semua slot .tutEx yang ada di halaman ini
+  el('tutText').querySelectorAll('.tutEx').forEach(d=>{
+    let k = d.getAttribute('data-ex');
+    if(EX[k]) d.innerHTML = EX[k];
+  });
   let box = el('tutTiles');
   if(!box) return;
-  // Helper: 1 baris contoh = label + tile beneran pake aset game
-  let tileRow = (label, tiles)=> '<div style="text-align:left;margin-top:10px"><div style="font-size:11px;font-weight:900;color:#fde68a;margin-bottom:4px">'+label+'</div><div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center">'+tiles.map(x=>tileHTML(x)).join('')+'</div></div>';
   if(t.isTiles){
+    let row = (label, tiles)=> '<div style="text-align:left;margin-top:10px"><div style="font-size:11px;font-weight:900;color:#fde68a;margin-bottom:4px">'+label+'</div><div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center">'+tiles.map(x=>tileHTML(x)).join('')+'</div></div>';
     let suit = (s)=> { let a=[]; for(let n=1;n<=9;n++) a.push({type:'suit', suit:s, num:n, id:'tut-'+s+'-'+n}); return a; };
     box.innerHTML =
-      tileRow('🀄 KARAKTER (Man) - 1 sampai 9', suit(2)) +
-      tileRow('🔴 DOT (Pin) - 1 sampai 9', suit(1)) +
-      tileRow('🎋 BAMBU (Sou) - 1 sampai 9', suit(0)) +
-      tileRow('🧭 ANGIN - Timur, Selatan, Barat, Utara', [0,1,2,3].map(n=>({type:'wind', num:n, id:'tut-w'+n}))) +
-      tileRow('🐉 NAGA - Merah, Hijau, Putih', [0,1,2].map(n=>({type:'dragon', num:n, id:'tut-d'+n})));
-    box.style.display = 'block';
-  } else if(t.tileRows){
-    // Halaman Pong/Chow/Kong + Tujuan HU: tampilkan contoh tile beneran
-    box.innerHTML = t.tileRows.map(r=>tileRow(r.label, r.tiles)).join('');
+      row('🀄 KARAKTER (Man) - 1 sampai 9', suit(2)) +
+      row('🔴 DOT (Pin) - 1 sampai 9', suit(1)) +
+      row('🎋 BAMBU (Sou) - 1 sampai 9', suit(0)) +
+      row('🧭 ANGIN - Timur, Selatan, Barat, Utara', [0,1,2,3].map(n=>({type:'wind', num:n, id:'tut-w'+n}))) +
+      row('🐉 NAGA - Merah, Hijau, Putih', [0,1,2].map(n=>({type:'dragon', num:n, id:'tut-d'+n})));
     box.style.display = 'block';
   } else {
     box.innerHTML = ''; box.style.display = 'none';
