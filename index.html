@@ -1371,7 +1371,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 </div>
 <div id="gameScreen" class="hidden">
-  <div class="gameTop"><div class="pill">🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div><div class="pill fsPill"><button id="fullBtnInGame" onclick="toggleFull()" class="fsBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">FULL</span></button></div></div>
+  <div class="gameTop"><div class="pill">🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div><div class="pill fsPill"><button id="fullBtnInGame" onclick="toggleFull()" class="fsBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">FULL</span></button></div><div class="pill" id="exitBotPill" style="display:none;background:#7f1d1d"><button onclick="exitBotGame()" style="background:none;color:#fecaca;font-weight:900;border:none;cursor:pointer">🚪 KELUAR</button></div></div>
   <div class="table" id="tableEl">
   <div class="turnArrow" title="Arah giliran: berlawanan jarum jam">
   <div class="turnArrowTxt">🔄 Giliran: berlawanan jarum jam</div>
@@ -1724,7 +1724,29 @@ function shareRoom(){
   let link = location.origin + '/?room=' + myCode;
   if(navigator.share){ navigator.share({title:'Join Meja Mahjong', text:'Join meja ' + myCode, url: link}); }
   else { navigator.clipboard.writeText(link); toast('🔗 Link meja ke-copy!'); }
-}  
+}
+// ===== KELUAR DARI MEJA CUMA PAS LAWAN BOT =====
+// Muncul cuma kalau ada BOT di currentPlayers. Lawan orang asli = tombol ilang.
+function updateExitBotBtn(){
+  let b = el('exitBotPill');
+  if(!b) return;
+  let hasBot = (currentPlayers || []).some(p => p && p.isBot);
+  // Kalau gameScreen lagi ke-hidden, sembunyiin juga
+  let inGame = el('gameScreen') && !el('gameScreen').classList.contains('hidden');
+  b.style.display = (hasBot && inGame) ? '' : 'none';
+}
+function exitBotGame(){
+  // Pengaman dobel: kalau gak ada BOT, jangan keluar. Biar gak bisa diakalin dari console.
+  let hasBot = (currentPlayers || []).some(p => p && p.isBot);
+  if(!hasBot){ toast('❌ Cuma bisa keluar pas lawan BOT!'); return; }
+  if(!confirm('Keluar dari meja ini? Game lawan BOT ini gak dihitung HU.')) return;
+  // Berhentiin timer + bersihin tangan, biar gak nyangkut pas balik
+  try{ clearInterval(turnTimerInt); }catch(e){}
+  try{ if(el('turnCountdown')) el('turnCountdown').style.display = 'none'; }catch(e){}
+  myHand = []; myMelds = []; myFlowers = [];
+  // backToHome() udah kirim leaveRoom ke server + balik ke Home / daftar meja (lobby)
+  backToHome();
+}
   function backToHome(skipLeave){
   // 1. Kasih tau server kita keluar meja, KECUALI kalau ini dipanggil pas rejoin gagal.
   // Kalau rejoin gagal, JANGAN kirim leaveRoom, nanti kursi kita kehapus sendiri.
@@ -2157,6 +2179,7 @@ socket.on('updateLobby', room=>{
   for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty">💺 Kursi Kosong<br><small>Menunggu pemain...</small></div>`;
   el('startBtn').disabled = room.players.length<2;
   el('startBtn').innerText = room.players.length<2 ? `⏳ BUTUH MIN 2 PEMAIN (${room.players.length}/4)` : `🚀 MULAI GAME (${room.players.length} PEMAIN)`;
+  updateExitBotBtn();
 });
 socket.on('turnTimeUpdated', d=>{ turnTimeSec=d.seconds; el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s'; el('timeInfo').innerText = turnTimeSec===0?'Saat ini: Tanpa batas':'Saat ini: '+turnTimeSec+' detik per giliran'; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec)); toast('⏱️ Waktu giliran diganti jadi '+(turnTimeSec===0?'Tanpa Batas':turnTimeSec+' detik')); });
 let currentSkin = 'hijau';
@@ -2188,6 +2211,7 @@ socket.on('gameStarted', d=>{
   setTimeout(()=>{ showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Kamu dealer, buang 1 tile!'); } }, 2100);
   addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!');
   renderSeats(d.players, d.turn); renderCentralPool(d.players);
+  updateExitBotBtn();
 });
 socket.on('youDrew', d=>{ playMjSound('draw'); if(d.tile){ lastDrawnTileId=d.tile.id; if(!myHand.some(x=>x.id===d.tile.id)){ myHand.push(d.tile); } } renderMyHand(); });
 function canHuLocal(){
@@ -2239,7 +2263,7 @@ socket.on('yourHand', d=>{
   if(acts.length) renderActionBar(acts);
 });
 socket.on('turnChanged', d=>{
-  if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } });
+  if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); }updateExitBotBtn(); });
   socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); console.log('DEBUG CHOW dari server:', d.from, 'ke saya:', myClaim, 'semua claims:', d.claims);
   if(myClaim){
   if(myClaim.canHu || myClaim.pong || (myClaim.chow||[]).length){
