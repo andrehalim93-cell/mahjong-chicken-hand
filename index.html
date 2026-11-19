@@ -157,6 +157,8 @@ input{font-family:inherit}
 .aPong{background:linear-gradient(180deg,#f97316,#ea580c)}
 .aChow{background:linear-gradient(180deg,#3b82f6,#1d4ed8)}
 .aHu{background:linear-gradient(180deg,#facc15,#f59e0b);color:#422006!important;animation:huShake .6s infinite;font-size:16px!important}
+@keyframes rankUpPop{0%{transform:scale(.5) rotate(-5deg);opacity:0}60%{transform:scale(1.1) rotate(2deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.rankBadge{display:inline-block;background:#422006;border:1px solid #facc15;color:#fde68a;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:900}
 .hintBtn{background:linear-gradient(180deg,#facc15,#f59e0b)!important;color:#422006!important}
 .hintBtn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.6)}
 @keyframes hintShake{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-8px) rotate(-3deg)}75%{transform:translateY(-8px) rotate(3deg)}}
@@ -1280,6 +1282,17 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     <button class="btn btn-gold" style="margin-top:14px" onclick="closeLeaderboard()">✅ TUTUP</button>
   </div>
 </div>
+<!-- POPUP NAIK GELAR No.3 -->
+<div id="rankUpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) closeRankUp()">
+  <div id="rankUpCard" style="background:linear-gradient(180deg,#422006,#1a2a1e);border:2px solid #facc15;border-radius:20px;max-width:360px;width:100%;text-align:center;padding:24px 18px;animation:rankUpPop .5s ease">
+    <div style="font-size:64px" id="rankUpEmoji">🔥</div>
+    <div style="color:#fde68a;font-weight:900;font-size:22px;margin:8px 0 4px">🎉 NAIK GELAR!</div>
+    <div style="font-size:13px;color:#a7f3d0">Kamu sekarang</div>
+    <div id="rankUpTitle" style="font-size:28px;font-weight:900;color:#fff;margin:6px 0">🔥 Elite</div>
+    <div id="rankUpSub" style="font-size:12px;color:#fde68a">Terus main, kejar gelar berikutnya!</div>
+    <button class="btn btn-gold" style="margin-top:16px" onclick="closeRankUp()">🔥 GAS LAGI!</button>
+  </div>
+</div>
 <!-- POPUP PROFIL -->
 <div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:210;align-items:center;justify-content:center;padding:16px">
   <div class="card" style="max-width:420px;width:100%;margin:0;text-align:center">
@@ -1426,6 +1439,41 @@ let turnTimeSec=30, turnTimerInt=null, turnLeft=30, isHost=false, usedBotNames=[
 let BOT_NAMES=['ANDI','BUDI','SARI','DEWI','EKO','FITRI','GILANG','HANI','IVAN','JOKO','KIKI','LINA','MAMA','NINA','OPA','PUTRI','RINA','SINTA','TONI','UDIN','VINA','WATI','YUDI','ZARA','AGUS','BAMBANG','CITRA','DODI','ERIK','FARAH'];
 let DICE_FACES=['','⚀','⚁','⚂','⚃','⚄','⚅'];
 function el(id){ return document.getElementById(id); }
+// ===== No.3 - GELAR dari TOTAL HU TANDING, gelar aja tanpa angka HU =====
+function getGelar(hu){
+  hu = Number(hu) || 0;
+  if(hu <= 10) return { emoji:'🐣', name:'Newbie', label:'🐣 Newbie', next:'🔥 Elite' };
+  if(hu <= 25) return { emoji:'🔥', name:'Elite', label:'🔥 Elite', next:'⚡ Pro' };
+  if(hu <= 40) return { emoji:'⚡', name:'Pro', label:'⚡ Pro', next:'🐉 Master' };
+  if(hu <= 60) return { emoji:'🐉', name:'Master', label:'🐉 Master', next:'👑 King' };
+  if(hu <= 99) return { emoji:'👑', name:'King', label:'👑 King', next:'🌟 Legendary' };
+  return { emoji:'🌟', name:'Legendary', label:'🌟 Legendary', next:null };
+}
+function gelarLabel(hu){ return getGelar(hu).label; }
+function showRankUp(newHu){
+  let g = getGelar(newHu);
+  let em = document.getElementById('rankUpEmoji'); if(em) em.innerText = g.emoji;
+  let t = document.getElementById('rankUpTitle'); if(t) t.innerText = g.label;
+  let s = document.getElementById('rankUpSub'); if(s) s.innerText = g.next ? ('Gelar berikutnya: ' + g.next) : 'Kamu udah di puncak! Pertahanin!';
+  let m = document.getElementById('rankUpModal'); if(m) m.style.display = 'flex';
+  playMjSound('hu');
+}
+function closeRankUp(){ let m = document.getElementById('rankUpModal'); if(m) m.style.display = 'none'; }
+async function refreshMyGelar(){
+  if(!currentUser) return;
+  try{
+    let r = await fetch('/api/get-hu?id=' + currentUser.id);
+    let j = await r.json();
+    if(j.ok){
+      currentUser.hu = j.hu;
+      // Update label di home + profil, gelar aja tanpa angka
+      let home = el('homeUserLabel');
+      if(home) home.innerHTML = avatarHTML(currentUser.avatar, 24) + ' ' + esc(currentUser.display_name) + ' <span class="rankBadge">' + gelarLabel(currentUser.hu) + '</span>';
+      let ph = el('profileHu');
+      if(ph) ph.innerHTML = '<span style="font-size:28px">' + getGelar(currentUser.hu).emoji + '</span><br><b style="font-size:18px">' + getGelar(currentUser.hu).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + currentUser.hu + '</span><br><span style="font-size:11px;color:#a7f3d0">' + (getGelar(currentUser.hu).next ? 'Berikutnya: ' + getGelar(currentUser.hu).next : 'Gelar tertinggi!') + '</span>';
+    }
+  }catch(e){}
+}
 // ============ AUTH JS ============
 let currentUser = null;
 let regGender = 'male';
@@ -1498,7 +1546,7 @@ function loginSuccess(user, passwordForSave, showProfile){
     localStorage.removeItem('mahjong_saved_login');
   }
   if(el('nameInput')){ el('nameInput').value = user.display_name; el('nameInput').readOnly = true; }
-  if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(user.avatar, 24)+' '+esc(user.display_name)+' ('+esc(user.id)+')';
+  if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(user.avatar, 24)+' '+esc(user.display_name)+' <span class="rankBadge">'+gelarLabel(user.hu||0)+'</span>';
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
     toast('Halo '+user.display_name+'!');
@@ -1520,7 +1568,7 @@ async function openProfile(){
   el('profileAvatarBig').innerHTML = avatarHTML(currentUser.avatar, 64);
   el('profileName').innerText = currentUser.display_name || '-';
   el('profileId').innerText = '@' + currentUser.id;
-  el('profileHu').innerText = '🏆 TOTAL HU TANDING: ' + (currentUser.hu ?? 0);
+  if(j.ok){ currentUser.hu = j.hu; el('profileHu').innerHTML = '<span style="font-size:28px">'+getGelar(j.hu).emoji+'</span><br><b style="font-size:18px">'+getGelar(j.hu).label+'</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: '+j.hu+'</span><br><span style="font-size:11px;color:#a7f3d0">'+(getGelar(j.hu).next ? 'Berikutnya: '+getGelar(j.hu).next : 'Gelar tertinggi!')+'</span>'; }
   let pick = el('profileAvatarPick'); pick.innerHTML = '';
   profileAvatars.forEach(a=>{
     let b = document.createElement('button');
@@ -1532,7 +1580,7 @@ async function openProfile(){
   try{
     let r = await fetch('/api/get-hu?id=' + currentUser.id);
     let j = await r.json();
-    if(j.ok){ currentUser.hu = j.hu; el('profileHu').innerText = '🏆 TOTAL HU TANDING: ' + j.hu; }
+    if(j.ok){ currentUser.hu = j.hu; el('profileHu').innerHTML = '<span style="font-size:28px">'+getGelar(currentUser.hu||0).emoji+'</span><br><b style="font-size:18px">'+getGelar(currentUser.hu||0).label+'</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: '+(currentUser.hu||0)+'</span>';<br><span style="font-size:11px;color:#a7f3d0">'+(getGelar(j.hu).next ? 'Berikutnya: '+getGelar(j.hu).next : 'Gelar tertinggi!')+'</span>'; }
   }catch(e){}
 }
 function closeProfile(){ el('profileModal').style.display = 'none'; }
@@ -2257,8 +2305,28 @@ function groupHuTiles(tiles){
   return groups;
 }
 socket.on('youHu', async d=>{
-  try{ await fetch('/api/add-hu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, mode: d.mode})}); }catch(e){}
-  if(d.mode==='tanding') toast('🏆 HU TANDING dicatat! +1 HU');
+  let oldHu = Number(currentUser ? currentUser.hu : 0) || 0;
+  // Kalau HU lama belum ke-load, ambil dulu dari server biar perbandingannya bener
+  try{
+    let gr = await fetch('/api/get-hu?id=' + currentUser.id);
+    let gj = await gr.json();
+    if(gj.ok) oldHu = Number(gj.hu) || 0;
+  }catch(e){}
+  let oldGelar = getGelar(oldHu).name;
+  let newHu = oldHu;
+  try{
+    // FIX: kirim playerCount, kalau enggak server selalu nolak (counted:false)
+    let r = await fetch('/api/add-hu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, mode: d.mode, playerCount: d.playerCount})});
+    let j = await r.json();
+    if(j.ok && j.counted && typeof j.hu === 'number') newHu = j.hu;
+  }catch(e){}
+  if(currentUser) currentUser.hu = newHu;
+  if(d.mode === 'tanding') toast('🏆 HU TANDING dicatat!');
+  // Kalau gelar naik, munculin popup animasi, jangan langsung ke gameOver
+  if(getGelar(newHu).name !== oldGelar){
+    setTimeout(() => showRankUp(newHu), 800);
+  }
+  refreshMyGelar();
 });
 socket.on('gameOver', d=>{
   clearInterval(turnTimerInt);
