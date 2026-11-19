@@ -157,6 +157,11 @@ input{font-family:inherit}
 .aPong{background:linear-gradient(180deg,#f97316,#ea580c)}
 .aChow{background:linear-gradient(180deg,#3b82f6,#1d4ed8)}
 .aHu{background:linear-gradient(180deg,#facc15,#f59e0b);color:#422006!important;animation:huShake .6s infinite;font-size:16px!important}
+.hintBtn{background:linear-gradient(180deg,#facc15,#f59e0b)!important;color:#422006!important}
+.hintBtn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.6)}
+@keyframes hintShake{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-8px) rotate(-3deg)}75%{transform:translateY(-8px) rotate(3deg)}}
+.t.hintTile{animation:hintShake .5s infinite!important;box-shadow:0 0 0 3px #facc15,0 0 18px #facc15!important;outline:3px solid #facc15;z-index:5}
+.hintLabel{font-size:11px;font-weight:900;color:#fde68a;text-align:center;margin-top:4px;animation:hintShake .5s infinite}
 @keyframes huShake{0%,100%{transform:scale(1) rotate(-1deg)}50%{transform:scale(1.06) rotate(1deg)}}
 .aPass{background:#475569}
 .aSelfHu{background:linear-gradient(180deg,#22c55e,#15803d)}
@@ -1387,7 +1392,9 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   <div class="myArea">
     <div class="myTools"><button id="discardFab" onclick="openDiscards()" title="Lihat semua buangan">🗑️</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
     <div class="myTop"><div><b id="myNameLabel">Kamu</b> <span id="myStatus">• Menunggu giliran...</span></div><div><span id="myCount">13 tile</span> • <span id="myMeldCount">0 set</span></div></div>
-    <div class="meldsRow" id="myMelds"></div><div class="flowersRow" id="myFlowers"></div><div class="myHand" id="myHand"></div><div class="actionBar" id="actionBar"></div>
+    <div class="meldsRow" id="myMelds"></div><div class="flowersRow" id="myFlowers"></div><div class="myHand" id="myHand"></div>
+<div style="text-align:center;margin-top:6px"><button id="hintBtn" class="hintBtn" onclick="useHint()" style="display:none;padding:10px 16px;border:none;border-radius:14px;font-weight:900;font-size:13px;box-shadow:0 6px 16px rgba(0,0,0,.35);cursor:pointer">💡 HINT: BUANG APA?</button><div id="hintLabel" class="hintLabel" style="display:none">💡 Buang ini paling aman!</div></div>
+<div class="actionBar" id="actionBar"></div>
     <div style="text-align:center;font-size:11px;color:#a7f3d0;margin-top:8px">💡 Double klik untuk membuang tile.</div>
   </div>
   <div class="log" id="gameLog">🀄 Game dimulai! Semoga HU! 🐔</div>
@@ -2278,12 +2285,118 @@ function renderCentralPool(players){ let df=document.getElementById('discardFab'
   if(box) box.innerHTML = all.map(t=>tileMini(t)).join('');
   ['poolTop','poolLeft','poolRight','poolBottom'].forEach(id=>{ let e=el(id); if(e) e.innerHTML=''; });
 }
+// ===== HINT No.1 - CUMA LATIHAN, BEBAS PENCET, COOLDOWN 3 DETIK =====
+let hintTileId = null;
+let hintCooldownUntil = 0;
+let hintCooldownTimer = null;
+
+function isHintAllowed(){
+  // Cuma latihan. Tanding = tombol ilang total.
+  if(lobbyMode !== 'latihan') return false;
+  if(!isMyTurn) return false;
+  // Cuma pas lu megang 14 tile (abis ambil, sebelum buang). Kalau 13, belum butuh hint.
+  if(!myHand || myHand.length < 14) return false;
+  return true;
+}
+
+function updateHintButton(){
+  let btn = document.getElementById('hintBtn');
+  let lbl = document.getElementById('hintLabel');
+  if(!btn) return;
+  if(!isHintAllowed()){
+    btn.style.display = 'none';
+    if(lbl) lbl.style.display = 'none';
+    hintTileId = null;
+    return;
+  }
+  btn.style.display = 'inline-block';
+  let left = Math.ceil((hintCooldownUntil - Date.now()) / 1000);
+  if(left > 0){
+    btn.disabled = true;
+    btn.innerText = '⏳ ' + left + '...';
+  } else {
+    btn.disabled = false;
+    btn.innerText = '💡 HINT: BUANG APA?';
+  }
+  // Kalau hint lagi aktif, label tetep keliatan
+  if(lbl) lbl.style.display = hintTileId ? 'block' : 'none';
+}
+
+function chooseHintTile(){
+  let hand = (myHand || []).filter(t => t.type !== 'flower');
+  if(!hand.length) return null;
+  // Hitung buangan semua pemain, buat deteksi tile mati
+  let discardCount = {};
+  (currentPlayers || []).forEach(p => {
+    (p.discards || []).forEach(t => { discardCount[t.key] = (discardCount[t.key] || 0) + 1; });
+  });
+  // Hitung jumlah kembaran di tangan
+  let counts = {};
+  hand.forEach(t => { counts[t.key] = (counts[t.key] || 0) + 1; });
+  // Score: makin kecil = makin jelek = paling aman dibuang
+  // Jangan buang tile yang udah jadi pair / bisa jadi pong / bisa jadi chow
+  let scored = hand.map(t => {
+    let score = 100;
+    let c = counts[t.key] || 0;
+    if(c >= 3) score += 100; // udah mau pong, jangan buang
+    else if(c === 2) score += 60; // udah pair, sayang dibuang
+    // Honor jomblo = paling jelek, buang duluan
+    if(t.type === 'wind' || t.type === 'dragon'){
+      if(c === 1) score -= 50;
+    }
+    // Suit jomblo di ujung 1/9 = jelek kedua
+    if(t.type === 'suit' && c === 1){
+      if(t.num === 1 || t.num === 9) score -= 35;
+      else score -= 20;
+      // Cek bisa jadi chow gak? Kalau ada tetangganya, jangan dibuang
+      let hasPrev = hand.some(x => x.type === 'suit' && x.suit === t.suit && x.num === t.num - 1);
+      let hasNext = hand.some(x => x.type === 'suit' && x.suit === t.suit && x.num === t.num + 1);
+      let hasPrev2 = hand.some(x => x.type === 'suit' && x.suit === t.suit && x.num === t.num - 2);
+      let hasNext2 = hand.some(x => x.type === 'suit' && x.suit === t.suit && x.num === t.num + 2);
+      if(hasPrev && hasNext) score += 45; // tengah chow, bagus
+      else if((hasPrev && hasPrev2) || (hasNext && hasNext2)) score += 30;
+      else if(hasPrev || hasNext) score += 15;
+    }
+    // Tile yang udah kebuang 3x+ = mati, gak usah ditungguin
+    if((discardCount[t.key] || 0) >= 3) score -= 40;
+    else if((discardCount[t.key] || 0) >= 2) score -= 15;
+    // Kalau tile ini ada di meld yang udah kebuka (pong), jangan dibuang - ini jaga-jaga aja
+    if((myMelds || []).some(m => (m.tiles || []).some(x => x.key === t.key))) score += 80;
+    return { tile: t, score };
+  });
+  scored.sort((a, b) => a.score - b.score);
+  return scored[0].tile;
+}
+
+function useHint(){
+  if(!isHintAllowed()) return;
+  if(Date.now() < hintCooldownUntil) return;
+  let pick = chooseHintTile();
+  if(!pick) return;
+  hintTileId = pick.id;
+  // Cooldown 3 detik, tombol jadi countdown
+  hintCooldownUntil = Date.now() + 3000;
+  if(hintCooldownTimer) clearInterval(hintCooldownTimer);
+  hintCooldownTimer = setInterval(() => {
+    updateHintButton();
+    if(Date.now() >= hintCooldownUntil){ clearInterval(hintCooldownTimer); updateHintButton(); }
+  }, 200);
+  // Highlight tile-nya di tangan, jangan auto-buang
+  renderMyHand();
+  updateHintButton();
+  toast('💡 Buang yang kedip kuning itu, paling aman!');
+}
+
+function clearHint(){
+  if(hintTileId){ hintTileId = null; let lbl = document.getElementById('hintLabel'); if(lbl) lbl.style.display = 'none'; }
+}
 function renderMyHand(){
   let sorted=[...myHand].sort((a,b)=>{ let order=t=> t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); if(order(a)!==order(b)) return order(a)-order(b); if(a.type==='suit' && b.type==='suit'){ if(a.suit!==b.suit) return a.suit-b.suit; return a.num-b.num; } return (a.num||0)-(b.num||0); });
   let handEl=el('myHand');
-  handEl.innerHTML = sorted.map(t=>tileHTML(t, (selectedTile===t.id?'sel ':'') + (lastDrawnTileId===t.id?'newTile ':'') + (isMyTurn?' myTurn':''))).join('');
-  handEl.querySelectorAll('.t').forEach(div=>{ div.onclick=()=>{ if(!isMyTurn) return toast('Bukan giliran kamu! Tunggu dulu...'); let id=div.dataset.id; if(selectedTile===id){ lastDrawnTileId=null; socket.emit('discard',{code:myCode, tileId:id}); selectedTile=null; renderMyHand(); } else { selectedTile=id; renderMyHand(); } }; });
+  handEl.innerHTML = sorted.map(t=>tileHTML(t, (selectedTile===t.id?'sel ':'') + (lastDrawnTileId===t.id?'newTile ':'') + (hintTileId===t.id?'hintTile ':'') + (isMyTurn?' myTurn':''))).join('');
+  handEl.querySelectorAll('.t').forEach(div=>{ div.onclick=()=>{ if(!isMyTurn) return toast('Bukan giliran kamu! Tunggu dulu...'); let id=div.dataset.id; if(selectedTile===id){ lastDrawnTileId=null; clearHint(); socket.emit('discard',{code:myCode, tileId:id}); selectedTile=null; renderMyHand(); } else { selectedTile=id; renderMyHand(); } }; });
   el('myCount').innerText = myHand.length+' tile'; el('myMeldCount').innerText = myMelds.length+' set';
+  updateHintButton();
   el('myMelds').innerHTML = myMelds.map(m=>`<div class="meld">${m.tiles.map(t=>tileHTML(t)).join('')}</div>`).join('');
   el('myFlowers').innerHTML = myFlowers.length ? `<div style="font-size:11px;color:#fbcfe8;width:100%;text-align:center">🌸 Bunga kamu: ${myFlowers.length}</div>` + myFlowers.map(t=>tileHTML(t)).join('') : '';
 }
