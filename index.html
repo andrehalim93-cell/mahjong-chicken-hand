@@ -1752,7 +1752,15 @@ setTimeout(()=>{ renderAvatarPick(); pickGender('male'); checkSavedLogin(); }, 3
 function showErr(m){ let e=el('homeErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',3000); }
 function toast(m){ let t=el('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 function esc(s){ let d=document.createElement('div'); d.innerText=String(s||''); return d.innerHTML; }
-function toggleSound(){ soundOn=!soundOn; el('soundBtn').innerText=soundOn?'ON':'OFF'; toast(soundOn?'🔊 Suara ON':'🔇 Suara OFF'); }
+function toggleSound(){
+  soundOn = !soundOn;
+  try{ localStorage.setItem('mj_sound', soundOn ? '1' : '0'); }catch(e){}
+  let b = el('soundBtn'); if(b) b.innerText = soundOn ? 'ON' : 'OFF';
+  toast(soundOn ? '🔊 Suara + Getar ON' : '🔇 Suara + Getar OFF');
+  if(soundOn) playMjSound('chow');
+}
+// Load setting suara pas buka game
+try{ if(localStorage.getItem('mj_sound') === '0'){ soundOn = false; setTimeout(() => { let b = el('soundBtn'); if(b) b.innerText = 'OFF'; }, 500); } }catch(e){}
 async function toggleFull(){
   if(!document.fullscreenElement){ try{ await document.documentElement.requestFullscreen(); }catch(e){} try{ if(screen.orientation && screen.orientation.lock){ await screen.orientation.lock('landscape'); } }catch(e){ toast('🔄 Puter HP kamu ke landscape ya!'); } }
   else{ try{ if(screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){} try{ document.exitFullscreen && document.exitFullscreen(); }catch(e){} }
@@ -1802,26 +1810,70 @@ function startTurnTimer(){
   },1000);
 }
 function showDiceRoll(firstPlayer, serverDice){ let m=el('diceModal'); m.classList.add('show'); let d1=el('dice1'), d2=el('dice2'); d1.classList.add('rolling'); d2.classList.add('rolling'); el('diceText').innerText='Menentukan siapa yang mulai duluan...'; el('diceTotal').innerText='Total: -'; el('diceWinner').innerText=''; let ticks=0; let iv=setInterval(()=>{ let a=1+Math.floor(Math.random()*6), b=1+Math.floor(Math.random()*6); d1.innerText=DICE_FACES[a]; d2.innerText=DICE_FACES[b]; ticks++; if(ticks>12){ clearInterval(iv); d1.classList.remove('rolling'); d2.classList.remove('rolling'); let finalA = serverDice ? serverDice.d1 : a; let finalB = serverDice ? serverDice.d2 : b; d1.innerText=DICE_FACES[finalA]; d2.innerText=DICE_FACES[finalB]; let total=finalA+finalB; el('diceTotal').innerText='Total: '+total+' ('+finalA+' + '+finalB+')'; el('diceWinner').innerText = firstPlayer ? '🎯 '+firstPlayer+' jalan duluan!' : '🎯 Giliran pertama dimulai!'; setTimeout(()=>m.classList.remove('show'), 1400); } },140); }
-let mjAudio = null;
+// ===== No.2 - SUARA MP3 REAL + GETAR IKUT SUARA =====
+// File harus sebelahan sama index.html: buang.mp3, ambil.mp3, pong.mp3, chow.mp3, kong.mp3, hu.mp3
+let MJ_SOUNDS = {
+  discard: 'buang.mp3', draw: 'ambil.mp3', pong: 'pong.mp3',
+  chow: 'chow.mp3', kong: 'kong.mp3', anKong: 'kong.mp3',
+  hu: 'hu.mp3', turn: 'ambil.mp3', dice: 'buang.mp3', claim: 'chow.mp3'
+};
+// Getar: ikut suara. Suara OFF = getar OFF juga.
+let MJ_VIBRATE = {
+  discard: 0, draw: 0, chow: 15, claim: 15, turn: 0, dice: 0,
+  pong: 50, kong: 120, anKong: [100, 60, 100], hu: 300
+};
+let mjAudioCache = {};
+let mjAudioCtx = null;
+
+function mjVibrate(type){
+  try{
+    if(!soundOn) return; // getar ikut suara
+    if(!navigator.vibrate) return;
+    let pat = MJ_VIBRATE[type];
+    if(pat) navigator.vibrate(pat);
+  }catch(e){}
+}
+
+function mjToneFallback(type){
+  try{
+    if(!mjAudioCtx) mjAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(mjAudioCtx.state === 'suspended') mjAudioCtx.resume();
+    let t = mjAudioCtx.currentTime;
+    function tone(freq, start, dur, vol, kind){
+      let o = mjAudioCtx.createOscillator(); let g = mjAudioCtx.createGain();
+      o.type = kind || 'sine'; o.frequency.setValueAtTime(freq, t + start);
+      g.gain.setValueAtTime(0.0001, t + start);
+      g.gain.exponentialRampToValueAtTime(vol || 0.2, t + start + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + start + dur);
+      o.connect(g); g.connect(mjAudioCtx.destination);
+      o.start(t + start); o.stop(t + start + dur + 0.05);
+    }
+    // Fallback kalau file mp3 belum didownload - tetep beda per aksi
+    if(type === 'discard'){ tone(800, 0, 0.08, 0.15, 'square'); }
+    if(type === 'draw'){ tone(600, 0, 0.06, 0.12, 'sine'); }
+    if(type === 'pong'){ tone(150, 0, 0.15, 0.3, 'square'); tone(80, 0.1, 0.3, 0.3, 'square'); }
+    if(type === 'chow'){ tone(523, 0, 0.15, 0.2, 'sine'); tone(659, 0.12, 0.2, 0.2, 'sine'); }
+    if(type === 'kong'){ tone(120, 0, 0.2, 0.35, 'square'); tone(90, 0.2, 0.3, 0.35, 'square'); }
+    if(type === 'anKong'){ tone(90, 0, 0.25, 0.4, 'square'); tone(60, 0.25, 0.4, 0.4, 'square'); }
+    if(type === 'hu'){ tone(523, 0, 0.2, 0.2, 'triangle'); tone(659, 0.2, 0.2, 0.2, 'triangle'); tone(784, 0.4, 0.2, 0.2, 'triangle'); tone(1046, 0.6, 0.6, 0.25, 'triangle'); }
+    if(type === 'turn'){ tone(1000, 0, 0.1, 0.12, 'sine'); }
+    if(type === 'dice'){ tone(400, 0, 0.1, 0.2, 'square'); tone(500, 0.15, 0.1, 0.2, 'square'); }
+  }catch(e){}
+}
+
 function playMjSound(type){
   if(!soundOn) return;
+  mjVibrate(type);
+  let file = MJ_SOUNDS[type];
+  if(!file){ mjToneFallback(type); return; }
   try{
-    if(!mjAudio) mjAudio = new (window.AudioContext || window.webkitAudioContext)();
-    if(mjAudio.state==='suspended') mjAudio.resume();
-    let t = mjAudio.currentTime;
-    function tone(freq, start, dur, vol, kind){
-      let o = mjAudio.createOscillator(); let g = mjAudio.createGain();
-      o.type = kind || 'sine'; o.frequency.setValueAtTime(freq, t+start);
-      g.gain.setValueAtTime(0.0001, t+start); g.gain.exponentialRampToValueAtTime(vol||0.2, t+start+0.05); g.gain.exponentialRampToValueAtTime(0.0001, t+start+dur);
-      o.connect(g); g.connect(mjAudio.destination); o.start(t+start); o.stop(t+start+dur+0.05);
-    }
-    if(type==='discard'){ tone(800, 0, 0.08, 0.15, 'square'); }
-    if(type==='pong'){ tone(150, 0, 0.15, 0.3, 'square'); tone(80, 0.1, 0.3, 0.3, 'square'); }
-    if(type==='chow'){ tone(523, 0, 0.15, 0.2, 'sine'); tone(659, 0.12, 0.2, 0.2, 'sine'); }
-    if(type==='hu'){ tone(523,0,0.2,0.2,'triangle'); tone(659,0.2,0.2,0.2,'triangle'); tone(784,0.4,0.2,0.2,'triangle'); tone(1046,0.6,0.6,0.25,'triangle'); }
-    if(type==='turn'){ tone(1000, 0, 0.1, 0.12, 'sine'); }
-    if(type==='dice'){ tone(400,0,0.1,0.2,'square'); tone(500,0.15,0.1,0.2,'square'); }
-  }catch(e){}
+    if(!mjAudioCache[file]) mjAudioCache[file] = new Audio(file);
+    let a = mjAudioCache[file];
+    a.currentTime = 0;
+    let p = a.play();
+    // Kalau file belum ada / gagal load, langsung fallback ke beep lama
+    if(p && p.catch) p.catch(() => mjToneFallback(type));
+  }catch(e){ mjToneFallback(type); }
 }
 function tileLabel(t){
   if(t.type==='suit') return {sub:['BAMBU','DOT','KARAKTER'][t.suit], num:t.num, cls:t.suit===1?'red':(t.suit===0?'green':'blue')};
@@ -2142,7 +2194,7 @@ socket.on('turnChanged', d=>{
     renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]);
   }
 } });
-socket.on('meldMade', d=>{ if(d.by===myName) lastDrawnTileId=null; currentPlayers=d.players; showMeldPopup(d.by, d.meld); if(d.meld.type==='pong') playMjSound('pong'); else playMjSound('chow'); addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); if(d.by===myName && isMyTurn && canHuLocal()){ renderActionBar([{type:'selfHu'}]); } });
+socket.on('meldMade', d=>{ if(d.by===myName) lastDrawnTileId=null; currentPlayers=d.players; showMeldPopup(d.by, d.meld); if(d.meld.type==='pong') playMjSound('pong'); else if(d.meld.type==='kong') playMjSound(d.meld.kongType==='an' ? 'anKong' : 'kong'); else playMjSound('chow'); addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); if(d.by===myName && isMyTurn && canHuLocal()){ renderActionBar([{type:'selfHu'}]); } });
 function groupHuTiles(tiles){
   function key(t){ return t.type+'|'+(t.suit??'')+'|'+(t.num??''); }
   function order(t){ return t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); }
@@ -2469,8 +2521,8 @@ function openClaimPopup(c, discardTile){
 function doClaim(action){ closeClaimPopup(); if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
 function doClaimChow(chowNums){ closeClaimPopup(); if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action:'chow', chowNums}); el('actionBar').innerHTML=''; }
 function doClaimChowByIdx(idx){ let chowNums = (window._lastChows||[])[idx]; console.log('KLIK CHOW idx:', idx, 'isi:', chowNums); doClaimChow(chowNums); }
-function selfHu(){ console.log('KLIK HU, hand:', myHand, 'melds:', myMelds); socket.emit('selfHu',{code:myCode}); }
-function doJiaKong(tileId){ let bar=document.getElementById('actionBar'); if(bar) bar.innerHTML=''; socket.emit('jiaKong',{code:myCode, tileId}); }
+function selfHu(){ console.log('KLIK HU, hand:', myHand, 'melds:', myMelds); playMjSound('anKong'); socket.emit('selfHu',{code:myCode}); }
+function doJiaKong(tileId){ let bar=document.getElementById('actionBar'); if(bar) bar.innerHTML=''; playMjSound('kong'); socket.emit('jiaKong',{code:myCode, tileId}); }
 function doAnKong(key){ let bar=document.getElementById('actionBar'); if(bar) bar.innerHTML=''; socket.emit('anKong',{code:myCode, tileKey:key}); }
 function openDiscards(){ let pool=document.querySelector('.poolAllBottom'); let body=document.getElementById('discardModalBody'); if(pool && body){ body.innerHTML=pool.innerHTML; body.querySelectorAll('.mTile').forEach(function(el2){ el2.style.width='32px'; el2.style.height='44px'; }); } document.getElementById('discardModal').classList.add('open'); }
 function closeDiscards(){ document.getElementById('discardModal').classList.remove('open'); }
