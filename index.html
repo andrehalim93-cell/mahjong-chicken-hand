@@ -2090,7 +2090,6 @@ function loadLeaderboardTab(){
       // TOP 3: 1 emas, 2 perak, 3 perunggu
       let rowBg = rank===1 ? 'linear-gradient(90deg,#facc15,#f59e0b)' : rank===2 ? 'linear-gradient(90deg,#e2e8f0,#94a3b8)' : rank===3 ? 'linear-gradient(90deg,#d97706,#92400e)' : (isMe ? 'rgba(250,204,21,.18)' : 'transparent');
 let rowColor = (rank<=3) ? '#422006' : '#fff';
-      let rowColor = (rank<=3 || isMe) ? '#422006' : '#fff';
       let medal = rank===1 ? '🥇 ' : rank===2 ? '🥈 ' : rank===3 ? '🥉 ' : '';
       return '<tr style="background:'+rowBg+';color:'+rowColor+';border-top:1px solid rgba(255,255,255,.12)">'
         + '<td style="padding:8px 6px;text-align:center">' + avatarHTML(u.avatar, 32) + '</td>'
