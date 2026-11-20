@@ -2331,10 +2331,16 @@ let currentSkin = 'hijau';
 function applySkin(skin){
   currentSkin = skin || 'hijau';
   let t = document.getElementById('tableEl');
-  if(t){ t.classList.remove('skin-hijau','skin-merah','skin-biru','skin-kayu'); t.classList.add('skin-'+currentSkin); }
+  if(t){
+    [...t.classList].forEach(c => { if(c.startsWith('skin-')) t.classList.remove(c); });
+    t.classList.add('skin-' + currentSkin);
+  }
   let lt = document.querySelector('.lobbyTable');
-  if(lt){ lt.classList.remove('skin-hijau','skin-merah','skin-biru','skin-kayu'); lt.classList.add('skin-'+currentSkin); }
-  document.querySelectorAll('.skinBtn').forEach(b=>b.classList.toggle('active', b.dataset.skin===currentSkin));
+  if(lt){
+    [...lt.classList].forEach(c => { if(c.startsWith('skin-')) lt.classList.remove(c); });
+    lt.classList.add('skin-' + currentSkin);
+  }
+  document.querySelectorAll('.skinBtn').forEach(b => b.classList.toggle('active', b.dataset.skin === currentSkin));
 }
 function setSkin(skin){
   applySkin(skin);
