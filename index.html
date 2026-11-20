@@ -82,6 +82,12 @@ input{font-family:inherit}
 #tableEl.skin-merah{ background:radial-gradient(ellipse at center,#b91c1c 0%,#7f1d1d 60%,#450a0a 100%); border-color:#facc15; }
 #tableEl.skin-biru{ background:radial-gradient(ellipse at center,#1e40af 0%,#0c1a4d 60%,#020617 100%); border-color:#22d3ee; }
 #tableEl.skin-kayu{ background:radial-gradient(ellipse at center,#b45309 0%,#78350f 60%,#451a03 100%); border-color:#3b2314; }
+#tableEl.skin-ungu{ background:radial-gradient(ellipse at center,#7c3aed 0%,#4c1d95 60%,#2e1065 100%); border-color:#c4b5fd; }
+#tableEl.skin-pink{ background:radial-gradient(ellipse at center,#ec4899 0%,#9d174d 60%,#500724 100%); border-color:#fbcfe8; }
+#tableEl.skin-hitam{ background:radial-gradient(ellipse at center,#374151 0%,#111827 60%,#000000 100%); border-color:#facc15; }
+#tableEl.skin-tosca{ background:radial-gradient(ellipse at center,#0d9488 0%,#115e59 60%,#042f2e 100%); border-color:#5eead4; }
+#tableEl.skin-silver{ background:radial-gradient(ellipse at center,#94a3b8 0%,#475569 60%,#1e293b 100%); border-color:#e2e8f0; }
+#tableEl.skin-jingga{ background:radial-gradient(ellipse at center,#f97316 0%,#c2410c 60%,#431407 100%); border-color:#fdba74; }
 .skinBtn{ flex:1; padding:10px 4px; border-radius:12px; border:3px solid transparent; font-size:11px; font-weight:900; cursor:pointer; color:#fff; }
 .skinBtn.active{ border-color:#facc15; transform:scale(1.05); }
 .skinBtn:disabled{ opacity:.45; cursor:not-allowed; }  
@@ -1196,6 +1202,12 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 .lobbyTable.skin-merah{ background:radial-gradient(ellipse at center,#b91c1c 0%,#7f1d1d 60%,#450a0a 100%); border-color:#facc15; }
 .lobbyTable.skin-biru{ background:radial-gradient(ellipse at center,#1e40af 0%,#0c1a4d 60%,#020617 100%); border-color:#22d3ee; }
 .lobbyTable.skin-kayu{ background:radial-gradient(ellipse at center,#b45309 0%,#78350f 60%,#451a03 100%); border-color:#3b2314; }  
+.lobbyTable.skin-ungu{ background:radial-gradient(ellipse at center,#7c3aed 0%,#4c1d95 60%,#2e1065 100%); border-color:#c4b5fd; }
+.lobbyTable.skin-pink{ background:radial-gradient(ellipse at center,#ec4899 0%,#9d174d 60%,#500724 100%); border-color:#fbcfe8; }
+.lobbyTable.skin-hitam{ background:radial-gradient(ellipse at center,#374151 0%,#111827 60%,#000000 100%); border-color:#facc15; }
+.lobbyTable.skin-tosca{ background:radial-gradient(ellipse at center,#0d9488 0%,#115e59 60%,#042f2e 100%); border-color:#5eead4; }
+.lobbyTable.skin-silver{ background:radial-gradient(ellipse at center,#94a3b8 0%,#475569 60%,#1e293b 100%); border-color:#e2e8f0; }
+.lobbyTable.skin-jingga{ background:radial-gradient(ellipse at center,#f97316 0%,#c2410c 60%,#431407 100%); border-color:#fdba74; }
 .lobbyCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:2;background:rgba(0,0,0,.35);border-radius:18px;padding:14px;width:200px}
 .lobbyCenter .lobbyTitle{font-size:18px;font-weight:900;color:#fde68a}
 .lobbyCenter .lobbySub{font-size:12px;color:#a7f3d0;margin-top:2px}
@@ -1397,11 +1409,17 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 
   <!-- SKIN + MULAI GAME -->
   <div class="lobbyBottom">
-    <div style="display:flex;gap:8px;justify-content:center">
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
 <button class="skinBtn" data-skin="hijau" style="background:#14532d" onclick="setSkin('hijau')">🟢 Hijau</button>
 <button class="skinBtn" data-skin="merah" style="background:#7f1d1d" onclick="setSkin('merah')">🔴 Merah</button>
 <button class="skinBtn" data-skin="biru" style="background:#1e40af" onclick="setSkin('biru')">🔵 Biru</button>
 <button class="skinBtn" data-skin="kayu" style="background:#92400e" onclick="setSkin('kayu')">🟤 Kayu</button>
+<button class="skinBtn" data-skin="ungu" style="background:#4c1d95" onclick="setSkin('ungu')">🟣 Ungu</button>
+<button class="skinBtn" data-skin="pink" style="background:#9d174d" onclick="setSkin('pink')">🌸 Pink</button>
+<button class="skinBtn" data-skin="hitam" style="background:#111827" onclick="setSkin('hitam')">⚫ Hitam</button>
+<button class="skinBtn" data-skin="tosca" style="background:#115e59" onclick="setSkin('tosca')">🩵 Tosca</button>
+<button class="skinBtn" data-skin="silver" style="background:#475569" onclick="setSkin('silver')">⚪ Silver</button>
+<button class="skinBtn" data-skin="jingga" style="background:#c2410c" onclick="setSkin('jingga')">🟠 Jingga</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-gold" id="startBtn" style="flex:2;font-size:16px;padding:16px" onclick="startGame()">🚀 MULAI GAME</button><button class="btn btn-dark" style="flex:1" onclick="backToHome()">⬅️ KELUAR</button></div>
   </div>
