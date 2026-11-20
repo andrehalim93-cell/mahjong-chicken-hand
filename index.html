@@ -1388,6 +1388,11 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 
   <!-- BOT + WAKTU TETEP ADA, DI BAWAH MEJA -->
   <div class="botBox" id="botBox"><h3>🤖 Tambah BOT </h3><div class="botBtns"><button class="bEasy" onclick="addBot('easy')">😊 GAMPANG</button><button class="bNorm" onclick="addBot('normal')">😐 NORMAL</button><button class="bHard" onclick="addBot('hard')">😈 SUSAH</button></div><button class="btnFill" onclick="fillBots()">⚡ ISI FULL BOT</button></div>
+  <div id="skinHint" style="font-size:11px;color:#a7f3d0;margin-top:8px;text-align:center">Cuma HOST yang bisa ganti</div>
+    <label style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;font-size:13px;font-weight:900;cursor:pointer">
+  <input type="checkbox" id="hintToggle" checked onchange="toggleHint(this.checked)" style="width:18px;height:18px;accent-color:#facc15"> 💡 Pakai Hint
+</label>
+<div style="font-size:11px;color:#a7f3d0;text-align:center;margin-top:2px">Cuma buat room LATIHAN lawan BOT</div>
   <div class="timeBox" id="timeBox"><h3>⏱️ Waktu Giliran</h3><div class="timeBtns" id="timeBtns"><button data-sec="0" onclick="setTurnTime(0,this)">♾️ Tanpa Batas</button><button data-sec="15" onclick="setTurnTime(15,this)">15s</button><button data-sec="30" onclick="setTurnTime(30,this)" class="active">30s</button><button data-sec="60" onclick="setTurnTime(60,this)">60s</button></div><div id="timeInfo" style="font-size:12px;color:#a7f3d0;margin-top:8px">Saat ini: 30 detik per giliran</div></div>
 
   <!-- SKIN + MULAI GAME -->
@@ -1399,11 +1404,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <button class="skinBtn" data-skin="kayu" style="background:#92400e" onclick="setSkin('kayu')">🟤 Kayu</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-gold" id="startBtn" style="flex:2;font-size:16px;padding:16px" onclick="startGame()">🚀 MULAI GAME</button><button class="btn btn-dark" style="flex:1" onclick="backToHome()">⬅️ KELUAR</button></div>
-    <div id="skinHint" style="font-size:11px;color:#a7f3d0;margin-top:8px;text-align:center">Cuma HOST yang bisa ganti</div>
-    <label style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;font-size:13px;font-weight:900;cursor:pointer">
-  <input type="checkbox" id="hintToggle" checked onchange="toggleHint(this.checked)" style="width:18px;height:18px;accent-color:#facc15"> 💡 Pakai Hint
-</label>
-<div style="font-size:11px;color:#a7f3d0;text-align:center;margin-top:2px">Cuma buat room LATIHAN lawan BOT</div>
   </div>
 </div>
   <div id="startConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:120;align-items:center;justify-content:center;padding:16px">
@@ -2587,6 +2587,7 @@ function renderCentralPool(players){ let df=document.getElementById('discardFab'
 }
 // ===== HINT No.1 - CUMA LATIHAN, BEBAS PENCET, COOLDOWN 3 DETIK =====
 let hintTileId = null;
+let hintReason = '';
 let hintCooldownUntil = 0;
 let hintCooldownTimer = null;
 let useHintEnabled = true;
@@ -2631,61 +2632,59 @@ function updateHintButton(){
     btn.innerText = '💡 HINT: BUANG APA?';
   }
   // Kalau hint lagi aktif, label tetep keliatan
-  if(lbl) lbl.style.display = hintTileId ? 'block' : 'none';
+  if(lbl){ lbl.style.display = hintTileId ? 'block' : 'none'; if(hintTileId) lbl.innerText = '💡 ' + hintReason; }
 }
 
 function chooseHintTile(){
   let hand = (myHand || []).filter(t => t.type !== 'flower');
   if(!hand.length) return null;
-  // Hitung buangan semua pemain, buat deteksi tile mati
   let discardCount = {};
   (currentPlayers || []).forEach(p => {
     (p.discards || []).forEach(t => { discardCount[t.key] = (discardCount[t.key] || 0) + 1; });
   });
-  // Hitung jumlah kembaran di tangan
   let counts = {};
   hand.forEach(t => { counts[t.key] = (counts[t.key] || 0) + 1; });
-  // Score: makin kecil = makin jelek = paling aman dibuang
-  // Jangan buang tile yang udah jadi pair / bisa jadi pong / bisa jadi chow
   let scored = hand.map(t => {
     let score = 100;
+    let reason = 'Paling jelek di tangan lu, paling aman dibuang.';
     let c = counts[t.key] || 0;
-    if(c >= 3) score += 100; // udah mau pong, jangan buang
-    else if(c === 2) score += 60; // udah pair, sayang dibuang
-    // Honor jomblo = paling jelek, buang duluan
+    if(c >= 3) score += 100;
+    else if(c === 2) score += 60;
     if(t.type === 'wind' || t.type === 'dragon'){
-      if(c === 1) score -= 50;
+      if(c === 1){ score -= 50; reason = 'Honor jomblo, gak bisa jadi Chow. Buang aja.'; }
     }
-    // Suit jomblo di ujung 1/9 = jelek kedua
     if(t.type === 'suit' && c === 1){
       if(t.num === 1 || t.num === 9) score -= 35;
       else score -= 20;
-      // Cek bisa jadi chow gak? Kalau ada tetangganya, jangan dibuang
       let hasPrev = hand.some(x => x.type === 'suit' && x.suit === t.suit && x.num === t.num - 1);
       let hasNext = hand.some(x => x.type === 'suit' && x.suit === t.suit && x.num === t.num + 1);
       let hasPrev2 = hand.some(x => x.type === 'suit' && x.suit === t.suit && x.num === t.num - 2);
       let hasNext2 = hand.some(x => x.type === 'suit' && x.suit === t.suit && x.num === t.num + 2);
-      if(hasPrev && hasNext) score += 45; // tengah chow, bagus
+      if(hasPrev && hasNext) score += 45;
       else if((hasPrev && hasPrev2) || (hasNext && hasNext2)) score += 30;
       else if(hasPrev || hasNext) score += 15;
+      else {
+        reason = (t.num === 1 || t.num === 9)
+          ? 'Tile ujung jomblo, susah jadi Chow. Buang aja.'
+          : 'Jomblo, gak nyambung ke tile lain. Buang aja.';
+      }
     }
-    // Tile yang udah kebuang 3x+ = mati, gak usah ditungguin
-    if((discardCount[t.key] || 0) >= 3) score -= 40;
-    else if((discardCount[t.key] || 0) >= 2) score -= 15;
-    // Kalau tile ini ada di meld yang udah kebuka (pong), jangan dibuang - ini jaga-jaga aja
+    if((discardCount[t.key] || 0) >= 3){ score -= 40; reason = 'Udah kebuang 3x, tile ini mati, gak ada yang butuh.'; }
+    else if((discardCount[t.key] || 0) >= 2){ score -= 15; reason = 'Udah kebuang 2x, kemungkinan kecil kepake.'; }
     if((myMelds || []).some(m => (m.tiles || []).some(x => x.key === t.key))) score += 80;
-    return { tile: t, score };
+    return { tile: t, score, reason };
   });
   scored.sort((a, b) => a.score - b.score);
-  return scored[0].tile;
+  return scored[0];
 }
 
 function useHint(){
   if(!isHintAllowed()) return;
   if(Date.now() < hintCooldownUntil) return;
-  let pick = chooseHintTile();
+    let pick = chooseHintTile();
   if(!pick) return;
-  hintTileId = pick.id;
+  hintTileId = pick.tile.id;
+  hintReason = pick.reason || '';
   // Cooldown 3 detik, tombol jadi countdown
   hintCooldownUntil = Date.now() + 3000;
   if(hintCooldownTimer) clearInterval(hintCooldownTimer);
@@ -2700,7 +2699,7 @@ function useHint(){
 }
 
 function clearHint(){
-  if(hintTileId){ hintTileId = null; let lbl = document.getElementById('hintLabel'); if(lbl) lbl.style.display = 'none'; }
+  if(hintTileId){ hintTileId = null; hintReason = ''; let lbl = document.getElementById('hintLabel'); if(lbl) lbl.style.display = 'none'; }
 }
 function renderMyHand(){
   let sorted=[...myHand].sort((a,b)=>{ let order=t=> t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); if(order(a)!==order(b)) return order(a)-order(b); if(a.type==='suit' && b.type==='suit'){ if(a.suit!==b.suit) return a.suit-b.suit; return a.num-b.num; } return (a.num||0)-(b.num||0); });
