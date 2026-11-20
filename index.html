@@ -2607,8 +2607,8 @@ function isHintAllowed(){
   // Cuma latihan. Tanding = tombol ilang total.
   if(lobbyMode !== 'latihan') return false;
   if(!isMyTurn) return false;
-  // Cuma pas lu megang 14 tile (abis ambil, sebelum buang). Kalau 13, belum butuh hint.
-  if(!myHand || myHand.length < 14) return false;
+  // Harus buang = sisa tangan % 3 == 2. Berlaku buat 14 (tanpa meld), 11 (abis Pong/Chow/Kong), 8 (abis Pong ke-2), dst.
+  if(!myHand || myHand.length < 2 || myHand.length % 3 !== 2) return false;
   return true;
 }
 
