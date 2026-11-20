@@ -1217,6 +1217,13 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 .homeTabBtn{flex:1;padding:12px 4px;border-radius:14px;font-weight:900;font-size:12px;background:rgba(0,0,0,.35);color:#cbd5e1;border:1px solid rgba(255,255,255,.15)}
 .homeTabBtn.active{background:linear-gradient(180deg,#fde047,#f59e0b);color:#422006;border-color:#facc15;box-shadow:0 8px 20px rgba(245,158,11,.4)}
 .homeTabPanel .card{margin-top:12px}
+/* Judul jadi watermark, tab naik mentok di bawah Heizel */
+.topLogo{opacity:.35!important;margin-top:6px!important;margin-bottom:0!important}
+.topLogo .crown{font-size:26px!important}
+.topLogo h1{font-size:24px!important;line-height:1.05!important}
+/* Gelar di Heizel: putih, teks coklat tua, bukan emas lagi */
+.homeProfile .rankBadge{background:#ffffff!important;color:#422006!important;border:1px solid #422006!important;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.homeTabs{margin-top:6px!important}
 </style>
 </head>
 <body>
@@ -1455,7 +1462,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
   <div style="display:flex;gap:6px;padding:8px;border-top:1px solid rgba(255,255,255,.15)"><input id="chatInput" placeholder="Silahkan chat disini" style="flex:1;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:13px;outline:none"><button onclick="sendChat()" style="padding:11px 16px;border-radius:10px;background:#facc15;color:#422006;font-weight:900;font-size:13px">KIRIM ➡️</button></div>
 </div>
-<<div id="huFx"><div id="huFxTile"></div><div id="huFxText"><div class="huBig">🀄 HU!!</div><div class="huName" id="huFxName"></div></div></div>
+<div id="huFx"><div id="huFxTile"></div><div id="huFxText"><div class="huBig">🀄 HU!!</div><div class="huName" id="huFxName"></div></div></div>
 <div id="winModal"><div class="winBox"><div id="winAvatar" style="font-size:64px;line-height:1"></div><div style="font-size:48px">🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2><p id="winMsg">...</p><div id="winHand" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:12px 0 4px"></div><div id="winMeldLabel" style="font-size:11px;color:#92400e;font-weight:800"></div><div id="rematchStatus" style="font-size:13px;font-weight:900;color:#92400e;margin-top:8px"></div><button id="rematchBtn" class="btn btn-gold" onclick="this.innerText='⏳ UDAH KLIK, NUNGGU TEMEN...';this.style.opacity='0.6';document.getElementById('rematchStatus').innerText='🔁 Kamu udah klik, nunggu temen...';socket.emit('rematch',{code:myCode});">🔁 REMATCH - MAIN LAGI (ORANG SAMA)</button><button class="btn btn-dark" style="margin-top:8px" onclick="openShowdown()">🃏 BUKA KARTU — LIHAT TANGAN SEMUA</button><button class="btn btn-dark" onclick="cancelRematchAndHome()">🏠 BALIK KE HOME</button></div></div>
 <!-- POPUP BUKA KARTU / SHOWDOWN -->
 <div id="showdownModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:400;overflow-y:auto;padding:16px" onclick="if(event.target===this) closeShowdown()">
@@ -2064,11 +2071,35 @@ function openLeaderboard(){ switchHomeTab('leaderboard'); }
 function loadLeaderboardTab(){
   el('leaderboardList').innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Memuat...</td></tr>';
   el('leaderboardMyRank').innerHTML = '';
-  // <-- tempel isi fetch('/api/leaderboard') lu yang lama persis di sini, jangan diubah
+  fetch('/api/leaderboard').then(r=>r.json()).then(j=>{
+    let list = j.users || j.leaderboard || [];
+    // Kalau nama lu gak dikirim server (misal HU 0), tambahin manual biar tetep muncul
+    if(currentUser && !list.some(u=>u.id===currentUser.id)){
+      list.push({id:currentUser.id, display_name:currentUser.display_name, avatar:currentUser.avatar, hu:currentUser.hu||0});
+      list.sort((a,b)=>(b.hu||0)-(a.hu||0));
+    }
+    if(!list.length){ el('leaderboardList').innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Belum ada pemain.</td></tr>'; return; }
+    let myIdx = list.findIndex(u=>currentUser && u.id===currentUser.id);
+    if(myIdx >= 0){
+      let u = list[myIdx];
+      el('leaderboardMyRank').innerHTML = '<div style="background:#facc15;color:#422006;border-radius:12px;padding:10px 12px;font-weight:900;font-size:13px">⭐ Kamu peringkat #' + (myIdx+1) + ' — ' + gelarLabel(u.hu||0) + ' • 🏆 ' + (u.hu||0) + ' HU</div>';
+    }
+    el('leaderboardList').innerHTML = list.map((u,i)=>{
+      let rank = i+1;
+      let isMe = currentUser && u.id===currentUser.id;
+      // TOP 3: 1 emas, 2 perak, 3 perunggu
+      let rowBg = rank===1 ? 'linear-gradient(90deg,#facc15,#f59e0b)' : rank===2 ? 'linear-gradient(90deg,#e2e8f0,#94a3b8)' : rank===3 ? 'linear-gradient(90deg,#d97706,#92400e)' : (isMe ? '#facc15' : 'transparent');
+      let rowColor = (rank<=3 || isMe) ? '#422006' : '#fff';
+      let medal = rank===1 ? '🥇 ' : rank===2 ? '🥈 ' : rank===3 ? '🥉 ' : '';
+      return '<tr style="background:'+rowBg+';color:'+rowColor+';border-top:1px solid rgba(255,255,255,.12)">'
+        + '<td style="padding:8px 6px;text-align:center">' + avatarHTML(u.avatar, 32) + '</td>'
+        + '<td style="padding:8px;text-align:left"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">' + medal + esc(u.display_name||u.id) + '</b><span style="font-size:11px;opacity:.75">@' + esc(u.id) + '</span></td>'
+        + '<td style="padding:8px;text-align:center"><span class="rankBadge">' + gelarLabel(u.hu||0) + '</span></td>'
+        + '<td style="padding:8px;text-align:center"><b>🏆 ' + (u.hu||0) + '</b></td>'
+        + '</tr>';
+    }).join('');
+  }).catch(e=>{ el('leaderboardList').innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;color:#fecaca">Gagal memuat leaderboard.</td></tr>'; });
 }
-function closeLeaderboard(){ switchHomeTab('lobby'); }
-function openTutorial(){ switchHomeTab('howto'); }
-function closeTutorial(){ switchHomeTab('lobby'); }
 function closeLeaderboard(){ switchHomeTab('lobby'); }
 function openGelarGuide(){
   let listEl = el('gelarGuideList');
