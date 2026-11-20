@@ -1400,6 +1400,10 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     </div>
     <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-gold" id="startBtn" style="flex:2;font-size:16px;padding:16px" onclick="startGame()">🚀 MULAI GAME</button><button class="btn btn-dark" style="flex:1" onclick="backToHome()">⬅️ KELUAR</button></div>
     <div id="skinHint" style="font-size:11px;color:#a7f3d0;margin-top:8px;text-align:center">Cuma HOST yang bisa ganti</div>
+    <label style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;font-size:13px;font-weight:900;cursor:pointer">
+  <input type="checkbox" id="hintToggle" checked onchange="toggleHint(this.checked)" style="width:18px;height:18px;accent-color:#facc15"> 💡 Pakai Hint
+</label>
+<div style="font-size:11px;color:#a7f3d0;text-align:center;margin-top:2px">Cuma buat room LATIHAN lawan BOT</div>
   </div>
 </div>
   <div id="startConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:120;align-items:center;justify-content:center;padding:16px">
@@ -2585,8 +2589,20 @@ function renderCentralPool(players){ let df=document.getElementById('discardFab'
 let hintTileId = null;
 let hintCooldownUntil = 0;
 let hintCooldownTimer = null;
-
+let useHintEnabled = true;
+try{ useHintEnabled = localStorage.getItem('mahjong_hint') !== '0'; }catch(e){}
+function toggleHint(on){
+  useHintEnabled = !!on;
+  try{ localStorage.setItem('mahjong_hint', on ? '1' : '0'); }catch(e){}
+  updateHintButton();
+}
+function syncHintToggle(){
+  let c = document.getElementById('hintToggle');
+  if(c) c.checked = useHintEnabled;
+}
+syncHintToggle();
 function isHintAllowed(){
+  if(!useHintEnabled) return false;
   // Cuma latihan. Tanding = tombol ilang total.
   if(lobbyMode !== 'latihan') return false;
   if(!isMyTurn) return false;
