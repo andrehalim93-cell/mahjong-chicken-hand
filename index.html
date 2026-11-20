@@ -2585,7 +2585,18 @@ socket.on('gameStarted', ()=>{
   if(el('rematchStatus')) el('rematchStatus').innerText = '';
 });
 function addLog(m){ let l=el('gameLog'); l.innerHTML = m + '<br>' + l.innerHTML; }
-function renderSeats(players, turn){
+const BACK_COLORS = {
+  hijau: ['#22c55e','#14532d'], merah: ['#ef4444','#7f1d1d'],
+  biru: ['#3b82f6','#1e40af'], kayu: ['#d97706','#78350f'],
+  ungu: ['#a855f7','#4c1d95'], pink: ['#ec4899','#9d174d'],
+  hitam: ['#4b5563','#000000'], tosca: ['#14b8a6','#115e59'],
+  silver: ['#cbd5e1','#475569'], jingga: ['#fb923c','#c2410c']
+};
+function backTileHTML(){
+  let c = BACK_COLORS[currentSkin] || BACK_COLORS.hijau;
+  return '<div class="tileBack" style="width:16px;height:24px;flex:none;overflow:hidden;border-radius:3px;background:linear-gradient(180deg,' + c[0] + ',' + c[1] + ');border:2px solid #ffffff;outline:1px solid #facc15;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 2px 4px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,255,255,.95),inset 0 0 0 4px ' + c[1] + ';display:flex;align-items:center;justify-content:center;color:#ffffff;font-size:9px;font-weight:900;text-shadow:0 1px 2px rgba(0,0,0,.8)">🀄</div>';
+}
+  function renderSeats(players, turn){
   let others = players.filter(p=>p.name!==myName);
   let posMap = players.length===2 ? ['top'] : ['right','top','left'];
   let slots = { top: el('seatTop'), left: el('seatLeft'), right: el('seatRight') };
@@ -2596,7 +2607,7 @@ function renderSeats(players, turn){
     let pos = posMap[idx] || 'top';
     let slot = slots[pos];
     let isTurn = p.name===turn;
-    slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span><small>• ${p.handCount} tile</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill('<div style="width:16px;height:24px;flex:none;overflow:hidden;border-radius:2px;background:#fff"><img src="Back.svg" style="width:100%;height:100%;display:block"></div>').join('')}</div>${p.flowers.length?`<div class="oppFlower" style="font-size:11px;color:#fbcfe8;writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;line-height:1.4">🌸 ${p.flowers.length} bunga</div>`:''}`;
+    slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span><small>• ${p.handCount} tile</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill(backTileHTML()).join('')}</div>${p.flowers.length?`<div class="oppFlower" style="font-size:11px;color:#fbcfe8;writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;line-height:1.4">🌸 ${p.flowers.length} bunga</div>`:''}`;
     let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join('');
     if(meldHtml && meldSlots[pos]) meldSlots[pos].innerHTML = meldHtml;
   });
