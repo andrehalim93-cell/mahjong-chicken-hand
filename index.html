@@ -1239,6 +1239,33 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 /* Gelar di Heizel: putih, teks coklat tua, bukan emas lagi */
 .homeProfile .rankBadge{background:transparent!important;color:#fde68a!important;border:1px solid rgba(250,204,21,.8)!important;box-shadow:none!important}
 .homeTabs{margin-top:6px!important}
+/* TILE TENGKULUP: atas berdiri, kiri-kanan tiduran, tapi ukurannya PAS puteran 90 derajat */
+@media (max-width:768px){
+  #gameScreen .seatPos.top .miniHand > div{
+    width:16px !important; height:24px !important; flex:none !important; transform:none !important;
+  }
+  #gameScreen .seatPos.left .miniHand > div,
+  #gameScreen .seatPos.right .miniHand > div{
+    width:24px !important; height:16px !important; flex:none !important; transform:none !important;
+  }
+  #gameScreen .seatPos.left .miniHand > div img,
+  #gameScreen .seatPos.right .miniHand > div img{
+    width:16px !important; height:24px !important; transform:rotate(90deg) !important;
+  }
+}
+@media (min-width:769px){
+  #gameScreen .seatPos.top .miniHand > div{
+    width:24px !important; height:34px !important; flex:none !important; transform:none !important;
+  }
+  #gameScreen .seatPos.left .miniHand > div,
+  #gameScreen .seatPos.right .miniHand > div{
+    width:34px !important; height:24px !important; flex:none !important; transform:none !important;
+  }
+  #gameScreen .seatPos.left .miniHand > div img,
+  #gameScreen .seatPos.right .miniHand > div img{
+    width:24px !important; height:34px !important; transform:rotate(90deg) !important;
+  }
+}
 </style>
 </head>
 <body>
