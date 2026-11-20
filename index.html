@@ -1193,6 +1193,9 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 #claimPassBtn{margin-top:12px;width:100%;border:none;background:#e5e7eb;border-radius:12px;padding:10px;font-weight:800;cursor:pointer}
 /* ===== LOBBY MEJA MELINGKAR ===== */
 .lobbyTable{position:relative;max-width:560px;height:430px;margin:10px auto;background:radial-gradient(ellipse at center,#1e6b34 0%,#14532d 60%,#0b3a1e 100%);border:6px solid #5b3a1a;border-radius:28px;box-shadow:inset 0 0 0 3px #8b5a2b,0 20px 40px rgba(0,0,0,.5);overflow:hidden}
+.lobbyTable.skin-merah{ background:radial-gradient(ellipse at center,#b91c1c 0%,#7f1d1d 60%,#450a0a 100%); border-color:#facc15; }
+.lobbyTable.skin-biru{ background:radial-gradient(ellipse at center,#1e40af 0%,#0c1a4d 60%,#020617 100%); border-color:#22d3ee; }
+.lobbyTable.skin-kayu{ background:radial-gradient(ellipse at center,#b45309 0%,#78350f 60%,#451a03 100%); border-color:#3b2314; }  
 .lobbyCenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:2;background:rgba(0,0,0,.35);border-radius:18px;padding:14px;width:200px}
 .lobbyCenter .lobbyTitle{font-size:18px;font-weight:900;color:#fde68a}
 .lobbyCenter .lobbySub{font-size:12px;color:#a7f3d0;margin-top:2px}
@@ -1565,7 +1568,7 @@ async function doRegister(){
   let j = await r.json();
   if(!j.ok) return showAuthErr(j.error||'Gagal daftar!');
   if(el('saveLogin')) el('saveLogin').checked = true;
-  loginSuccess(j.user, password, false);
+  loginSuccess(j.user, password, true);
   toast('Daftar berhasil! Selamat datang!');
 }
 async function doLogin(){
@@ -1854,14 +1857,14 @@ function checkSavedLogin(){
         // Auto-login diam-diam pake ID + password yang ke-save di session
         fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:s.user.id, password:s.password})})
         .then(r=>r.text()).then(txt=>{
-          try{ let j = JSON.parse(txt); if(j.ok){ loginSuccess(j.user, s.password, false); return; } }catch(e){}
+          try{ let j = JSON.parse(txt); if(j.ok){ loginSuccess(j.user, s.password, true); return; } }catch(e){}
           // Kalau gagal (password diganti dll), jatuh ke login biasa
           showLoginScreen();
         }).catch(()=>showLoginScreen());
         return;
       }
       if(s && s.user){
-        loginSuccess(s.user, '', false);
+        loginSuccess(s.user, '', true);
         return;
       }
     }
@@ -2307,6 +2310,8 @@ function applySkin(skin){
   currentSkin = skin || 'hijau';
   let t = document.getElementById('tableEl');
   if(t){ t.classList.remove('skin-hijau','skin-merah','skin-biru','skin-kayu'); t.classList.add('skin-'+currentSkin); }
+  let lt = document.querySelector('.lobbyTable');
+  if(lt){ lt.classList.remove('skin-hijau','skin-merah','skin-biru','skin-kayu'); lt.classList.add('skin-'+currentSkin); }
   document.querySelectorAll('.skinBtn').forEach(b=>b.classList.toggle('active', b.dataset.skin===currentSkin));
 }
 function setSkin(skin){
