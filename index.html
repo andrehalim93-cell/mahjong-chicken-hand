@@ -1222,7 +1222,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 .topLogo .crown{font-size:26px!important}
 .topLogo h1{font-size:24px!important;line-height:1.05!important}
 /* Gelar di Heizel: putih, teks coklat tua, bukan emas lagi */
-.homeProfile .rankBadge{background:#ffffff!important;color:#422006!important;border:1px solid #422006!important;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.homeProfile .rankBadge{background:transparent!important;color:#fde68a!important;border:1px solid rgba(250,204,21,.8)!important;box-shadow:none!important}
 .homeTabs{margin-top:6px!important}
 </style>
 </head>
@@ -1293,7 +1293,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   <div id="tab-leaderboard" class="homeTabPanel hidden">
     <div class="card">
       <div style="text-align:center"><div style="font-size:44px">🏆</div><h2 style="margin:6px 0 4px;font-size:22px;color:#fde68a">LEADERBOARD HU</h2><div style="color:#a7f3d0;font-size:12px;line-height:1.5">Semua pemain terdaftar — urut HU terbanyak<br><span style="color:#fde68a">HU cuma dihitung dari mode TANDING full 4 orang asli</span></div><div id="leaderboardMyRank" style="margin:12px auto 0"></div></div>
-      <table style="width:100%;border-collapse:collapse;background:rgba(0,0,0,.45);border:1px solid rgba(250,204,21,.35);border-radius:14px;overflow:hidden;font-size:13px;margin-top:12px"><thead><tr style="background:#facc15;color:#422006"><th style="padding:10px 6px;text-align:center;width:56px">AVATAR</th><th style="padding:10px 8px;text-align:left">NAMA</th><th style="padding:10px 8px;text-align:center;width:110px">GELAR</th><th style="padding:10px 8px;text-align:center;width:110px">TOTAL HU<br>MENANG</th></tr></thead><tbody id="leaderboardList"><tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Memuat...</td></tr></tbody></table>
+      <table style="width:100%;border-collapse:collapse;background:rgba(0,0,0,.45);border:1px solid rgba(250,204,21,.35);border-radius:14px;overflow:hidden;font-size:13px;margin-top:12px"><thead><tr style="background:#0d3a22;color:#fde68a"><th style="padding:10px 6px;text-align:center;width:56px">AVATAR</th><th style="padding:10px 8px;text-align:left">NAMA</th><th style="padding:10px 8px;text-align:center;width:110px">GELAR</th><th style="padding:10px 8px;text-align:center;width:110px">TOTAL HU<br>MENANG</th></tr></thead><tbody id="leaderboardList"><tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Memuat...</td></tr></tbody></table>
       <button class="btn btn-dark" style="margin-top:12px" onclick="openGelarGuide()">📖 PANDUAN GELAR</button>
       <button class="btn btn-dark" style="margin-top:8px" onclick="loadLeaderboardTab()">🔄 REFRESH LEADERBOARD</button>
     </div>
@@ -1602,7 +1602,7 @@ function loginSuccess(user, passwordForSave, showProfile){
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
     toast('Halo '+user.display_name+'!');
-  if(showProfile){ clearTimeout(window._profileTimer); window._profileTimer = setTimeout(()=>{ openProfile(false); }, 400); }
+  if(showProfile){ clearTimeout(window._profileTimer); window._profileTimer = setTimeout(()=>{ openProfile(false); }, 900); }
   refreshRooms();
   try{
     let savedRoom = JSON.parse(sessionStorage.getItem('mahjong_room'));
@@ -2082,13 +2082,14 @@ function loadLeaderboardTab(){
     let myIdx = list.findIndex(u=>currentUser && u.id===currentUser.id);
     if(myIdx >= 0){
       let u = list[myIdx];
-      el('leaderboardMyRank').innerHTML = '<div style="background:#facc15;color:#422006;border-radius:12px;padding:10px 12px;font-weight:900;font-size:13px">⭐ Kamu peringkat #' + (myIdx+1) + ' — ' + gelarLabel(u.hu||0) + ' • 🏆 ' + (u.hu||0) + ' HU</div>';
+      el('leaderboardMyRank').innerHTML = '<div style="background:rgba(0,0,0,.45);color:#fde68a;border:1px solid #facc15;border-radius:12px;padding:10px 12px;font-weight:900;font-size:13px">⭐ Kamu peringkat #' + (myIdx+1) + ' — ' + gelarLabel(u.hu||0) + ' • 🏆 ' + (u.hu||0) + ' HU</div>';
     }
     el('leaderboardList').innerHTML = list.map((u,i)=>{
       let rank = i+1;
       let isMe = currentUser && u.id===currentUser.id;
       // TOP 3: 1 emas, 2 perak, 3 perunggu
-      let rowBg = rank===1 ? 'linear-gradient(90deg,#facc15,#f59e0b)' : rank===2 ? 'linear-gradient(90deg,#e2e8f0,#94a3b8)' : rank===3 ? 'linear-gradient(90deg,#d97706,#92400e)' : (isMe ? '#facc15' : 'transparent');
+      let rowBg = rank===1 ? 'linear-gradient(90deg,#facc15,#f59e0b)' : rank===2 ? 'linear-gradient(90deg,#e2e8f0,#94a3b8)' : rank===3 ? 'linear-gradient(90deg,#d97706,#92400e)' : (isMe ? 'rgba(250,204,21,.18)' : 'transparent');
+let rowColor = (rank<=3) ? '#422006' : '#fff';
       let rowColor = (rank<=3 || isMe) ? '#422006' : '#fff';
       let medal = rank===1 ? '🥇 ' : rank===2 ? '🥈 ' : rank===3 ? '🥉 ' : '';
       return '<tr style="background:'+rowBg+';color:'+rowColor+';border-top:1px solid rgba(255,255,255,.12)">'
