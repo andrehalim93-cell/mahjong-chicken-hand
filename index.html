@@ -1270,19 +1270,47 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     width:24px !important; height:34px !important; transform:rotate(90deg) !important;
   }
 }
-/* HP ONLY - BENERIN FLEX TANGAN LAWAN DOANG, YANG LAIN JANGAN DIUBAH */
+/* ===== HP FINAL: SEMUA SLOT FIX, KALO KOSONG DI-HIDE, BUKAN DIHAPUS ===== */
 @media (max-width:768px){
-  #gameScreen .seatPos.left .miniHand,
-  #gameScreen .seatPos.right .miniHand{
-    display:flex !important; flex-direction:column !important;
-    flex-wrap:nowrap !important; gap:1px !important;
-    justify-content:flex-start !important; align-items:center !important;
-  }
-  #gameScreen .seatPos.top .miniHand{
-    display:flex !important; flex-direction:row !important;
-    flex-wrap:nowrap !important; gap:1px !important;
-    justify-content:center !important;
-  }
+  /* --- MEJA: posisi paten, jangan melar --- */
+  #gameScreen{ display:flex !important; flex-direction:column !important; }
+  #gameScreen .table{ flex:none !important; width:100% !important; height:52dvh !important; min-height:360px !important; position:relative !important; overflow:hidden !important; }
+
+  /* --- LAWAN: semua pake flex, tapi arahnya dikunci --- */
+  #gameScreen .seatPos{ display:flex !important; align-items:center !important; gap:3px !important; }
+  #gameScreen .playerChip{ display:flex !important; }
+  /* Atas: chip -> bunga -> tangan, susun ke bawah */
+  #gameScreen .seatPos.top{ top:6px !important; left:50% !important; transform:translateX(-50%) !important; flex-direction:column !important; width:max-content !important; }
+  #gameScreen .seatPos.top .playerChip{ order:1 !important; }
+  #gameScreen .seatPos.top .oppFlower{ order:2 !important; }
+  #gameScreen .seatPos.top .miniHand{ order:3 !important; display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; gap:1px !important; }
+  /* Kiri: chip -> bunga -> tangan, susun ke samping */
+  #gameScreen .seatPos.left{ left:2px !important; top:50% !important; transform:translateY(-50%) !important; flex-direction:row !important; width:max-content !important; }
+  #gameScreen .seatPos.left .playerChip{ order:1 !important; }
+  #gameScreen .seatPos.left .oppFlower{ order:2 !important; }
+  #gameScreen .seatPos.left .miniHand{ order:3 !important; display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important; gap:1px !important; }
+  /* Kanan: kebalikannya kiri, biar ngadep ke tengah */
+  #gameScreen .seatPos.right{ right:2px !important; top:50% !important; transform:translateY(-50%) !important; flex-direction:row-reverse !important; width:max-content !important; }
+  #gameScreen .seatPos.right .playerChip{ order:1 !important; }
+  #gameScreen .seatPos.right .oppFlower{ order:2 !important; }
+  #gameScreen .seatPos.right .miniHand{ order:3 !important; display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important; gap:1px !important; }
+
+  /* --- MELD LAWAN: posisi fix di dalem meja --- */
+  #gameScreen .meldTopRight{ top:108px !important; left:50% !important; transform:translateX(-50%) !important; display:flex !important; flex-wrap:nowrap !important; justify-content:center !important; }
+  #gameScreen .meldLeftBottom{ left:48px !important; top:50% !important; transform:translateY(-50%) !important; display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important; }
+  #gameScreen .meldRightBottom{ right:48px !important; top:50% !important; transform:translateY(-50%) !important; display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important; }
+  /* Kalo meld lawan belum ada, di-hide tapi tempatnya tetep ada */
+  #gameScreen .meldZone:empty{ visibility:hidden !important; }
+
+  /* --- AREA LU: slot meld + bunga + tangan, tingginya dikunci --- */
+  #gameScreen #myMelds{ display:flex !important; flex-wrap:nowrap !important; justify-content:center !important; height:52px !important; min-height:52px !important; overflow:hidden !important; }
+  #gameScreen #myMelds:empty{ visibility:hidden !important; }
+  #gameScreen #myFlowers{ display:flex !important; flex-wrap:nowrap !important; justify-content:center !important; height:38px !important; min-height:38px !important; overflow:hidden !important; }
+  #gameScreen #myFlowers:empty{ visibility:hidden !important; }
+  #gameScreen #myHand{ display:flex !important; flex-wrap:wrap !important; justify-content:center !important; min-height:128px !important; align-content:flex-start !important; }
+
+  /* --- ACTIONBAR: kalo kosong, hilang total, kalo ada, nongol di tempatnya, gak dorong meja --- */
+  #gameScreen #actionBar:empty{ display:none !important; }
 }
 </style>
 </head>
