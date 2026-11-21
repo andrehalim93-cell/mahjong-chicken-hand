@@ -1483,6 +1483,63 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     writing-mode:horizontal-tb !important;
   }
 }
+/* HP ONLY - URUTAN KUNCI: KIRI edge>tile>bunga>meld, KANAN meld>bunga>tile>edge, ATAS meld dibawah bunga */
+@media (max-width:768px){
+  #gameScreen .table{ position:relative !important; }
+
+  /* --- KIRI: ujung meja(0) > tile(6-28) > bunga(34) > meld(62) --- */
+  #gameScreen .seatPos.left{ left:6px !important; right:auto !important; top:50% !important; transform:translateY(-50%) !important; width:22px !important; }
+  #gameScreen .seatPos.left .oppFlower{
+    position:absolute !important; left:34px !important; top:50% !important; transform:translateY(-50%) !important;
+    writing-mode:vertical-rl !important; white-space:nowrap !important;
+  }
+  #gameScreen #meldLeft{
+    position:absolute !important; left:62px !important; right:auto !important;
+    top:50% !important; transform:translateY(-50%) !important;
+    width:44px !important; display:flex !important; flex-direction:column !important; gap:4px !important;
+  }
+
+  /* --- KANAN: meld > bunga > tile > ujung meja --- */
+  /* dari tengah ke kanan: meld dulu, terus bunga, terus tile, terus ujung */
+  #gameScreen .seatPos.right{ right:6px !important; left:auto !important; top:50% !important; transform:translateY(-50%) !important; width:22px !important; }
+  #gameScreen .seatPos.right .oppFlower{
+    position:absolute !important; right:34px !important; left:auto !important; top:50% !important; transform:translateY(-50%) !important;
+    writing-mode:vertical-rl !important; white-space:nowrap !important;
+  }
+  #gameScreen #meldRight{
+    position:absolute !important; right:62px !important; left:auto !important;
+    top:50% !important; transform:translateY(-50%) !important;
+    width:44px !important; display:flex !important; flex-direction:column !important; gap:4px !important; align-items:flex-end !important;
+  }
+
+  /* --- ATAS: tile > bunga > meld (meld mentok dibawah bunga) --- */
+  #gameScreen .seatPos.top{ top:6px !important; }
+  #gameScreen .seatPos.top .oppFlower{
+    position:absolute !important; left:50% !important; top:100% !important; bottom:auto !important;
+    transform:translateX(-50%) !important; writing-mode:horizontal-tb !important; margin-top:2px !important;
+  }
+  #gameScreen #meldTop{
+    position:absolute !important; top:78px !important; left:50% !important; transform:translateX(-50%) !important;
+    display:flex !important; flex-direction:row !important; gap:4px !important;
+  }
+
+  /* --- FRAME SAYA: jangan flex, slot Pong/Chow FIX 4 kotak --- */
+  #gameScreen .myArea{ display:block !important; }
+  #gameScreen #myMelds{
+    display:grid !important; grid-template-columns:repeat(4, 1fr) !important;
+    gap:6px !important; min-height:46px !important; margin:6px 0 !important;
+  }
+  #gameScreen #myMelds .meld{
+    min-height:44px !important; border:1.5px dashed rgba(255,255,255,.25) !important;
+    border-radius:8px !important; display:flex !important; justify-content:center !important; align-items:center !important;
+  }
+  #gameScreen #myMelds .meld:empty::after{ content:"—"; color:rgba(255,255,255,.25); font-size:14px; }
+  /* Tangan lu: grid 7 kolom x 2 baris, biar gak loncat-loncat pas ada Pong */
+  #gameScreen #myHand{
+    display:grid !important; grid-template-columns:repeat(7, 1fr) !important;
+    gap:6px !important; min-height:112px !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -3023,7 +3080,7 @@ function renderMyHand(){
   handEl.querySelectorAll('.t').forEach(div=>{ div.onclick=()=>{ if(!isMyTurn) return toast('Bukan giliran kamu! Tunggu dulu...'); let id=div.dataset.id; if(selectedTile===id){ lastDrawnTileId=null; clearHint(); playMjSound('discard'); socket.emit('discard',{code:myCode, tileId:id}); selectedTile=null; renderMyHand(); } else { selectedTile=id; renderMyHand(); } }; });
   el('myCount').innerText = myHand.length+' tile'; el('myMeldCount').innerText = myMelds.length+' set';
   updateHintButton();
-  el('myMelds').innerHTML = myMelds.map(m=>`<div class="meld">${m.tiles.map(t=>tileHTML(t)).join('')}</div>`).join('');
+  el('myMelds').innerHTML = [0,1,2,3].map(i=>{ let m=myMelds[i]; return `<div class="meld">${m?m.tiles.map(t=>tileHTML(t)).join(''):''}</div>`; }).join('');
   el('myFlowers').innerHTML = myFlowers.length ? `<div style="font-size:11px;color:#fbcfe8;width:100%;text-align:center">🌸 Bunga kamu: ${myFlowers.length}</div>` + myFlowers.map(t=>tileHTML(t)).join('') : '';
 }
 function renderActionBar(actions){
