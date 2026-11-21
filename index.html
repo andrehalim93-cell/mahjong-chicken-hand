@@ -451,7 +451,7 @@ input{font-family:inherit}
   right:auto !important; top:auto !important; bottom:auto !important; left:auto !important;
   display:none !important; align-items:center !important; justify-content:center !important;
 }
-#chatFab.showInLobby, #chatFab.showInGame, #discardFab.showInGame{ display:flex !important; }
+#chatFab.showInLobby, #chatFab.showInGame, #emoteFab.showInGame{ display:flex !important; }
 #chatFab #chatBadge{ min-width:15px !important; height:15px !important; line-height:15px !important; font-size:9px !important; top:-3px !important; right:-3px !important; }
 #chatPanel{ position:fixed !important; right:10px !important; bottom:80px !important; top:auto !important; }
 /* 3. Matikan aturan landscape lama yang mindahin chat ke kanan meja */
@@ -2968,7 +2968,7 @@ socket.on('yourHand', d=>{
 });
 socket.on('turnChanged', d=>{
   if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); }updateExitBotBtn(); });
-  socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); console.log('DEBUG CHOW dari server:', d.from, 'ke saya:', myClaim, 'semua claims:', d.claims);
+  socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div><div style="margin-top:4px;font-size:10px;color:#fde68a">👆 Klik buat liat semua buangan</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); console.log('DEBUG CHOW dari server:', d.from, 'ke saya:', myClaim, 'semua claims:', d.claims);
   if(myClaim){
   if(myClaim.canHu || myClaim.pong || (myClaim.chow||[]).length){
     renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]);
@@ -3181,7 +3181,7 @@ applyTileColor(currentTileColor);
   });
   let me = players.find(p=>p.name===myName); if(me){ myMelds=me.melds; myFlowers=me.flowers; renderMyHand(); }
 }
-function renderCentralPool(players){ let df=document.getElementById('discardFab'); if(df) df.classList.add('showInGame');
+function renderCentralPool(players){ let df=document.getElementById('emoteFab'); if(df) df.classList.add('showInGame');
   let all = [];
   players.forEach(p=>{ (p.discards||[]).forEach(t=> all.push(t)); });
   let box = el('poolAllTiles');
@@ -3392,9 +3392,10 @@ function closeDiscards(){ document.getElementById('discardModal').classList.remo
 let claimTimeoutInt=null;
 let lastDrawnTileId=null;
 let chatOpen=false, chatUnread=0;
-function toggleChat(){
+ffunction toggleChat(){
   chatOpen=!chatOpen;
   el('chatPanel').classList.toggle('show', chatOpen);
+  if(chatOpen){ emoteOpen=false; el('emotePanel').classList.remove('show'); }
   if(chatOpen){ chatUnread=0; el('chatBadge').style.display='none'; el('chatFabDot').style.display='none'; setTimeout(()=>el('chatInput').focus(),100); }
 }
 function sendChat(){ let inp = el('chatInput'); let m = inp.value.trim(); if(!m) return; socket.emit('tableChat', {code:myCode, msg:m}); inp.value=''; inp.focus(); }
