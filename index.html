@@ -1331,6 +1331,30 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     text-align:center !important; display:block !important;
   }
 }
+/* HP ONLY - MEJA MENTOK, PALING GEDE */
+@media (max-width:768px){
+  /* Napasnya dikecilin, cuma buat nama doang, sisanya buat meja */
+  #gameScreen{ padding:22px 34px 0 34px !important; gap:0 !important; }
+
+  /* Meja: lebarnya = layar dikurangin tempat nama kiri-kanan doang */
+  #gameScreen .table{
+    width:calc(100vw - 68px) !important;
+    max-width:none !important;
+    aspect-ratio:1 / 1 !important;
+    margin:0 auto !important;
+    overflow:visible !important;
+  }
+
+  /* Tile lawan dikecilin dikit, biar 13 tile muat di meja yang udah mentok */
+  #gameScreen .seatPos.top .miniHand{ flex-wrap:nowrap !important; gap:1px !important; }
+  #gameScreen .seatPos .miniHand .backTile,
+  #gameScreen .seatPos .miniHand img{
+    width:20px !important; height:30px !important;
+  }
+  #gameScreen .seatPos.left .miniHand, #gameScreen .seatPos.right .miniHand{
+    flex-wrap:nowrap !important; gap:1px !important;
+  }
+}
 </style>
 </head>
 <body>
