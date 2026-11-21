@@ -1355,6 +1355,55 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     flex-wrap:nowrap !important; gap:1px !important;
   }
 }
+/* HP ONLY - BAR ATAS JADI 1 GRUP + ATAS-BAWAH MEJA DIRAPETIN */
+@media (max-width:768px){
+  /* ATAS: 1 bar panjang, bukan 4 pill misah */
+  #gameScreen .gameTop{
+    display:flex !important; flex-wrap:nowrap !important;
+    align-items:stretch !important; gap:0 !important;
+    background:rgba(0,0,0,.55) !important;
+    border:1px solid rgba(250,204,21,.45) !important;
+    border-radius:999px !important;
+    padding:3px !important; margin:0 4px 6px 4px !important;
+    overflow:hidden !important;
+  }
+  #gameScreen .gameTop .pill{
+    background:transparent !important; border:none !important;
+    border-radius:0 !important; padding:6px 4px !important;
+    display:flex !important; align-items:center !important;
+    justify-content:center !important; text-align:center !important;
+    font-size:11px !important; line-height:1.2 !important;
+    white-space:nowrap !important; flex:none !important;
+  }
+  /* Pembatas antar isi grup */
+  #gameScreen .gameTop .pill + .pill{
+    border-left:1px solid rgba(255,255,255,.18) !important;
+  }
+  /* Sisa: jangan jadi balok tinggi ke bawah */
+  #gameScreen .gameTop .pill:nth-child(1){ flex:0 0 auto !important; }
+  /* Giliran: yang paling lebar, biar namanya muat */
+  #gameScreen .gameTop .pill:nth-child(2){ flex:1 1 auto !important; min-width:0 !important; }
+  #gameScreen .gameTop .pill:nth-child(2) b{
+    overflow:hidden !important; text-overflow:ellipsis !important;
+  }
+  /* ON: kecil aja */
+  #gameScreen .gameTop .pill:nth-child(3){ flex:0 0 auto !important; padding:6px 6px !important; }
+  /* KELUAR: tombol merahnya nempel di ujung kanan, jadi penutup grup */
+  #gameScreen .gameTop .pill:last-child{
+    flex:0 0 auto !important; background:#991b1b !important;
+    border-radius:0 999px 999px 0 !important; margin:-3px -3px -3px 0 !important;
+    padding:6px 10px !important;
+  }
+  /* FULL: sembunyiin, biar grupnya bersih cuma Sisa - Giliran - ON - KELUAR */
+  #gameScreen .gameTop .fsPill{ display:none !important; }
+
+  /* ATAS MEJA: rapetin jarak dari bar atas ke meja */
+  #gameScreen{ padding-top:6px !important; }
+  #gameScreen .table{ margin-top:2px !important; }
+
+  /* BAWAH MEJA: rapetin jarak dari meja ke kartu lu */
+  #gameScreen .myArea{ margin-top:4px !important; padding-top:4px !important; }
+}
 </style>
 </head>
 <body>
