@@ -91,6 +91,10 @@ input{font-family:inherit}
 .skinBtn{ flex:1; padding:10px 4px; border-radius:12px; border:3px solid transparent; font-size:11px; font-weight:900; cursor:pointer; color:#fff; }
 .skinBtn.active{ border-color:#facc15; transform:scale(1.05); }
 .skinBtn:disabled{ opacity:.45; cursor:not-allowed; }  
+.pillLabel{ font-size:11px; font-weight:900; color:#fde68a; letter-spacing:.5px; margin:10px 0 6px; text-align:left; }
+.pillRow{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.tileBtn{ flex:1; padding:10px 4px; border-radius:12px; border:3px solid transparent; font-size:11px; font-weight:900; cursor:pointer; color:#fff; }
+.tileBtn.active{ border-color:#facc15; transform:scale(1.05); }
 .centerBox{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);text-align:center;width:200px;max-width:60%;z-index:4;background:rgba(0,0,0,.35);border-radius:14px;padding:6px}
 .poolTop,.poolBottom{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;min-height:28px;max-width:220px;margin:4px auto}
 .poolMid{display:flex;justify-content:center;align-items:flex-start;gap:6px}
@@ -1434,9 +1438,10 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <div style="font-size:11px;color:#a7f3d0;text-align:center;margin-top:2px">Hanya untuk mode lawan BOT</div>
   <div class="timeBox" id="timeBox"><h3>⏱️ Waktu Giliran</h3><div class="timeBtns" id="timeBtns"><button data-sec="0" onclick="setTurnTime(0,this)">♾️ Tanpa Batas</button><button data-sec="15" onclick="setTurnTime(15,this)">15s</button><button data-sec="30" onclick="setTurnTime(30,this)" class="active">30s</button><button data-sec="60" onclick="setTurnTime(60,this)">60s</button></div><div id="timeInfo" style="font-size:12px;color:#a7f3d0;margin-top:8px">Saat ini: 30 detik per giliran</div></div>
 
-  <!-- SKIN + MULAI GAME -->
+ <!-- SKIN + MULAI GAME -->
   <div class="lobbyBottom">
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+    <div class="pillLabel">🎨 SKIN MEJA</div>
+    <div class="pillRow">
 <button class="skinBtn" data-skin="hijau" style="background:#14532d" onclick="setSkin('hijau')">🟢 Hijau</button>
 <button class="skinBtn" data-skin="merah" style="background:#7f1d1d" onclick="setSkin('merah')">🔴 Merah</button>
 <button class="skinBtn" data-skin="biru" style="background:#1e40af" onclick="setSkin('biru')">🔵 Biru</button>
@@ -1447,6 +1452,19 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <button class="skinBtn" data-skin="tosca" style="background:#115e59" onclick="setSkin('tosca')">🩵 Tosca</button>
 <button class="skinBtn" data-skin="silver" style="background:#475569" onclick="setSkin('silver')">⚪ Silver</button>
 <button class="skinBtn" data-skin="jingga" style="background:#c2410c" onclick="setSkin('jingga')">🟠 Jingga</button>
+    </div>
+    <div class="pillLabel">🀄 WARNA TILE</div>
+    <div class="pillRow">
+<button class="tileBtn" data-tile="hijau" style="background:linear-gradient(180deg,#22c55e,#14532d)" onclick="setTileColor('hijau')">🟢 Hijau</button>
+<button class="tileBtn" data-tile="merah" style="background:linear-gradient(180deg,#ef4444,#7f1d1d)" onclick="setTileColor('merah')">🔴 Merah</button>
+<button class="tileBtn" data-tile="biru" style="background:linear-gradient(180deg,#3b82f6,#1e40af)" onclick="setTileColor('biru')">🔵 Biru</button>
+<button class="tileBtn" data-tile="kayu" style="background:linear-gradient(180deg,#d97706,#78350f)" onclick="setTileColor('kayu')">🟤 Kayu</button>
+<button class="tileBtn" data-tile="ungu" style="background:linear-gradient(180deg,#a855f7,#4c1d95)" onclick="setTileColor('ungu')">🟣 Ungu</button>
+<button class="tileBtn" data-tile="pink" style="background:linear-gradient(180deg,#ec4899,#9d174d)" onclick="setTileColor('pink')">🌸 Pink</button>
+<button class="tileBtn" data-tile="hitam" style="background:linear-gradient(180deg,#4b5563,#000000)" onclick="setTileColor('hitam')">⚫ Hitam</button>
+<button class="tileBtn" data-tile="tosca" style="background:linear-gradient(180deg,#14b8a6,#115e59)" onclick="setTileColor('tosca')">🩵 Tosca</button>
+<button class="tileBtn" data-tile="silver" style="background:linear-gradient(180deg,#cbd5e1,#475569)" onclick="setTileColor('silver')">⚪ Silver</button>
+<button class="tileBtn" data-tile="jingga" style="background:linear-gradient(180deg,#fb923c,#c2410c)" onclick="setTileColor('jingga')">🟠 Jingga</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-gold" id="startBtn" style="flex:2;font-size:16px;padding:16px" onclick="startGame()">🚀 MULAI GAME</button><button class="btn btn-dark" style="flex:1" onclick="backToHome()">⬅️ KELUAR</button></div>
   </div>
@@ -2612,17 +2630,34 @@ socket.on('gameStarted', ()=>{
   if(el('rematchStatus')) el('rematchStatus').innerText = '';
 });
 function addLog(m){ let l=el('gameLog'); l.innerHTML = m + '<br>' + l.innerHTML; }
-const BACK_COLORS = {
+const TILE_COLORS = {
   hijau: ['#22c55e','#14532d'], merah: ['#ef4444','#7f1d1d'],
   biru: ['#3b82f6','#1e40af'], kayu: ['#d97706','#78350f'],
   ungu: ['#a855f7','#4c1d95'], pink: ['#ec4899','#9d174d'],
   hitam: ['#4b5563','#000000'], tosca: ['#14b8a6','#115e59'],
   silver: ['#cbd5e1','#475569'], jingga: ['#fb923c','#c2410c']
 };
+const BACK_COLORS = TILE_COLORS; // biar kode lama yang manggil BACK_COLORS gak error
+let currentTileColor = 'hijau';
+try{ currentTileColor = localStorage.getItem('mahjong_tile_color') || 'hijau'; }catch(e){}
+function applyTileColor(color){
+  currentTileColor = color || 'hijau';
+  try{ localStorage.setItem('mahjong_tile_color', currentTileColor); }catch(e){}
+  document.querySelectorAll('.tileBtn').forEach(b => b.classList.toggle('active', b.dataset.tile === currentTileColor));
+  // Kalau lagi di dalem game, render ulang tile tengkulup lawan biar langsung ganti warna
+  if(currentPlayers && currentPlayers.length && !el('gameScreen').classList.contains('hidden')){
+    renderSeats(currentPlayers, el('turnName') ? el('turnName').innerText : '');
+  }
+}
+function setTileColor(color){
+  applyTileColor(color);
+  toast('🀄 Warna tile diganti jadi ' + color + '!');
+}
 function backTileHTML(){
-  let c = BACK_COLORS[currentSkin] || BACK_COLORS.hijau;
+  let c = TILE_COLORS[currentTileColor] || TILE_COLORS.hijau;
   return '<div class="tileBack" style="width:16px;height:24px;flex:none;overflow:hidden;border-radius:3px;background:linear-gradient(180deg,' + c[0] + ',' + c[1] + ');border:1px solid rgba(255,255,255,.85);box-shadow:0 1px 3px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.25)"></div>';
 }
+applyTileColor(currentTileColor);
   function renderSeats(players, turn){
   let others = players.filter(p=>p.name!==myName);
   let posMap = players.length===2 ? ['top'] : ['right','top','left'];
