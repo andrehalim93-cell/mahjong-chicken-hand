@@ -1628,6 +1628,62 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   #gameScreen .playerChip{ white-space:nowrap !important; max-width:none !important; }
   #gameScreen .playerChip small{ white-space:nowrap !important; }
 }
+/* HP ONLY - TILE ATAS BALIK KE DALAM + MELD MENTOK TILE + KELUAR FULL KOTAK MERAH */
+@media (max-width:768px){
+  /* 1. TILE ATAS BALIK KE DALAM MEJA, CUMA CHIP VINA YANG DI LUAR */
+  #gameScreen .table #seatTop{
+    top:6px !important; left:50% !important; transform:translateX(-50%) !important;
+  }
+  #gameScreen .table #seatTop .playerChip{
+    position:absolute !important; top:-30px !important; left:50% !important;
+    transform:translateX(-50%) !important; white-space:nowrap !important; z-index:6 !important;
+  }
+  #gameScreen .table #seatTop .miniHand{
+    position:relative !important; top:0 !important; margin-top:0 !important;
+  }
+
+  /* 2. MELD KIRI: mentok tile kiri */
+  /* tile kiri: 6px -> 28px, meld kiri mulai 34px, gak ada jarak kosong lagi */
+  #gameScreen .table #meldLeft{
+    left:34px !important; right:auto !important;
+    top:50% !important; transform:translateY(-50%) !important;
+    width:auto !important; display:flex !important; flex-direction:column !important;
+    gap:4px !important; align-items:flex-start !important; justify-content:center !important;
+    margin:0 !important; padding:0 !important;
+  }
+  /* 3. MELD KANAN: mentok tile kanan */
+  #gameScreen .table #meldRight{
+    right:34px !important; left:auto !important;
+    top:50% !important; transform:translateY(-50%) !important;
+    width:auto !important; display:flex !important; flex-direction:column !important;
+    gap:4px !important; align-items:flex-end !important; justify-content:center !important;
+    margin:0 !important; padding:0 !important;
+  }
+  /* 4. MELD ATAS: mentok tile atas */
+  /* tile atas: 6px -> 34px, meld atas mulai 38px */
+  #gameScreen .table #meldTop{
+    top:38px !important; left:50% !important; transform:translateX(-50%) !important;
+    display:flex !important; flex-direction:row !important; gap:4px !important;
+    margin:0 !important; padding:0 !important;
+  }
+  #gameScreen .table .meldZone .meld{ margin:0 !important; padding:2px !important; }
+
+  /* 5. TOMBOL KELUAR: full kotak merah, bukan pill lagi */
+  #gameScreen .gameTop #exitBotPill{
+    background:#dc2626 !important; border-radius:0 !important;
+    border:none !important; padding:0 !important; margin:0 !important;
+    overflow:hidden !important; display:flex !important; align-items:stretch !important;
+  }
+  #gameScreen .gameTop #exitBotPill button{
+    background:#dc2626 !important; color:#fff !important;
+    font-weight:900 !important; font-size:14px !important;
+    padding:8px 14px !important; border:none !important; border-radius:0 !important;
+    width:100% !important; height:100% !important; cursor:pointer !important;
+  }
+  /* Biar kotak merahnya nempel atas-bawah bar atas, gak jadi pill kecil */
+  #gameScreen .gameTop{ align-items:stretch !important; }
+  #gameScreen .gameTop .pill{ display:flex !important; align-items:center !important; }
+}
 </style>
 </head>
 <body>
