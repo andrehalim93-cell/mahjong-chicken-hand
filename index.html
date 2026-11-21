@@ -1764,6 +1764,31 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   background:rgba(255,255,255,.15) !important;
   transform:scale(.96);
 }
+/* MELD ATAS - PAKSA 2x2, KALAHIN SEMUA FLEX LAMA */
+#gameScreen #meldTop.meldTopRight{
+  display:grid !important;
+  grid-template-columns:repeat(2, max-content) !important;
+  grid-auto-rows:max-content !important;
+  gap:4px 6px !important;
+  flex-direction:unset !important;
+  flex-wrap:unset !important;
+  justify-content:center !important;
+  align-content:start !important;
+  width:max-content !important;
+  max-width:92% !important;
+  left:50% !important;
+  right:auto !important;
+  transform:translateX(-50%) !important;
+  top:44px !important;
+}
+/* Tiap meld-nya tetep jejer ke samping, jangan ikut jadi grid */
+#gameScreen #meldTop.meldTopRight .meld{
+  display:flex !important;
+  flex-direction:row !important;
+  flex-wrap:nowrap !important;
+  gap:1px !important;
+  margin:0 !important;
+}
 </style>
 </head>
 <body>
