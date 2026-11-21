@@ -1580,6 +1580,26 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     text-align:right !important; white-space:nowrap !important;
   }
 }
+/* HP ONLY - LOG HAPUS + HEIZEL NEMPEL + BUNGA MASUK PIL */
+@media (max-width:768px){
+  /* 1. Log bawah hapus */
+  #gameScreen #gameLog{ display:none !important; }
+
+  /* 2. 13 tile • 1 set: jangan float kanan lagi, nempel persis kanan nama */
+  #gameScreen .myArea .myTop > div:nth-child(2){
+    float:none !important; display:inline-block !important;
+    margin-left:8px !important; white-space:nowrap !important;
+  }
+  #gameScreen .myArea .myTop > div:nth-child(1){
+    display:inline-block !important;
+  }
+  /* 3. Bunga di dalam pil, warna pink */
+  #gameScreen .myArea .myTop #myFlowerCount{
+    color:#fbcfe8 !important; font-weight:900 !important;
+  }
+  /* 4. Baris Bunga kamu: 2 yang lama, sembunyiin */
+  #gameScreen #myFlowers{ display:none !important; }
+}
 </style>
 </head>
 <body>
@@ -1824,7 +1844,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 </div>
   <div class="myArea">
     <div class="myTools"><button id="discardFab" onclick="openDiscards()" title="Lihat semua buangan">🗑️</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
-    <div class="myTop"><div><b id="myNameLabel">Kamu</b> <span id="myStatus">• Menunggu giliran...</span></div><div><span id="myCount">13 tile</span> • <span id="myMeldCount">0 set</span></div></div>
+    <div class="myTop"><div><b id="myNameLabel">Kamu</b> <span id="myStatus">• Menunggu giliran...</span></div><div><span id="myCount">13 tile</span> • <span id="myMeldCount">0 set</span><span id="myFlowerCount"></span></div></div>
     <div class="meldsRow" id="myMelds"></div><div class="flowersRow" id="myFlowers"></div><div class="myHand" id="myHand"></div>
 <div style="text-align:center;margin-top:6px"><button id="hintBtn" class="hintBtn" onclick="useHint()" style="display:none;padding:10px 16px;border:none;border-radius:14px;font-weight:900;font-size:13px;box-shadow:0 6px 16px rgba(0,0,0,.35);cursor:pointer">💡 HINT: BUANG APA?</button><div id="hintLabel" class="hintLabel" style="display:none">💡 Buang ini paling aman!</div></div>
 <div class="actionBar" id="actionBar"></div>
@@ -3121,7 +3141,8 @@ function renderMyHand(){
   el('myCount').innerText = myHand.length+' tile'; el('myMeldCount').innerText = myMelds.length+' set';
   updateHintButton();
   el('myMelds').innerHTML = [0,1,2,3].map(i=>{ let m=myMelds[i]; return `<div class="meld">${m?m.tiles.map(t=>tileHTML(t)).join(''):''}</div>`; }).join('');
-  el('myFlowers').innerHTML = myFlowers.length ? `<div style="font-size:11px;color:#fbcfe8;width:100%;text-align:center">🌸 Bunga kamu: ${myFlowers.length}</div>` + myFlowers.map(t=>tileHTML(t)).join('') : '';
+  el('myFlowers').innerHTML = '';
+el('myFlowerCount').innerText = myFlowers.length ? ` • 🌸 ${myFlowers.length} bunga` : '';
 }
 function renderActionBar(actions){
   let bar=el('actionBar'); bar.innerHTML=''; if(!actions || actions.length===0) return;
