@@ -2069,6 +2069,34 @@ function renderAvatarPick(){
 function pickAvatar(a, btn){ regAvatar = a; renderAvatarPick(); }
 function showAuthErr(m){ let e=el('authErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',10000); }
 function showAuthOk(m){ let e=el('authOk'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',2500); }
+// ===== PERTANYAAN KEAMANAN - HASH, BUKAN POLOSAN =====
+async function hashAnswer(teks){
+  let data = new TextEncoder().encode(teks.trim().toLowerCase() + 'mahjong-rahasia-123');
+  let buf = await crypto.subtle.digest('SHA-256', data);
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function showForgot(){
+  el('loginForm').classList.add('hidden');
+  el('registerForm').classList.add('hidden');
+  el('forgotForm').classList.remove('hidden');
+}
+function backToLogin(){
+  el('forgotForm').classList.add('hidden');
+  el('loginForm').classList.remove('hidden');
+  switchAuthTab('login');
+}
+async function doForgot(){
+  let id = el('forgotId').value.trim().toLowerCase();
+  let question = el('forgotQuestion').value;
+  let answerHash = await hashAnswer(el('forgotAnswer').value);
+  let newPass = el('forgotNewPass').value;
+  if(!id || !answerHash || !newPass || newPass.length < 6) return showAuthErr('Isi semua, password baru min 6!');
+  let r = await fetch('/api/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id, question, answerHash, newPassword: newPass})});
+  let j = await r.json();
+  if(!j.ok) return showAuthErr(j.error||'Jawaban salah!');
+  showAuthOk('Password berhasil diganti! Login lagi.');
+  backToLogin();
+}
 async function doRegister(){
   let id = el('regId').value.trim().toLowerCase();
   let password = el('regPass').value;
