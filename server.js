@@ -35,6 +35,43 @@ const SUPABASE_URL = process.env.SUPABASE_URL ||   'https://iisxxgaihgtcuzynjcus
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ||   'sb_publishable_y2IpdW-81zOi5qha15J0Ew_OTmhdrNA' ;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ============ TEMEN - ONLINE + FRIENDS - JANGAN UBAH YANG LAIN ============
+const onlineUsers = new Map(); // userId(lowercase) -> { socketId, id, display_name, avatar, roomCode }
+function normId(v){ return String(v||'').trim().toLowerCase(); }
+function getOnlineList(){
+  return [...onlineUsers.values()].map(u=>({ id:u.id, display_name:u.display_name, avatar:u.avatar||'🧑', roomCode:u.roomCode||'', status: u.roomCode ? 'Di Meja' : 'Online' }));
+}
+function broadcastOnline(){ io.emit('onlineUsersUpdated', getOnlineList()); }
+function getSocketByUserId(uid){
+  let u = onlineUsers.get(normId(uid));
+  return u ? io.sockets.sockets.get(u.socketId) : null;
+}
+async function getUserPublicById(uid){
+  let { data } = await supabase.from('users').select('id, display_name, avatar, hu').eq('id', normId(uid)).maybeSingle();
+  return data || null;
+}
+async function getFriendsFor(uid){
+  uid = normId(uid);
+  let { data } = await supabase.from('friends').select('*').or(`from_id.eq.${uid},to_id.eq.${uid}`).eq('status','accepted');
+  let out = [];
+  for(let r of (data||[])){
+    let otherId = r.from_id===uid ? r.to_id : r.from_id;
+    let p = await getUserPublicById(otherId);
+    let on = onlineUsers.get(otherId);
+    out.push({ id: otherId, display_name: p?.display_name||otherId, avatar: p?.avatar||'🧑', hu: p?.hu||0, status: on ? (on.roomCode ? 'Di Meja' : 'Online') : 'Offline', roomCode: on?.roomCode||'' });
+  }
+  return out;
+}
+async function getPendingFor(uid){
+  uid = normId(uid);
+  let { data } = await supabase.from('friends').select('*').eq('to_id', uid).eq('status','pending');
+  let out = [];
+  for(let r of (data||[])){
+    let p = await getUserPublicById(r.from_id);
+    out.push({ from_id: r.from_id, display_name: p?.display_name||r.from_id, avatar: p?.avatar||'🧑' });
+  }
+  return out;
+}
 
 // --- Helper validasi ---
 function isValidUserId(id){
@@ -695,7 +732,106 @@ function endGameWin(room, winnerName, msg, winningTile){
 // ============ SOCKET.IO ============
 io.on('connection', (socket)=>{
   console.log('User connected:', socket.id);
+  // ----- TEMEN: DAFTAR ONLINE -----
+  socket.on('registerOnline', async ({ id, display_name, avatar })=>{
+    id = normId(id); if(!id) return;
+    socket.myUserId = id;
+    onlineUsers.set(id, { socketId: socket.id, id, display_name: display_name||id, avatar: avatar||'🧑', roomCode: socket.myRoomCode||'' });
+    broadcastOnline();
+  });
 
+  // ----- TEMEN: CARI PAKE NAMA / @ID -----
+  socket.on('searchUser', async ({ q, myId })=>{
+    q = String(q||'').trim(); myId = normId(myId);
+    if(!q) return socket.emit('searchUserResult', []);
+    // Cari di display_name ATAU id, biar ketik HANI / @hani1 sama-sama ketemu
+    let { data } = await supabase.from('users').select('id, display_name, avatar, hu').or(`display_name.ilike.%${q}%,id.ilike.%${q}%`).limit(10);
+    let list = (data||[]).filter(u=>u.id!==myId).map(u=>{
+      let on = onlineUsers.get(u.id);
+      return { id:u.id, display_name:u.display_name, avatar:u.avatar||'🧑', hu:u.hu||0, status: on ? (on.roomCode ? 'Di Meja' : 'Online') : 'Offline' };
+    });
+    socket.emit('searchUserResult', list);
+  });
+
+  // ----- TEMEN: KIRIM REQUEST -----
+  socket.on('sendFriendRequest', async ({ fromId, toId })=>{
+    fromId = normId(fromId); toId = normId(toId);
+    if(!fromId || !toId || fromId===toId) return socket.emit('friendError', 'Gak bisa add diri sendiri!');
+    let target = await getUserPublicById(toId);
+    if(!target) return socket.emit('friendError', 'User @'+toId+' gak ketemu!');
+    // Cek udah ada request / udah temenan belum (bolak-balik)
+    let { data: ex } = await supabase.from('friends').select('*').or(`and(from_id.eq.${fromId},to_id.eq.${toId}),and(from_id.eq.${toId},to_id.eq.${fromId})`).maybeSingle();
+    if(ex){
+      if(ex.status==='accepted') return socket.emit('friendError', 'Udah temenan!');
+      return socket.emit('friendError', 'Request udah dikirim, tinggal nunggu diterima!');
+    }
+    await supabase.from('friends').insert({ from_id: fromId, to_id: toId, status: 'pending' });
+    let me = await getUserPublicById(fromId);
+    // Kasih notif langsung ke yang dituju kalo dia lagi online
+    let ts = getSocketByUserId(toId);
+    if(ts) ts.emit('friendRequestIncoming', { from_id: fromId, display_name: me?.display_name||fromId, avatar: me?.avatar||'🧑' });
+    socket.emit('friendOk', 'Request ke '+ (me ? '' : '') + (target.display_name||toId) + ' udah dikirim!');
+    // Refresh list pending si tujuan biar langsung muncul
+    if(ts) ts.emit('friendPending', await getPendingFor(toId));
+  });
+
+  // ----- TEMEN: TERIMA / TOLAK -----
+  socket.on('respondFriendRequest', async ({ myId, fromId, accept })=>{
+    myId = normId(myId); fromId = normId(fromId);
+    if(accept){
+      await supabase.from('friends').update({ status:'accepted' }).eq('from_id', fromId).eq('to_id', myId).eq('status','pending');
+    } else {
+      await supabase.from('friends').delete().eq('from_id', fromId).eq('to_id', myId).eq('status','pending');
+    }
+    socket.emit('friendList', await getFriendsFor(myId));
+    socket.emit('friendPending', await getPendingFor(myId));
+    let other = getSocketByUserId(fromId);
+    if(other){
+      other.emit('friendList', await getFriendsFor(fromId));
+      if(accept) other.emit('friendOk', 'Request lu diterima!');
+      else other.emit('friendError', 'Request lu ditolak!');
+    }
+  });
+
+  // ----- TEMEN: AMBIL LIST TEMEN + PENDING + ONLINE -----
+  socket.on('getFriends', async ({ myId })=>{ socket.emit('friendList', await getFriendsFor(myId)); });
+  socket.on('getFriendPending', async ({ myId })=>{ socket.emit('friendPending', await getPendingFor(myId)); });
+  socket.on('getOnlineUsers', ()=>{ socket.emit('onlineUsersUpdated', getOnlineList()); });
+
+  // ----- TEMEN: HAPUS TEMEN -----
+  socket.on('removeFriend', async ({ myId, friendId })=>{
+    myId = normId(myId); friendId = normId(friendId);
+    await supabase.from('friends').delete().or(`and(from_id.eq.${myId},to_id.eq.${friendId}),and(from_id.eq.${friendId},to_id.eq.${myId})`).eq('status','accepted');
+    socket.emit('friendList', await getFriendsFor(myId));
+    let other = getSocketByUserId(friendId);
+    if(other) other.emit('friendList', await getFriendsFor(friendId));
+  });
+
+  // ----- TEMEN: UNDANG KE MEJA -----
+  socket.on('inviteFriend', async ({ fromId, toId, code, roomName })=>{
+    fromId = normId(fromId); toId = normId(toId);
+    let me = await getUserPublicById(fromId);
+    let ts = getSocketByUserId(toId);
+    if(!ts) return socket.emit('friendError', 'Temen lu lagi offline!');
+    ts.emit('friendInvite', { from_id: fromId, from_name: me?.display_name||fromId, avatar: me?.avatar||'🧑', code: code||'', roomName: roomName||'Meja' });
+    socket.emit('friendOk', 'Undangan udah dikirim!');
+  });
+
+  // ----- TEMEN: CHAT PRIBADI 1 LAWAN 1 -----
+  socket.on('privateChat', async ({ fromId, toId, msg })=>{
+    fromId = normId(fromId); toId = normId(toId); msg = String(msg||'').trim().slice(0,500);
+    if(!fromId || !toId || !msg) return;
+    await supabase.from('private_messages').insert({ from_id: fromId, to_id: toId, msg });
+    let payload = { from_id: fromId, to_id: toId, msg, created_at: new Date().toISOString() };
+    let ts = getSocketByUserId(toId);
+    if(ts) ts.emit('privateChatIncoming', payload);
+    socket.emit('privateChatSent', payload);
+  });
+  socket.on('getPrivateChat', async ({ myId, friendId })=>{
+    myId = normId(myId); friendId = normId(friendId);
+    let { data } = await supabase.from('private_messages').select('*').or(`and(from_id.eq.${myId},to_id.eq.${friendId}),and(from_id.eq.${friendId},to_id.eq.${myId})`).order('created_at', { ascending:true }).limit(100);
+    socket.emit('privateChatHistory', { friendId, messages: data||[] });
+  });
   socket.on('createRoom', ({ name, roomName, isPrivate, password, mode, avatar })=>{
   let code = genCode();
   let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec:30, turnTimer:null, lastDice:null, passCount:0, passNeeded:0, passedNames:[], claimTimer:null, skin:'hijau',
@@ -706,7 +842,8 @@ io.on('connection', (socket)=>{
   };
     let host = { id:socket.id, name:(name||'Player').trim(), isBot:false, isHost:true, hand:[], melds:[], discards:[], flowers:[], level:'', avatar: avatar||'🧑' };
   room.players.push(host);
-  rooms[code]=room; socket.join(code);
+    rooms[code]=room; socket.join(code);
+  if(socket.myUserId){ let u = onlineUsers.get(socket.myUserId); if(u){ u.roomCode = code; onlineUsers.set(socket.myUserId, u); } socket.myRoomCode = code; broadcastOnline(); }
   socket.emit('roomCreated', { code, players:publicPlayers(room) }); emitLobby(room);
   io.emit('roomListUpdated');
 });
@@ -719,15 +856,16 @@ io.on('connection', (socket)=>{
     if(room.phase==='playing'){ socket.emit('errorMsg', 'Game sudah mulai!'); return; }
     if(room.isPrivate && room.password!==(password||'')){ socket.emit('errorMsg','Password salah!'); return; }
         let cleanName = (name||'Player').trim() || 'Player';
-    let oldP = room.players.find(x=>x.name===cleanName && !x.isBot);
-    if(oldP){
-      if(oldP.disconnected){
+       let oldP = room.players.find(x=>x.name===cleanName && !x.isBot);
+       if(oldP){
+       if(oldP.disconnected){
         if(oldP.disconnectTimer){ clearTimeout(oldP.disconnectTimer); oldP.disconnectTimer = null; }
         oldP.id = socket.id;
         oldP.disconnected = false;
         oldP.disconnectedAt = null;
         if(avatar) oldP.avatar = avatar;
         socket.join(code);
+        if(socket.myUserId){ let u = onlineUsers.get(socket.myUserId); if(u){ u.roomCode = code; onlineUsers.set(socket.myUserId, u); } socket.myRoomCode = code; broadcastOnline(); }
         socket.emit('rejoinedRoom', { code, phase: room.phase, players: publicPlayers(room) });
         emitLobby(room);
         if(room.phase==='playing') sendHand(room, oldP);
@@ -736,8 +874,9 @@ io.on('connection', (socket)=>{
       socket.emit('errorMsg','Nama udah dipake! Ganti nama lain!'); return;
     }
     let p = { id:socket.id, name:cleanName, isBot:false, isHost:false, hand:[], melds:[], discards:[], flowers:[], level:'', avatar: avatar || '🧑' };
-    room.players.push(p);
+       room.players.push(p);
     socket.join(code);
+    if(socket.myUserId){ let u = onlineUsers.get(socket.myUserId); if(u){ u.roomCode = code; onlineUsers.set(socket.myUserId, u); } socket.myRoomCode = code; broadcastOnline(); }
     socket.emit('joinedRoom', { code, players:publicPlayers(room) });
     emitLobby(room);
   });
@@ -1049,9 +1188,10 @@ socket.on('jiaKong', ({ code, tileId })=>{
     io.emit('roomListUpdated');
   });
    socket.on('disconnect', ()=>{
-    for(let code in rooms){
-      let room = rooms[code];
-      let p = room.players.find(x=>x.id===socket.id);
+   if(socket.myUserId){ onlineUsers.delete(socket.myUserId); broadcastOnline(); }
+   for(let code in rooms){
+       let room = rooms[code];
+       let p = room.players.find(x=>x.id===socket.id);
       if(!p) continue;
       // JANGAN langsung hapus. Tandain putus, kasih 120 detik buat balik.
       p.disconnected = true;
