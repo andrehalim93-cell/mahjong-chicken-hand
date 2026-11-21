@@ -101,8 +101,8 @@ input{font-family:inherit}
 .poolSide{display:flex;flex-direction:column;flex-wrap:wrap;gap:2px;justify-content:flex-start;min-width:28px;max-height:120px}
 .poolCenter{min-width:90px;text-align:center}
 .poolTop .mTile,.poolBottom .mTile,.poolSide .mTile{width:36px;height:50px;font-size:10px}
-#discardFab{position:fixed;right:10px;top:108px;bottom:auto;width:44px;height:44px;border-radius:50%;border:2px solid #d4a017;background:#1a3a2a;color:#fff;font-size:22px;z-index:480;box-shadow:0 4px 12px rgba(0,0,0,.5);cursor:pointer;display:none}
-#discardFab.showInGame{display:block}
+#emoteFab{position:fixed;right:10px;top:108px;bottom:auto;width:44px;height:44px;border-radius:50%;border:2px solid #d4a017;background:#1a3a2a;color:#fff;font-size:22px;z-index:480;box-shadow:0 4px 12px rgba(0,0,0,.5);cursor:pointer;display:none}
+#emoteFab.showInGame{display:block}
 #discardModal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:490;display:none;align-items:center;justify-content:center}
 #discardModal.open{display:flex}
 .poolAllBottom{display:none!important}
@@ -249,6 +249,12 @@ input{font-family:inherit}
 #chatPanel.show{display:flex}
 #chatPanel .chatHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(250,204,21,.15);border-bottom:1px solid rgba(250,204,21,.3);font-size:13px}
 #chatPanel .qc{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.15);color:#fff;font-size:11px}
+#emotePanel{position:fixed;right:14px;bottom:80px;width:260px;max-width:92vw;background:rgba(10,20,12,.97);border:1px solid rgba(250,204,21,.45);border-radius:18px;z-index:500;display:none;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+#emotePanel.show{display:flex}
+#emotePanel button{font-size:26px;padding:10px 0;background:rgba(255,255,255,.1);border:none;border-radius:12px;cursor:pointer}
+#emotePanel button:active{transform:scale(.9)}
+.floatEmote{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);font-size:64px;z-index:600;pointer-events:none;animation:floatEmoteUp 1.6s ease-out forwards;text-shadow:0 4px 12px rgba(0,0,0,.6)}
+@keyframes floatEmoteUp{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-120%) scale(1)}}
 @media(max-width:640px){
   .topLogo h1{font-size:30px}
   .t{width:36px!important;height:50px!important}
@@ -439,7 +445,7 @@ input{font-family:inherit}
   position:absolute !important; top:6px !important; right:6px !important;
   display:flex !important; gap:6px !important; z-index:30 !important;
 }
-#chatFab, #discardFab{
+#chatFab, #emoteFab{
   position:static !important; width:30px !important; height:30px !important;
   min-width:30px !important; font-size:15px !important; border-radius:50% !important;
   right:auto !important; top:auto !important; bottom:auto !important; left:auto !important;
@@ -451,7 +457,7 @@ input{font-family:inherit}
 /* 3. Matikan aturan landscape lama yang mindahin chat ke kanan meja */
 @media (orientation:landscape) and (max-height:500px){
   .turnArrow{ width:210px !important; height:210px !important; }
-  #chatFab, #discardFab{ width:30px !important; height:30px !important; right:auto !important; bottom:auto !important; }
+  #chatFab, #emoteFab{ width:30px !important; height:30px !important; right:auto !important; bottom:auto !important; }
   #chatPanel{ right:10px !important; bottom:80px !important; }
 }
 /* ===== FINAL FIX V13 - ICON BALIK KE FRAME TANGAN + TILE MERAH SAMA KAYAK MELD ===== */
@@ -461,13 +467,13 @@ input{font-family:inherit}
   position:absolute !important; top:6px !important; right:6px !important;
   display:flex !important; gap:6px !important; z-index:30 !important;
 }
-#chatFab, #discardFab{
+#chatFab, #emoteFab{
   position:static !important; width:30px !important; height:30px !important;
   min-width:30px !important; font-size:15px !important; border-radius:50% !important;
   right:auto !important; top:auto !important; bottom:auto !important; left:auto !important;
   display:none !important; align-items:center !important; justify-content:center !important;
 }
-#chatFab.showInLobby, #chatFab.showInGame, #discardFab.showInGame{ display:flex !important; }
+#chatFab.showInLobby, #chatFab.showInGame, #emoteFab.showInGame{ display:flex !important; }
 /* Matikan aturan lama yang naruh icon di gameTop / kanan layar */
 .gameTop #chatFab, .gameTop #discardFab{ position:static !important; }
 /* 2. Tile merah kiri-kanan: puter kayak meld, jangan berdiri lagi */
@@ -1927,7 +1933,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   <div class="turnArrowTxt">🔄 Giliran: berlawanan jarum jam</div>
 </div>
    <div class="centerBox" id="centerBox">
-  <div class="poolCenter" id="lastTileEl" onclick="openDiscards()" title="Klik buat liat semua buangan" style="cursor:pointer">Belum ada buangan</div>
+  <div class="poolCenter" id="lastTileEl" onclick="openDiscards()" title="Klik buat liat semua buangan" style="cursor:pointer">👆 Klik buat liat buangan</div>
 </div>
 <div class="poolAllBottom" id="poolAll">
   <div style="font-size:10px;color:#fde68a;font-weight:800;letter-spacing:1px;margin-bottom:4px">🃏 BUANGAN</div>
@@ -1953,7 +1959,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 </div>
   <div class="myArea">
-    <div class="myTools"><button id="discardFab" onclick="openDiscards()" title="Lihat semua buangan">🗑️</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
+    <div class="myTools"><button id="emoteFab" onclick="toggleEmote()" title="Quick Emote">😀</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
     <div class="myTop"><div><b id="myNameLabel">Kamu</b> <span id="myStatus">• Menunggu giliran...</span></div><div><span id="myCount">13 tile</span> • <span id="myMeldCount">0 set</span><span id="myFlowerCount"></span></div></div>
     <div class="meldsRow" id="myMelds"></div><div class="flowersRow" id="myFlowers"></div><div class="myHand" id="myHand"></div>
 <div style="text-align:center;margin-top:6px"><button id="hintBtn" class="hintBtn" onclick="useHint()" style="display:none;padding:10px 16px;border:none;border-radius:14px;font-weight:900;font-size:13px;box-shadow:0 6px 16px rgba(0,0,0,.35);cursor:pointer">💡 HINT: BUANG APA?</button><div id="hintLabel" class="hintLabel" style="display:none">💡 Buang ini paling aman!</div></div>
@@ -1973,6 +1979,19 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     <button onclick="quickChat('🔥 Hoki banget!')" class="qc">🔥 Hoki banget!</button>
   </div>
   <div style="display:flex;gap:6px;padding:8px;border-top:1px solid rgba(255,255,255,.15)"><input id="chatInput" placeholder="Silahkan chat disini" style="flex:1;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:13px;outline:none"><button onclick="sendChat()" style="padding:11px 16px;border-radius:10px;background:#facc15;color:#422006;font-weight:900;font-size:13px">KIRIM ➡️</button></div>
+</div>
+<div id="emotePanel">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px"><b style="font-size:13px">😀 QUICK EMOTE</b><button onclick="toggleEmote()" style="background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;padding:4px 10px;font-weight:900">✕</button></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 10px 10px">
+    <button onclick="sendEmote('😂')">😂</button>
+    <button onclick="sendEmote('😭')">😭</button>
+    <button onclick="sendEmote('🔥')">🔥</button>
+    <button onclick="sendEmote('😡')">😡</button>
+    <button onclick="sendEmote('🐔')">🐔</button>
+    <button onclick="sendEmote('🙏')">🙏</button>
+    <button onclick="sendEmote('👏')">👏</button>
+    <button onclick="sendEmote('😱')">😱</button>
+  </div>
 </div>
 <div id="huFx"><div id="huFxTile"></div><div id="huFxText"><div class="huBig">🀄 HU!!</div><div class="huName" id="huFxName"></div></div></div>
 <div id="winModal"><div class="winBox"><div id="winAvatar" style="font-size:64px;line-height:1"></div><div style="font-size:48px">🎉</div><h2 id="winTitle">HU! CHICKEN HAND!</h2><p id="winMsg">...</p><div id="winHand" style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin:12px 0 4px"></div><div id="winMeldLabel" style="font-size:11px;color:#92400e;font-weight:800"></div><div id="rematchStatus" style="font-size:13px;font-weight:900;color:#92400e;margin-top:8px"></div><button id="rematchBtn" class="btn btn-gold" onclick="this.innerText='⏳ UDAH KLIK, NUNGGU TEMEN...';this.style.opacity='0.6';document.getElementById('rematchStatus').innerText='🔁 Kamu udah klik, nunggu temen...';socket.emit('rematch',{code:myCode});">🔁 REMATCH - MAIN LAGI (ORANG SAMA)</button><button class="btn btn-dark" style="margin-top:8px" onclick="openShowdown()">🃏 BUKA KARTU — LIHAT TANGAN SEMUA</button><button class="btn btn-dark" onclick="cancelRematchAndHome()">🏠 BALIK KE HOME</button></div></div>
@@ -2369,6 +2388,8 @@ function exitBotGame(){
   el('chatPanel').classList.remove('show');
   el('chatFab').classList.remove('showInLobby');
   el('chatFab').classList.remove('showInGame');
+  el('emoteFab').classList.remove('showInGame');
+  if(el('emotePanel')) el('emotePanel').classList.remove('show');
   // 3. Balik ke halaman depan - JANGAN hapus currentUser, JANGAN panggil doLogout()
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
@@ -2776,12 +2797,14 @@ socket.on('rejoinedRoom', d=>{
     el('gameScreen').classList.remove('hidden');
     el('chatFab').classList.remove('showInLobby');
     el('chatFab').classList.add('showInGame');
+    el('emoteFab').classList.add('showInGame');
   } else {
     el('gameScreen').classList.add('hidden');
     el('homeScreen').classList.add('hidden');
     el('lobbyScreen').classList.remove('hidden');
     el('chatFab').classList.remove('showInGame');
     el('chatFab').classList.add('showInLobby');
+    el('emoteFab').classList.remove('showInGame');
   }
 });
 socket.on('rejoinFailed', m=>{
@@ -3376,7 +3399,22 @@ function toggleChat(){
 }
 function sendChat(){ let inp = el('chatInput'); let m = inp.value.trim(); if(!m) return; socket.emit('tableChat', {code:myCode, msg:m}); inp.value=''; inp.focus(); }
 function quickChat(m){ socket.emit('tableChat', {code:myCode, msg:m}); }
-socket.on('tableChatMsg', d=>{ let list = el('chatList'); if(list.innerHTML.includes('Belum ada chat')) list.innerHTML=''; let isMe = d.name===myName; list.innerHTML += `<div style="margin-bottom:4px"><b style="color:${isMe?'#facc15':'#a7f3d0'}">${isMe?'Kamu':esc(d.name)}</b> <span style="color:#94a3b8;font-size:10px">${d.time}</span><br>${esc(d.msg)}</div>`; list.scrollTop = list.scrollHeight; if(!chatOpen && !isMe){ chatUnread++; let b=el('chatBadge'); b.innerText=chatUnread; b.style.display='block'; el('chatFabDot').style.display='block'; } });
+let emoteOpen=false;
+function toggleEmote(){
+  emoteOpen=!emoteOpen;
+  el('emotePanel').classList.toggle('show', emoteOpen);
+  if(emoteOpen) el('chatPanel').classList.remove('show');
+}
+function sendEmote(m){
+  socket.emit('tableChat', {code:myCode, msg:m});
+  showFloatingEmote(m);
+  emoteOpen=false; el('emotePanel').classList.remove('show');
+}
+function showFloatingEmote(m){
+  let d=document.createElement('div'); d.className='floatEmote'; d.innerText=m;
+  document.body.appendChild(d); setTimeout(()=>d.remove(), 1700);
+}
+socket.on('tableChatMsg', d=>{ let list = el('chatList'); if(list.innerHTML.includes('Belum ada chat')) list.innerHTML=''; let isMe = d.name===myName; if(!isMe && d.msg && [...d.msg].length<=2 && !d.msg.includes(' ')) showFloatingEmote(d.msg); list.innerHTML += `<div style="margin-bottom:4px"><b style="color:${isMe?'#facc15':'#a7f3d0'}">${isMe?'Kamu':esc(d.name)}</b> <span style="color:#94a3b8;font-size:10px">${d.time}</span><br>${esc(d.msg)}</div>`; list.scrollTop = list.scrollHeight; if(!chatOpen && !isMe){ chatUnread++; let b=el('chatBadge'); b.innerText=chatUnread; b.style.display='block'; el('chatFabDot').style.display='block'; } });
 socket.on('gameLog', d=>addLog(d.msg));
 document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.activeElement && document.activeElement.id==='chatInput'){ sendChat(); } });
 // ===== BACK HP: BALIK DI GAME, BUKAN KELUAR BROWSER =====
