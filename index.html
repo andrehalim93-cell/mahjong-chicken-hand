@@ -1600,6 +1600,34 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   /* 4. Baris Bunga kamu: 2 yang lama, sembunyiin */
   #gameScreen #myFlowers{ display:none !important; }
 }
+/* HP ONLY - TURUNIN SEMUA + NAMA SINTA DI LUAR MEJA + BUNGA LAWAN UDAH DI NAMA */
+@media (max-width:768px){
+  /* 1. Turunin semua dikit, biar bawah gak kosong */
+  #gameScreen{ padding-top:18px !important; }
+
+  /* 2. Meja turun, kasih ruang buat chip SINTA di atas meja */
+  #gameScreen .table{
+    margin-top:26px !important; /* ruang buat chip atas */
+    margin-bottom:10px !important;
+  }
+  /* 3. Chip SINTA: di luar meja, di atas meja, bukan nimpa tile */
+  #gameScreen .seatPos.top{
+    position:absolute !important; top:-22px !important; left:50% !important;
+    transform:translateX(-50%) !important; z-index:5 !important;
+  }
+  /* 4. Chip kiri-kanan: udah di luar, biarin, cuma pastiin gak ketutupan meja */
+  #gameScreen .seatPos.left, #gameScreen .seatPos.right{ z-index:5 !important; }
+
+  /* 5. Bunga lawan yang lama (yang misah di tengah meja) sembunyiin, udah pindah ke nama */
+  #gameScreen .seatPos .oppFlower{ display:none !important; }
+
+  /* 6. Meld atas: karena meja turun + chip di luar, meld atas turun dikit juga biar gak nempel tile atas */
+  #gameScreen #meldTop{ top:84px !important; }
+
+  /* 7. Chip lawan: biar muat "10 tile • 🌸 1 bunga", jangan kepotong */
+  #gameScreen .playerChip{ white-space:nowrap !important; max-width:none !important; }
+  #gameScreen .playerChip small{ white-space:nowrap !important; }
+}
 </style>
 </head>
 <body>
@@ -3004,7 +3032,7 @@ applyTileColor(currentTileColor);
     let pos = posMap[idx] || 'top';
     let slot = slots[pos];
     let isTurn = p.name===turn;
-       slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span><small>• ${p.handCount} tile</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill(backTileHTML()).join('')}</div><div class="oppFlower" style="font-size:11px;color:#fbcfe8;writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;line-height:1.4;${p.flowers.length?'':'visibility:hidden'}">🌸 ${p.flowers.length} bunga</div>`;
+       slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span><small>• ${p.handCount} tile${p.flowers.length?` • 🌸 ${p.flowers.length} bunga`:''}</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill(backTileHTML()).join('')}</div>`;
     let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join('');
     if(meldHtml && meldSlots[pos]) meldSlots[pos].innerHTML = meldHtml;
   });
