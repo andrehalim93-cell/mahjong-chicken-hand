@@ -36,7 +36,9 @@ function cleanStr(s, max){
 // --- REGISTER: ID + Password di-hash dulu baru disimpen ---
 app.post('/api/register', async (req, res) => {
   try{
-    let { id, password, display_name, gender, avatar } = req.body || {};
+    let { id, password, display_name, gender, avatar, question, answerHash } = req.body || {};
+    question = cleanStr(question, 20);
+    answerHash = cleanStr(answerHash, 100);
     id = cleanStr(id, 20).toLowerCase();
     display_name = cleanStr(display_name, 20);
     gender = cleanStr(gender, 10);
@@ -46,7 +48,8 @@ app.post('/api/register', async (req, res) => {
     if(!password || String(password).length < 6) return res.status(400).json({ ok:false, error:'Password minimal 6 karakter!' });
     if(!display_name) return res.status(400).json({ ok:false, error:'Nama tampilan wajib diisi!' });
     if(gender !== 'male' && gender !== 'female') return res.status(400).json({ ok:false, error:'Gender harus male / female!' });
-    if(!avatar) avatar = '🀄';
+    if(!['hewan','kota','sekolah','ibu'].includes(question)) return res.status(400).json({ ok:false, error:'Pertanyaan keamanan wajib dipilih!' });
+    if(!answerHash || answerHash.length !== 64) return res.status(400).json({ ok:false, error:'Jawaban keamanan wajib diisi!' });
 
     // Cek ID udah dipake belum
     let { data: existing } = await supabase.from('users').select('id').eq('id', id).maybeSingle();
@@ -56,7 +59,7 @@ app.post('/api/register', async (req, res) => {
     let password_hash = await bcrypt.hash(String(password), 10);
 
     let { data, error } = await supabase.from('users').insert([{
-      id, password_hash, display_name, gender, avatar
+      id, password_hash, display_name, gender, avatar, question, answer_hash: answerHash
     }]).select('id, display_name, gender, avatar, created_at').single();
 
     if(error){
@@ -84,12 +87,43 @@ app.post('/api/login', async (req, res) => {
     let match = await bcrypt.compare(String(password), user.password_hash);
     if(!match) return res.status(400).json({ ok:false, error:'Password salah!' });
 
-    // JANGAN kirim password_hash ke client!
+       // JANGAN kirim hash ke client! Ini yang paling penting.
     delete user.password_hash;
+    delete user.answer_hash;
     return res.json({ ok:true, user });
   }catch(e){
     console.log('LOGIN EX:', e);
     return res.status(500).json({ ok:false, error:'Server error saat login!' });
+  }
+});
+
+// --- LUPA PASSWORD: cek HASH jawaban, bukan jawaban polosan ---
+app.post('/api/forgot-password', async (req, res) => {
+  try{
+    let { id, question, answerHash, newPassword } = req.body || {};
+    id = cleanStr(id, 20).toLowerCase();
+    question = cleanStr(question, 20);
+    answerHash = cleanStr(answerHash, 100);
+    if(!id || !question || !answerHash) return res.status(400).json({ ok:false, error:'Isi ID, pertanyaan & jawaban!' });
+    if(!newPassword || String(newPassword).length < 6) return res.status(400).json({ ok:false, error:'Password baru minimal 6 karakter!' });
+
+    let { data: user, error } = await supabase.from('users').select('id, question, answer_hash').eq('id', id).maybeSingle();
+    if(error || !user) return res.status(400).json({ ok:false, error:'ID tidak ditemukan!' });
+    if(!user.answer_hash) return res.status(400).json({ ok:false, error:'Akun ini belum setting pertanyaan keamanan! Daftar ulang!' });
+
+    // Bandingin HASH vs HASH - jawaban aslinya gak pernah keluar dari HP user
+    if(user.question !== question || user.answer_hash !== answerHash)
+      return res.status(400).json({ ok:false, error:'Pertanyaan / jawaban salah!' });
+
+    // Kalo cocok, baru ganti password - pake bcrypt kayak register
+    let newHash = await bcrypt.hash(String(newPassword), 10);
+    let { error: updErr } = await supabase.from('users').update({ password_hash: newHash }).eq('id', id);
+    if(updErr) return res.status(500).json({ ok:false, error:'Gagal ganti password: ' + updErr.message });
+
+    return res.json({ ok:true });
+  }catch(e){
+    console.log('FORGOT EX:', e);
+    return res.status(500).json({ ok:false, error:'Server error saat reset!' });
   }
 });
 app.post('/api/add-hu', async (req, res)=>{
