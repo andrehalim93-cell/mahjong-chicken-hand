@@ -2957,7 +2957,6 @@ function openGelarGuide(){
   }
 }
 function closeGelarGuide(){ let m = el('gelarGuideModal'); if(m) m.style.display = 'none'; }
-function joinRoom(){ myName = el('nameInput') ? el('nameInput').value.trim() : ''; if(!myName && currentUser) myName = currentUser.display_name; let code = el('codeInput') ? el('codeInput').value.trim().toUpperCase() : ''; let password = el('joinPassInput') ? el('joinPassInput').value.trim() : ''; if(!myName) return showErr('Isi nama dulu!'); if(!code) return showErr('Isi kode meja!'); socket.emit('joinRoom',{code,name:myName,password,avatar: currentUser ? currentUser.avatar : '🧑'}); }
 function addBot(level){ let botName=randomBotName(); socket.emit('addBot',{code:myCode, level, botName}); }
 function fillBots(){ let need=4 - (currentPlayers.length||0); if(need<=0) need=3; for(let i=0;i<need;i++){ setTimeout(()=>addBot('normal'), i*150); } }
 // Simpen info lobby terakhir, biar startGame tau mode + jumlah pemain
