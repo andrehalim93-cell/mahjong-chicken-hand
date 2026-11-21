@@ -451,7 +451,7 @@ input{font-family:inherit}
   right:auto !important; top:auto !important; bottom:auto !important; left:auto !important;
   display:none !important; align-items:center !important; justify-content:center !important;
 }
-#chatFab.showInLobby, #chatFab.showInGame, #emoteFab.showInGame{ display:flex !important; }
+#chatFab.showInLobby, #chatFab.showInGame, #emoteFab.showInGame, #friendFab.showInLobby, #friendFab.showInGame{ display:flex !important; }
 #chatFab #chatBadge{ min-width:15px !important; height:15px !important; line-height:15px !important; font-size:9px !important; top:-3px !important; right:-3px !important; }
 #chatPanel{ position:fixed !important; right:10px !important; bottom:80px !important; top:auto !important; }
 /* 3. Matikan aturan landscape lama yang mindahin chat ke kanan meja */
@@ -473,7 +473,7 @@ input{font-family:inherit}
   right:auto !important; top:auto !important; bottom:auto !important; left:auto !important;
   display:none !important; align-items:center !important; justify-content:center !important;
 }
-#chatFab.showInLobby, #chatFab.showInGame, #emoteFab.showInGame{ display:flex !important; }
+#chatFab.showInLobby, #chatFab.showInGame, #emoteFab.showInGame, #friendFab.showInLobby, #friendFab.showInGame{ display:flex !important; }
 /* Matikan aturan lama yang naruh icon di gameTop / kanan layar */
 .gameTop #chatFab, .gameTop #discardFab{ position:static !important; }
 /* 2. Tile merah kiri-kanan: puter kayak meld, jangan berdiri lagi */
@@ -2002,7 +2002,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 </div>
   <div class="myArea">
-    <div class="myTools"><button id="emoteFab" onclick="toggleEmote()" title="Quick Emote">😀</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
+    <div class="myTools"><button id="friendFab" onclick="openInviteFriends()" title="Undang Temen" style="background:#facc15;color:#422006">👥<span id="friendFabBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;font-size:9px;min-width:15px;height:15px;line-height:15px;border-radius:999px">!</span></button><button id="emoteFab" onclick="toggleEmote()" title="Quick Emote">😀</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
     <div class="myTop"><div><b id="myNameLabel">Kamu</b> <span id="myStatus">• Menunggu giliran...</span></div><div><span id="myCount">13 tile</span> • <span id="myMeldCount">0 set</span><span id="myFlowerCount"></span></div></div>
     <div class="meldsRow" id="myMelds"></div><div class="flowersRow" id="myFlowers"></div><div class="myHand" id="myHand"></div>
 <div style="text-align:center;margin-top:6px"><button id="hintBtn" class="hintBtn" onclick="useHint()" style="display:none;padding:10px 16px;border:none;border-radius:14px;font-weight:900;font-size:13px;box-shadow:0 6px 16px rgba(0,0,0,.35);cursor:pointer">💡 HINT: BUANG APA?</button><div id="hintLabel" class="hintLabel" style="display:none">💡 Buang ini paling aman!</div></div>
@@ -2666,6 +2666,7 @@ function refreshFriends(){
   socket.emit('getFriendPending', { myId: myUserId() });
   socket.emit('getOnlineUsers', {});
 }
+setInterval(()=>{ let c = el('chatFab'); let f = el('friendFab'); if(c && f){ if(c.classList.contains('showInLobby')) f.classList.add('showInLobby'); if(c.classList.contains('showInGame')) f.classList.add('showInGame'); if(!c.classList.contains('showInLobby') && !c.classList.contains('showInGame')){ f.classList.remove('showInLobby'); f.classList.remove('showInGame'); } } }, 1000);
 function searchFriend(){
   let q = el('friendSearchInput').value.trim();
   if(!q) return toast('Ketik nama / @id dulu!');
@@ -2704,6 +2705,30 @@ function renderFriendList(list){
 function inviteFriend(toId){
   if(!myCode){ toast('Bikin meja dulu baru bisa undang!'); return; }
   socket.emit('inviteFriend', { fromId: myUserId(), toId, code: myCode, roomName: 'Meja '+ (currentUser?currentUser.display_name:'') });
+}
+function openInviteFriends(){
+  if(!myCode){ toast('Bikin / join meja dulu baru bisa undang!'); return; }
+  refreshFriends();
+  el('inviteFriendsCode').innerText = '('+myCode+')';
+  el('inviteFriendsModal').style.display = 'flex';
+  setTimeout(renderInviteFriendsList, 400);
+}
+function closeInviteFriends(){ el('inviteFriendsModal').style.display = 'none'; }
+function renderInviteFriendsList(){
+  // Nama yang udah di meja ini, jangan ditampilin lagi
+  let inRoom = (currentPlayers||[]).map(p=>p.name);
+  let friends = (friendListData||[]).filter(u=>!inRoom.includes(u.display_name));
+  let online = (onlineListData||[]).filter(u=>u.id!==myUserId() && u.roomCode!==myCode && !inRoom.includes(u.display_name) && !(friendListData||[]).some(f=>f.id===u.id));
+  let fb = el('inviteFriendsList');
+  if(fb){
+    if(!friends.length) fb.innerHTML = '<div style="color:#94a3b8;font-size:13px">Belum ada temen. Add dulu di tab TEMEN.</div>';
+    else fb.innerHTML = friends.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="inviteFriend('${esc(u.id)}');toast('Undangan ke ${esc(u.display_name)} dikirim!')">🀄 UNDANG</button></div>`).join('');
+  }
+  let ob = el('inviteOnlineList');
+  if(ob){
+    if(!online.length) ob.innerHTML = '<div style="color:#94a3b8;font-size:13px">Gak ada yang online di luar meja ini.</div>';
+    else ob.innerHTML = online.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="inviteFriend('${esc(u.id)}');toast('Undangan ke ${esc(u.display_name)} dikirim!')">🀄 UNDANG</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="sendFriendRequest('${esc(u.id)}')">+ ADD</button></div>`).join('');
+  }
 }
 function openPrivateChat(friendId, displayName){
   currentPrivateFriend = friendId;
@@ -3027,7 +3052,7 @@ socket.on('updateLobby', room=>{
     if(!av) av = '🧑';
     wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}"><div class="ava">${p.isBot?'🤖':avatarHTML(av, 56)}</div><div class="nm">${p.isBot?botDisplayName(p):esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?('🤖 BOT'+(isHost?' • Klik buat hapus':'')):(p.id===room.hostId?'👑 HOST':'Pemain')}</div>${p.isBot && isHost?`<button class="kickBtn" onclick="removeBot('${esc(p.name)}')">✕</button>`:''}</div>`;
   });
-  for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty">💺 Kursi Kosong<br><small>Menunggu pemain...</small></div>`;
+  for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty" onclick="openInviteFriends()" style="cursor:pointer">💺 Kursi Kosong<br><small>Menunggu pemain...</small><button onclick="event.stopPropagation();openInviteFriends()" style="margin-top:6px;background:#facc15;color:#422006;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">👥 UNDANG TEMEN</button></div>`;
   el('startBtn').disabled = room.players.length<2;
   el('startBtn').innerText = room.players.length<2 ? `⏳ BUTUH MIN 2 PEMAIN (${room.players.length}/4)` : `🚀 MULAI GAME (${room.players.length} PEMAIN)`;
   updateExitBotBtn();
@@ -3606,6 +3631,18 @@ window.addEventListener('popstate', function(e){
     <div id="friendInviteSub" style="font-size:13px;color:#a7f3d0;margin:8px 0"></div>
     <button class="btn btn-gold" onclick="acceptFriendInvite()">✅ IKUT MEJA</button>
     <button class="btn btn-dark" onclick="closeFriendInvite()" style="margin-top:8px">❌ TOLAK</button>
+  </div>
+</div>
+<!-- MODAL UNDANG TEMEN KE MEJA INI -->
+<div id="inviteFriendsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:250;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) closeInviteFriends()">
+  <div class="card" style="max-width:420px;width:100%;margin:0">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b>👥 UNDANG KE MEJA <span id="inviteFriendsCode"></span></b><button onclick="closeInviteFriends()" style="background:none;border:none;color:#fff;font-size:20px">✕</button></div>
+    <div style="font-size:12px;color:#a7f3d0;margin-top:6px">Yang diundang bakal dapet popup <b>✅ IKUT MEJA</b>, langsung masuk ke meja ini. Kalo dia lagi di meja lain, dia harus keluar dulu.</div>
+    <div class="lbl">👥 TEMEN KAMU</div>
+    <div id="inviteFriendsList" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="lbl">🟢 ONLINE TAPI BELUM DI MEJA INI</div>
+    <div id="inviteOnlineList" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button class="btn btn-dark" onclick="refreshFriends();setTimeout(renderInviteFriendsList,300)" style="margin-top:10px">🔄 REFRESH</button>
   </div>
 </div>
 </body>
