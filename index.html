@@ -2293,6 +2293,7 @@ function exitBotGame(){
   backToHome();
 }
   function backToHome(skipLeave){
+  releaseBackTrap();
   // 1. Kasih tau server kita keluar meja, KECUALI kalau ini dipanggil pas rejoin gagal.
   // Kalau rejoin gagal, JANGAN kirim leaveRoom, nanti kursi kita kehapus sendiri.
   try{ if(myCode && !skipLeave) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
@@ -2629,6 +2630,7 @@ let lobbyMode = 'latihan';
 let lobbyPlayerCount = 0;
 
 function startGame(){
+  trapBackInGame();
   // Kalau TANDING tapi belum full 4 orang asli -> tampilkan konfirmasi dulu, JANGAN langsung start
   if(lobbyMode==='tanding' && lobbyPlayerCount < 4){
     document.getElementById('startConfirmText').innerText =
@@ -3315,6 +3317,24 @@ function quickChat(m){ socket.emit('tableChat', {code:myCode, msg:m}); }
 socket.on('tableChatMsg', d=>{ let list = el('chatList'); if(list.innerHTML.includes('Belum ada chat')) list.innerHTML=''; let isMe = d.name===myName; list.innerHTML += `<div style="margin-bottom:4px"><b style="color:${isMe?'#facc15':'#a7f3d0'}">${isMe?'Kamu':esc(d.name)}</b> <span style="color:#94a3b8;font-size:10px">${d.time}</span><br>${esc(d.msg)}</div>`; list.scrollTop = list.scrollHeight; if(!chatOpen && !isMe){ chatUnread++; let b=el('chatBadge'); b.innerText=chatUnread; b.style.display='block'; el('chatFabDot').style.display='block'; } });
 socket.on('gameLog', d=>addLog(d.msg));
 document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.activeElement && document.activeElement.id==='chatInput'){ sendChat(); } });
+// ===== BACK HP: BALIK DI GAME, BUKAN KELUAR BROWSER =====
+let inGameBackTrap = false;
+function trapBackInGame(){
+  history.pushState({inGame:true}, '');
+  inGameBackTrap = true;
+}
+function releaseBackTrap(){
+  inGameBackTrap = false;
+}
+window.addEventListener('popstate', function(e){
+  if(!inGameBackTrap) return;
+  history.pushState({inGame:true}, '');
+  if(confirm('Keluar dari game ini?')){
+    releaseBackTrap();
+    backToHome();
+  }
+});
+</script>  <-- yang ini, ini penutupnya
 </script>
 </body>
 </html>
