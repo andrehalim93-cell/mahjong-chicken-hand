@@ -1404,6 +1404,54 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   /* BAWAH MEJA: rapetin jarak dari meja ke kartu lu */
   #gameScreen .myArea{ margin-top:4px !important; padding-top:4px !important; }
 }
+/* HP ONLY - PILL ATAS KEBACA + TILE KIRI-KANAN NEMPEL PINGGIR */
+@media (max-width:768px){
+  /* 1. PILL ATAS: kasih napas atas, jangan kepotong */
+  #gameScreen{ padding-top:12px !important; overflow:visible !important; }
+  #gameScreen .gameTop{
+    margin:4px 4px 8px 4px !important;
+    overflow:visible !important; min-height:32px !important;
+  }
+  #gameScreen .gameTop .pill{ overflow:visible !important; }
+
+  /* 2. PATOKAN MEJA: harus relative, biar kiri-kanan ngukurnya dari meja */
+  #gameScreen .table{ position:relative !important; }
+
+  /* 3. KIRI: nempel pinggir kiri meja, vertikal, di tengah-tengah tinggi meja */
+  #gameScreen .seatPos.left{
+    position:absolute !important;
+    left:4px !important; right:auto !important;
+    top:50% !important; transform:translateY(-50%) !important;
+    width:26px !important; display:flex !important;
+    flex-direction:column !important; align-items:center !important;
+  }
+  /* 4. KANAN: nempel pinggir kanan meja */
+  #gameScreen .seatPos.right{
+    position:absolute !important;
+    right:4px !important; left:auto !important;
+    top:50% !important; transform:translateY(-50%) !important;
+    width:26px !important; display:flex !important;
+    flex-direction:column !important; align-items:center !important;
+  }
+  /* 5. TIANG IJO KIRI-KANAN: 1 kolom lurus, gak melebar ke tengah */
+  #gameScreen .seatPos.left .miniHand,
+  #gameScreen .seatPos.right .miniHand{
+    display:flex !important; flex-direction:column !important;
+    flex-wrap:nowrap !important; gap:1px !important;
+    align-items:center !important; width:26px !important;
+  }
+  #gameScreen .seatPos.left .miniHand .backTile,
+  #gameScreen .seatPos.right .miniHand .backTile,
+  #gameScreen .seatPos.left .miniHand img,
+  #gameScreen .seatPos.right .miniHand img{
+    width:22px !important; height:28px !important; flex:none !important;
+  }
+  /* 6. ATAS: tetep di atas, biar gak ikut kegeser */
+  #gameScreen .seatPos.top{
+    position:absolute !important; top:6px !important; left:50% !important;
+    transform:translateX(-50%) !important;
+  }
+}
 </style>
 </head>
 <body>
