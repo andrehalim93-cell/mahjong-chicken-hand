@@ -2738,7 +2738,7 @@ function renderFriendList(list){
 function inviteFriend(toId){
   if(!myCode){ toast('Bikin meja dulu baru bisa undang!'); return; }
   let target = String(toId||'').toLowerCase();
-  console.log('inviteFriend ke:', target, 'dari:', myUserId(), 'kode:', myCode);
+  console.log('inviteFriend ke:', target, 'dari:', myUserId());
   if(!socket || !socket.connected){ toast('📶 Lagi putus, nyambung lagi...'); return; }
   socket.emit('inviteFriend', { fromId: myUserId(), toId: target, code: myCode, roomName: 'Meja '+ (currentUser?currentUser.display_name:'') });
   toast('Undangan ke @'+target+' dikirim!');
@@ -2747,7 +2747,7 @@ function openInviteFriends(){
   let titleEl2 = document.querySelector('#inviteFriendsModal b'); if(titleEl2) titleEl2.innerText = '👥 UNDANG KE MEJA';
   if(!myCode){ toast('Bikin / join meja dulu baru bisa undang! (myCode kosong)'); return; }
   refreshFriends();
-  el('inviteFriendsCode').innerText = '('+myCode+')';
+  el('inviteFriendsCode').innerText = '';
   let m = el('inviteFriendsModal');
   m.style.display = 'flex';
   m.style.zIndex = '999';
@@ -2851,7 +2851,7 @@ socket.on('friendRequestIncoming', d=>{
 socket.on('friendInvite', d=>{
   pendingInviteCode = d.code;
   el('friendInviteText').innerText = d.from_name + ' ngundang main!';
-  el('friendInviteSub').innerText = 'Meja: ' + d.roomName + ' • Kode: ' + d.code;
+  el('friendInviteSub').innerText = 'Meja: ' + d.roomName;
   el('friendInviteModal').style.display = 'flex';
 });
 socket.on('privateChatHistory', d=>{ if(d.friendId===currentPrivateFriend) renderPrivateHistory(d.messages); });
@@ -3706,7 +3706,7 @@ window.addEventListener('popstate', function(e){
   </div>
 </div>
 <!-- MODAL UNDANG TEMEN KE MEJA INI -->
-<<div id="inviteFriendsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto" onclick="if(event.target===this) closeInviteFriends()">
+<div id="inviteFriendsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto" onclick="if(event.target===this) closeInviteFriends()">
   <div class="card" style="max-width:420px;width:100%;margin:20px 0;max-height:88vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center"><b>👥 UNDANG KE MEJA <span id="inviteFriendsCode"></span></b><button onclick="closeInviteFriends()" style="background:none;border:none;color:#fff;font-size:20px">✕</button></div>
     <div style="font-size:12px;color:#a7f3d0;margin-top:6px">Yang diundang bakal dapet popup <b>✅ IKUT MEJA</b>, langsung masuk ke meja ini. Kalo dia lagi di meja lain, dia harus keluar dulu.</div>
