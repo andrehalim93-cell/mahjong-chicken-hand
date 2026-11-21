@@ -1270,38 +1270,38 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     width:24px !important; height:34px !important; transform:rotate(90deg) !important;
   }
 }
-/* HP ONLY - FIX 3 INI DOANG */
+/* HP ONLY - FINAL: KODE LAMA, CUMA DIKUNCI POSISINYA, MEJA PERSEGI */
 @media (max-width:768px){
-  /* 1. CHIP LAWAN: jangan absolute, biar gak kepotong pinggir meja */
-  #gameScreen .seatPos.left .playerChip,
-  #gameScreen .seatPos.right .playerChip,
-  #gameScreen .seatPos.top .playerChip{
-    position:static !important; transform:none !important;
-    writing-mode:horizontal-tb !important; max-width:110px !important;
-    white-space:nowrap !important; overflow:hidden !important;
-  }
-  #gameScreen .seatPos.left, #gameScreen .seatPos.right{
-    display:flex !important; flex-direction:column !important;
-    align-items:center !important; gap:2px !important; width:72px !important;
-  }
-  #gameScreen .seatPos.left .miniHand, #gameScreen .seatPos.right .miniHand{
-    display:flex !important; flex-direction:column !important;
-    flex-wrap:nowrap !important; gap:1px !important;
-  }
-  #gameScreen .seatPos.top .miniHand{
-    display:flex !important; flex-direction:row !important;
-    flex-wrap:nowrap !important; gap:1px !important;
+  #gameScreen{ display:flex !important; flex-direction:column !important; }
+
+  /* MEJA PERSEGI, DI TENGAH */
+  #gameScreen .table{
+    flex:none !important; width:min(calc(100vw - 16px), 430px) !important;
+    aspect-ratio:1 / 1 !important; margin:0 auto !important;
+    position:relative !important; overflow:hidden !important;
   }
 
-  /* 2. TANGAN LU: kecilin dikit biar 14 tile muat 2 baris, gak kepotong */
-  #gameScreen #myHand{ display:flex !important; flex-wrap:wrap !important; justify-content:center !important; gap:3px !important; }
-  #gameScreen #myHand .t{ width:34px !important; height:48px !important; }
-  #gameScreen .myArea{ padding:4px !important; }
+  /* LAWAN: POSISI FIX, PAKE FLEX LAMA, CUMA DIKUNCI */
+  #gameScreen .seatPos{ position:absolute !important; display:flex !important; flex-direction:column !important; align-items:center !important; gap:2px !important; }
+  #gameScreen .seatPos.top{ top:8px !important; left:50% !important; transform:translateX(-50%) !important; }
+  #gameScreen .seatPos.left{ left:8px !important; top:50% !important; transform:translateY(-50%) !important; }
+  #gameScreen .seatPos.right{ right:8px !important; top:50% !important; transform:translateY(-50%) !important; }
+  #gameScreen .seatPos .playerChip{ position:static !important; transform:none !important; }
+  #gameScreen .seatPos.top .miniHand{ display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; gap:1px !important; }
+  #gameScreen .seatPos.left .miniHand, #gameScreen .seatPos.right .miniHand{ display:flex !important; flex-direction:column !important; flex-wrap:nowrap !important; gap:1px !important; }
 
-  /* 3. SLOT KOSONG: hilang total, jangan ninggalin bolong */
-  #gameScreen #myMelds:empty, #gameScreen #myFlowers:empty,
+  /* MELD LAWAN: POSISI FIX, KALO GAK ADA HILANG TOTAL */
+  #gameScreen .meldZone{ position:absolute !important; }
+  #gameScreen .meldTopRight{ top:95px !important; left:50% !important; transform:translateX(-50%) !important; }
+  #gameScreen .meldLeftBottom{ left:72px !important; top:50% !important; transform:translateY(-50%) !important; }
+  #gameScreen .meldRightBottom{ right:72px !important; top:50% !important; transform:translateY(-50%) !important; }
   #gameScreen .meldZone:empty{ display:none !important; }
-  #gameScreen #myMelds, #gameScreen #myFlowers{ height:auto !important; min-height:0 !important; }
+
+  /* TENGAH MEJA: FIX DI TENGAH */
+  #gameScreen .centerBox{ position:absolute !important; left:50% !important; top:50% !important; transform:translate(-50%,-50%) !important; }
+
+  /* PUNYA LU: KALO KOSONG HILANG, KALO ADA NONGOL DI TEMPATNYA */
+  #gameScreen #myMelds:empty, #gameScreen #myFlowers:empty{ display:none !important; }
 }
 </style>
 </head>
