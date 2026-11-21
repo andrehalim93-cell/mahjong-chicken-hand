@@ -1270,56 +1270,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     width:24px !important; height:34px !important; transform:rotate(90deg) !important;
   }
 }
-/* ===== HP ONLY: NO-FLEX LAYOUT, MEJA PERSEGI, NO TINDIH ===== */
-@media (max-width:768px){
-  /* 1. MEJA PERSEGI, UKURAN DIKUNCI, GAK MELAR / MENCIUT LAGI */
-  #gameScreen{ display:block !important; overflow:hidden !important; }
-  #gameScreen .gameTop{ height:34px !important; flex:none !important; }
-  #gameScreen .table{
-    display:block !important; flex:none !important;
-    width:min(calc(100vw - 12px), calc(100dvh - 340px)) !important;
-    height:auto !important; aspect-ratio:1 / 1 !important;
-    margin:4px auto !important; overflow:hidden !important;
-  }
-  #gameScreen .myArea{ display:block !important; flex:none !important; }
-  #gameScreen .log{ flex:none !important; }
-
-  /* 2. KECUALI PLAYERCHIP, SEMUA FLEX DIMATIIN DI DALEM MEJA */
-  #gameScreen .seatPos{ display:block !important; text-align:center !important; }
-  #gameScreen .playerChip{ display:flex !important; } /* INI DOANG YANG TETEP FLEX */
-  #gameScreen .miniHand{ display:block !important; text-align:center !important; }
-  #gameScreen .miniHand > div{ display:inline-block !important; vertical-align:top !important; }
-  #gameScreen .centerBox{ display:block !important; }
-  #gameScreen .poolTop, #gameScreen .poolBottom,
-  #gameScreen .poolMid, #gameScreen .poolSide{ display:block !important; text-align:center !important; }
-  #gameScreen .poolTop .mTile, #gameScreen .poolBottom .mTile,
-  #gameScreen .poolSide .mTile{ display:inline-block !important; vertical-align:top !important; }
-  #gameScreen .meldZone{ display:block !important; }
-  #gameScreen .meldZone .meld{ display:inline-block !important; vertical-align:top !important; }
-
-  /* 3. BUNGA: SLOT TETEP ADA, KALO GAK ADA BUNGA YA KOSONG, GAK NGEDORONG */
-  #gameScreen #myFlowers{
-    display:block !important; height:38px !important; min-height:38px !important;
-    overflow:hidden !important; text-align:center !important; margin-top:4px !important;
-  }
-  #gameScreen #myFlowers .t{ display:inline-block !important; vertical-align:top !important; }
-
-  /* 4. MELD: SAMA, SLOT TETEP ADA, KALO GAK ADA MELD YA KOSONG */
-  #gameScreen #myMelds{
-    display:block !important; height:44px !important; min-height:44px !important;
-    overflow:hidden !important; text-align:center !important; margin-top:4px !important;
-  }
-  #gameScreen #myMelds .meld{ display:inline-block !important; vertical-align:top !important; }
-
-  /* 5. TANGAN LU: BUKAN FLEX, JADI GAK LONCAT-LONCAT */
-  #gameScreen #myHand{ display:block !important; text-align:center !important; }
-  #gameScreen #myHand .t{ display:inline-block !important; vertical-align:top !important; }
-
-  /* 6. ACTIONBAR: GAK ADA DI ALUR LAYOUT. KALO KOSONG, HILANG TOTAL. KALO ADA TOMBOL, NONGOL DI ATAS TANGAN, GAK DORONG MEJA */
-  #gameScreen #actionBar{ display:block !important; text-align:center !important; min-height:0 !important; margin-top:6px !important; }
-  #gameScreen #actionBar:empty{ display:none !important; margin:0 !important; }
-  #gameScreen #actionBar button{ display:inline-block !important; vertical-align:top !important; }
-}
 </style>
 </head>
 <body>
