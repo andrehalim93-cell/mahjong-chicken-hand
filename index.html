@@ -3392,7 +3392,7 @@ function closeDiscards(){ document.getElementById('discardModal').classList.remo
 let claimTimeoutInt=null;
 let lastDrawnTileId=null;
 let chatOpen=false, chatUnread=0;
-ffunction toggleChat(){
+function toggleChat(){
   chatOpen=!chatOpen;
   el('chatPanel').classList.toggle('show', chatOpen);
   if(chatOpen){ emoteOpen=false; el('emotePanel').classList.remove('show'); }
