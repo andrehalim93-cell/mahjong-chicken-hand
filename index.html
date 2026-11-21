@@ -1540,6 +1540,46 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     gap:6px !important; min-height:112px !important;
   }
 }
+/* HP ONLY - FRAME SAYA JANGAN FLEX, 11 TILE 1 SET MASUK KE DALAM FRAME */
+@media (max-width:768px){
+  #gameScreen .myArea .myTop{
+    display:block !important; /* bukan flex lagi */
+    background:rgba(0,0,0,.45) !important;
+    border:1px solid rgba(250,204,21,.35) !important;
+    border-radius:12px !important;
+    padding:8px 10px !important;
+    text-align:left !important;
+  }
+  /* Baris 1: nama lu doang, tanpa GILIRAN KAMU */
+  #gameScreen .myArea .myTop > div:nth-child(1){
+    display:block !important; font-size:14px !important; line-height:1.3 !important;
+  }
+  #gameScreen .myArea .myTop > div:nth-child(1) b{ font-size:14px !important; }
+  #gameScreen .myArea .myTop #myStatus{ display:none !important; }
+
+  /* Baris 2: 11 tile • 1 set, pindah masuk ke dalam frame, di bawah nama */
+  #gameScreen .myArea .myTop > div:nth-child(2){
+    display:block !important; margin-top:2px !important;
+    font-size:12px !important; color:#a7f3d0 !important;
+  }
+}
+/* HP ONLY - 11 TILE 1 SET PERSES SEBELAH KANAN NAMA */
+@media (max-width:768px){
+  #gameScreen .myArea .myTop{
+    display:block !important; /* tetep bukan flex */
+    overflow:hidden !important;
+  }
+  /* Nama: kiri */
+  #gameScreen .myArea .myTop > div:nth-child(1){
+    display:inline-block !important; vertical-align:middle !important;
+  }
+  /* 11 tile • 1 set: persis sebelah kanan nama, nempel kanan frame */
+  #gameScreen .myArea .myTop > div:nth-child(2){
+    display:inline-block !important; float:right !important;
+    margin-top:0 !important; vertical-align:middle !important;
+    text-align:right !important; white-space:nowrap !important;
+  }
+}
 </style>
 </head>
 <body>
