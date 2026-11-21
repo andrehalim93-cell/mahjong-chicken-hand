@@ -2021,7 +2021,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 </div>
   <div class="myArea">
-    <div class="myTools"><button id="friendFab" onclick="onFriendFabClick()" title="Temen">👥</button><button id="emoteFab" onclick="toggleEmote()" title="Quick Emote">😀</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
+    <div class="myTools"><button id="friendFab" onclick="onFriendFabClick()" title="Temen">👥<span id="friendBadgeDot" style="display:none;position:absolute;top:-4px;left:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center;padding:0 4px">0</span></button><button id="emoteFab" onclick="toggleEmote()" title="Quick Emote">😀</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
     <div class="myTop"><div><b id="myNameLabel">Kamu</b> <span id="myStatus">• Menunggu giliran...</span></div><div><span id="myCount">13 tile</span> • <span id="myMeldCount">0 set</span><span id="myFlowerCount"></span></div></div>
     <div class="meldsRow" id="myMelds"></div><div class="flowersRow" id="myFlowers"></div><div class="myHand" id="myHand"></div>
 <div style="text-align:center;margin-top:6px"><button id="hintBtn" class="hintBtn" onclick="useHint()" style="display:none;padding:10px 16px;border:none;border-radius:14px;font-weight:900;font-size:13px;box-shadow:0 6px 16px rgba(0,0,0,.35);cursor:pointer">💡 HINT: BUANG APA?</button><div id="hintLabel" class="hintLabel" style="display:none">💡 Buang ini paling aman!</div></div>
@@ -2073,6 +2073,10 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <style>.showdownWin{background:#facc15 !important;border:2px solid #92400e !important}</style>
 <div id="reconnectBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999;background:#dc2626;color:#fff;text-align:center;padding:10px;font-weight:900;font-size:13px">📶 PUTUS! Lagi nyambung lagi... jangan tutup / reload!</div>
 <div id="toast"></div>
+<div id="privateChatNotif" onclick="openPrivateChatFromNotif()" style="display:none;position:fixed;left:50%;top:110px;transform:translateX(-50%);background:#111827;border:2px solid #facc15;color:#fff;padding:10px 14px;border-radius:14px;font-size:13px;font-weight:700;z-index:999;max-width:92%;text-align:left;box-shadow:0 10px 30px rgba(0,0,0,.6);cursor:pointer">
+  <div id="privateChatNotifText" style="line-height:1.4"></div>
+  <div style="font-size:11px;color:#a7f3d0;margin-top:2px">👆 Klik buat buka chat</div>
+</div>
 <div id="turnPopup"><div style="font-size:28px">🎯</div><div style="font-size:11px;letter-spacing:2px;color:#fde68a;font-weight:800">GILIRAN SEKARANG</div><div class="tpName" id="turnPopupName">-</div><div class="tpSub" id="turnPopupSub">Siap-siap buang tile!</div></div>
 <div id="meldPopup" style="position:fixed;left:50%;top:32%;transform:translate(-50%,-50%);background:rgba(0,0,0,.88);border:3px solid #facc15;border-radius:20px;padding:16px 24px;text-align:center;z-index:301;display:none;box-shadow:0 20px 50px rgba(0,0,0,.6);pointer-events:none"><div id="meldAvatar" style="font-size:42px">🧑</div><div id="meldName" style="font-size:20px;font-weight:900;color:#fff;margin-top:4px">-</div><div id="meldAction" style="font-size:22px;font-weight:900;margin-top:2px">PONG!</div><div id="meldTiles" style="display:flex;gap:4px;justify-content:center;margin-top:10px"></div></div>
 <div id="turnCountdown" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:299;display:none;pointer-events:none;text-align:center"><div id="turnCountdownNum" style="font-size:120px;font-weight:900;color:rgba(250,204,21,.55);text-shadow:0 0 30px rgba(250,204,21,.6);line-height:1">5</div><div style="font-size:12px;font-weight:800;color:rgba(255,255,255,.6);letter-spacing:3px">WAKTU HABIS!</div></div>  
@@ -2803,6 +2807,11 @@ function renderInviteFriendsList(){
   }
 }
 function openPrivateChat(friendId, displayName){
+  // Reset notif pas dibuka
+  privateUnread = 0;
+  let dot = el('friendBadgeDot'); if(dot) dot.style.display = 'none';
+  let fb = el('friendBadge'); if(fb) fb.style.display = 'none';
+  let n = el('privateChatNotif'); if(n) n.style.display = 'none';
   currentPrivateFriend = friendId;
   el('privateChatTitle').innerText = '💬 Chat - ' + displayName + ' (@'+friendId+')';
   el('privateChatMessages').innerHTML = '<div style="color:#94a3b8;font-size:12px;text-align:center">Memuat...</div>';
@@ -2855,10 +2864,36 @@ socket.on('friendInvite', d=>{
   el('friendInviteModal').style.display = 'flex';
 });
 socket.on('privateChatHistory', d=>{ if(d.friendId===currentPrivateFriend) renderPrivateHistory(d.messages); });
+let privateUnread = 0, lastPrivateFromId = '', lastPrivateFromName = '';
 socket.on('privateChatIncoming', m=>{
-  if(currentPrivateFriend && (m.from_id===currentPrivateFriend || m.to_id===currentPrivateFriend)) appendPrivateMsg(m);
-  else toast('💬 Chat baru dari @'+m.from_id+'! Buka tab TEMEN -> CHAT');
+  if(currentPrivateFriend && (m.from_id===currentPrivateFriend || m.to_id===currentPrivateFriend)){
+    appendPrivateMsg(m);
+    return;
+  }
+  // Lagi gak buka chat orang itu -> kasih notif nempel
+  privateUnread++;
+  lastPrivateFromId = m.from_id;
+  lastPrivateFromName = m.from_name || ('@'+m.from_id);
+  let dot = el('friendBadgeDot');
+  if(dot){ dot.innerText = privateUnread; dot.style.display = 'block'; }
+  // Badge di tab TEMEN di Home juga
+  let fb = el('friendBadge');
+  if(fb){ fb.style.display = 'inline-block'; fb.innerText = privateUnread; }
+  let n = el('privateChatNotif');
+  if(n){
+    el('privateChatNotifText').innerHTML = '💬 <b style="color:#fde68a">' + esc(lastPrivateFromName) + '</b><br>' + esc(String(m.msg||'').slice(0,60));
+    n.style.display = 'block';
+    clearTimeout(window._privNotifTimer);
+    window._privNotifTimer = setTimeout(()=>{ n.style.display = 'none'; }, 5000);
+  }
+  playMjSound('turn');
+  try{ if(navigator.vibrate) navigator.vibrate(120); }catch(e){}
 });
+function openPrivateChatFromNotif(){
+  let n = el('privateChatNotif');
+  if(n) n.style.display = 'none';
+  if(lastPrivateFromId) openPrivateChat(lastPrivateFromId, lastPrivateFromName);
+}
 socket.on('privateChatSent', m=>{ if(currentPrivateFriend) appendPrivateMsg(m); });
 function joinPublicRoom(code, isPrivate){
   myName = el('nameInput').value.trim() || (currentUser ? currentUser.display_name : '');
@@ -3666,7 +3701,22 @@ function showFloatingEmote(m){
   let d=document.createElement('div'); d.className='floatEmote'; d.innerText=m;
   document.body.appendChild(d); setTimeout(()=>d.remove(), 1700);
 }
-socket.on('tableChatMsg', d=>{ let list = el('chatList'); if(list.innerHTML.includes('Belum ada chat')) list.innerHTML=''; let isMe = d.name===myName; if(!isMe && d.msg && [...d.msg].length<=2 && !d.msg.includes(' ')) showFloatingEmote(d.msg); list.innerHTML += `<div style="margin-bottom:4px"><b style="color:${isMe?'#facc15':'#a7f3d0'}">${isMe?'Kamu':esc(d.name)}</b> <span style="color:#94a3b8;font-size:10px">${d.time}</span><br>${esc(d.msg)}</div>`; list.scrollTop = list.scrollHeight; if(!chatOpen && !isMe){ chatUnread++; let b=el('chatBadge'); b.innerText=chatUnread; b.style.display='block'; el('chatFabDot').style.display='block'; } });
+socket.on('tableChatMsg', d=>{
+  let list = el('chatList');
+  if(list.innerHTML.includes('Belum ada chat')) list.innerHTML='';
+  let isMe = d.name===myName;
+  if(!isMe && d.msg && [...d.msg].length<=2 && !d.msg.includes(' ')) showFloatingEmote(d.msg);
+  list.innerHTML += `<div style="margin-bottom:4px"><b style="color:${isMe?'#facc15':'#a7f3d0'}">${isMe?'Kamu':esc(d.name)}</b> <span style="color:#94a3b8;font-size:10px">${d.time}</span><br>${esc(d.msg)}</div>`;
+  list.scrollTop = list.scrollHeight;
+  if(!chatOpen && !isMe){
+    chatUnread++;
+    let b=el('chatBadge'); b.innerText=chatUnread; b.style.display='block';
+    el('chatFabDot').style.display='block';
+    // INI YANG BARU, 2 BARIS INI DOANG:
+    toast('💬 ' + d.name + ': ' + String(d.msg||'').slice(0,40));
+    playMjSound('turn');
+  }
+});
 socket.on('gameLog', d=>addLog(d.msg));
 document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.activeElement && document.activeElement.id==='chatInput'){ sendChat(); } });
 // ===== BACK HP: BALIK DI GAME, BUKAN KELUAR BROWSER =====
