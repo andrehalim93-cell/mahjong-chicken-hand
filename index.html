@@ -1690,6 +1690,27 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   #gameScreen .gameTop{ align-items:stretch !important; }
   #gameScreen .gameTop .pill{ display:flex !important; align-items:center !important; }
 }
+/* KHUSUS MELD ATAS (HANI) DOANG - 2x2, biar gak nabrak kiri-kanan */
+.seatPos.top .melds,
+#meldTop,
+.meldTop,
+.seatPos.top .meldWrap,
+.seatPos.top .meldContainer{
+  display:grid !important;
+  grid-template-columns:repeat(2, max-content) !important;
+  gap:4px 6px !important;
+  justify-content:center !important;
+  align-content:start !important;
+  width:max-content !important;
+  max-width:230px !important;
+  margin-left:auto !important;
+  margin-right:auto !important;
+  flex-wrap:wrap !important;
+}
+.seatPos.top .meld{
+  flex:none !important;
+  margin:0 !important;
+}
 </style>
 </head>
 <body>
