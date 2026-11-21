@@ -1975,6 +1975,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <button class="tileBtn" data-tile="silver" style="background:linear-gradient(180deg,#cbd5e1,#475569)" onclick="setTileColor('silver')">⚪ Silver</button>
 <button class="tileBtn" data-tile="jingga" style="background:linear-gradient(180deg,#fb923c,#c2410c)" onclick="setTileColor('jingga')">🟠 Jingga</button>
     </div>
+    <button class="btn btn-gold" onclick="openInviteFriends()" style="width:100%;font-size:15px;padding:14px;margin-bottom:8px">👥 UNDANG TEMEN KE MEJA INI</button>
     <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-gold" id="startBtn" style="flex:2;font-size:16px;padding:16px" onclick="startGame()">🚀 MULAI GAME</button><button class="btn btn-dark" style="flex:1" onclick="backToHome()">⬅️ KELUAR</button></div>
   </div>
 </div>
@@ -2694,7 +2695,13 @@ function searchFriend(){
 function renderSearchResult(list){
   let box = el('friendSearchResult'); if(!box) return;
   if(!list || !list.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center">Gak ketemu. Coba ketik nama / @id lain.</div>'; return; }
-  box.innerHTML = list.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="sendFriendRequest('${esc(u.id)}')">+ ADD</button></div>`).join('');
+  box.innerHTML = list.map(u=>{
+    let isFriend = (friendListData||[]).some(f=>f.id===u.id);
+    let btn = isFriend
+      ? `<button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="openPrivateChat('${esc(u.id)}','${esc(u.display_name)}')">💬 CHAT</button>`
+      : `<button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="sendFriendRequest('${esc(u.id)}')">+ ADD</button>`;
+    return `<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div>${btn}</div>`;
+  }).join('');
 }
 function sendFriendRequest(toId){ socket.emit('sendFriendRequest', { fromId: myUserId(), toId }); toast('Mengirim request...'); }
 function renderOnlineUsers(list){
@@ -2702,7 +2709,13 @@ function renderOnlineUsers(list){
   let box = el('onlineUsersList'); if(!box) return;
   let others = list.filter(u=>u.id!==myUserId());
   if(!others.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center">Cuma kamu yang online.</div>'; return; }
-  box.innerHTML = others.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}${u.roomCode ? ' • Meja '+u.roomCode : ''}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="sendFriendRequest('${esc(u.id)}')">+ ADD</button></div>`).join('');
+  box.innerHTML = others.map(u=>{
+    let isFriend = (friendListData||[]).some(f=>f.id===u.id);
+    let btn = isFriend
+      ? `<button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="openPrivateChat('${esc(u.id)}','${esc(u.display_name)}')">💬 CHAT</button>`
+      : `<button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="sendFriendRequest('${esc(u.id)}')">+ ADD</button>`;
+    return `<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}${u.roomCode ? ' • Meja '+u.roomCode : ''}</span></div>${btn}</div>`;
+  }).join('');
 }
 function renderPending(list){
   pendingListData = list||[];
@@ -2716,6 +2729,7 @@ function renderPending(list){
 function respondFriend(fromId, accept){ socket.emit('respondFriendRequest', { myId: myUserId(), fromId, accept }); }
 function renderFriendList(list){
   friendListData = list||[];
+  if(onlineListData && onlineListData.length) setTimeout(()=>renderOnlineUsers(onlineListData), 50);
   let box = el('friendListBox'); if(!box) return;
   if(!list.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:13px">Belum ada temen. Cari di atas / pencet + di orang online.</div>'; return; }
   box.innerHTML = list.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 10px;font-size:12px" onclick="openPrivateChat('${esc(u.id)}','${esc(u.display_name)}')">💬 CHAT</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="if(confirm('Hapus ${esc(u.display_name)} dari temen?')) socket.emit('removeFriend',{myId:myUserId(),friendId:'${esc(u.id)}'})">🗑️</button></div>`).join('');
@@ -3094,7 +3108,7 @@ socket.on('updateLobby', room=>{
     if(!av) av = '🧑';
     wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}"><div class="ava">${p.isBot?'🤖':avatarHTML(av, 56)}</div><div class="nm">${p.isBot?botDisplayName(p):esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?('🤖 BOT'+(isHost?' • Klik buat hapus':'')):(p.id===room.hostId?'👑 HOST':'Pemain')}</div>${p.isBot && isHost?`<button class="kickBtn" onclick="removeBot('${esc(p.name)}')">✕</button>`:''}</div>`;
   });
-  for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty" onclick="openInviteFriends()" style="cursor:pointer">💺 Kursi Kosong<br><small>Menunggu pemain...</small><button onclick="event.stopPropagation();openInviteFriends()" style="margin-top:6px;background:#facc15;color:#422006;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">👥 UNDANG TEMEN</button></div>`;
+  for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty" onclick="openInviteFriends()" style="cursor:pointer;pointer-events:auto">💺 Kursi Kosong<br><small>Menunggu pemain...</small><button onclick="openInviteFriends()" style="margin-top:6px;background:#facc15;color:#422006;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer;pointer-events:auto">👥 UNDANG TEMEN</button></div>`;
   el('startBtn').disabled = room.players.length<2;
   el('startBtn').innerText = room.players.length<2 ? `⏳ BUTUH MIN 2 PEMAIN (${room.players.length}/4)` : `🚀 MULAI GAME (${room.players.length} PEMAIN)`;
   updateExitBotBtn();
