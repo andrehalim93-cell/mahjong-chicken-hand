@@ -1706,6 +1706,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   <input id="saveLogin" type="checkbox" checked style="width:18px;height:18px;accent-color:#facc15"> Ingat ID & Password di HP ini
 </label>
 <button class="btn btn-gold" style="margin-top:14px" onclick="doLogin()">🔑 MASUK</button>
+<button class="btn btn-dark" style="margin-top:8px" onclick="showForgot()">❓ LUPA PASSWORD?</button>
       </div>
       <div id="registerForm" class="hidden">
         <div class="lbl">BUAT ID (3-20, huruf/angka/_)</div>
@@ -1714,6 +1715,14 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
         <input id="regPass" class="inp" type="password" placeholder="Minimal 6 karakter">
         <div class="lbl">NAMA TAMPILAN</div>
         <input id="regName" class="inp" placeholder="Contoh: Budi" maxlength="20">
+        <div class="lbl">PERTANYAAN KEAMANAN (BUAT LUPA PASSWORD)</div>
+<select id="regQuestion" class="inp">
+  <option value="hewan">Nama hewan peliharaan pertama kamu?</option>
+  <option value="kota">Di kota mana kamu lahir?</option>
+  <option value="sekolah">Nama SD kamu?</option>
+  <option value="ibu">Nama tengah ibu kamu?</option>
+</select>
+<input id="regAnswer" class="inp" placeholder="Jawaban rahasia kamu">
         <div class="lbl">JENIS KELAMIN</div>
         <div style="display:flex;gap:8px">
           <button id="genderMale" class="btn btn-gold" style="flex:1" onclick="pickGender('male')">👦 COWOK</button>
@@ -1723,6 +1732,23 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
         <div id="avatarPick" style="display:flex;flex-wrap:wrap;gap:8px"></div>
         <button class="btn btn-green" style="margin-top:10px;position:sticky;bottom:8px;z-index:10" onclick="doRegister()">✅ DAFTAR & MASUK</button>
       </div>
+      <div id="forgotForm" class="hidden">
+  <div class="lbl">ID KAMU</div>
+  <input id="forgotId" class="inp" placeholder="Contoh: budi123">
+  <div class="lbl">PERTANYAAN KEAMANAN</div>
+  <select id="forgotQuestion" class="inp">
+    <option value="hewan">Nama hewan peliharaan pertama kamu?</option>
+    <option value="kota">Di kota mana kamu lahir?</option>
+    <option value="sekolah">Nama SD kamu?</option>
+    <option value="ibu">Nama tengah ibu kamu?</option>
+  </select>
+  <div class="lbl">JAWABAN</div>
+  <input id="forgotAnswer" class="inp" placeholder="Jawaban rahasia kamu">
+  <div class="lbl">PASSWORD BARU</div>
+  <input id="forgotNewPass" class="inp" type="password" placeholder="Minimal 6 karakter">
+  <button class="btn btn-gold" style="margin-top:14px" onclick="doForgot()">🔄 GANTI PASSWORD</button>
+  <button class="btn btn-dark" style="margin-top:8px" onclick="backToLogin()">⬅️ KEMBALI KE LOGIN</button>
+</div>
       <div id="authErr" style="display:none;margin-top:10px;background:#7f1d1d;color:#fecaca;padding:10px;border-radius:10px;font-size:13px"></div>
       <div id="authOk" style="display:none;margin-top:10px;background:#14532d;color:#bbf7d0;padding:10px;border-radius:10px;font-size:13px"></div>
     </div>
@@ -2027,6 +2053,7 @@ function avatarImg(a, size){ return avatarHTML(a, size); }
   function switchAuthTab(tab){
   el('loginForm').classList.toggle('hidden', tab!=='login');
   el('registerForm').classList.toggle('hidden', tab!=='register');
+  el('forgotForm').classList.add('hidden');
   el('tabLogin').className = 'btn ' + (tab==='login'?'btn-gold':'btn-dark');
   el('tabRegister').className = 'btn ' + (tab==='register'?'btn-gold':'btn-dark');
 }
@@ -2046,8 +2073,11 @@ async function doRegister(){
   let id = el('regId').value.trim().toLowerCase();
   let password = el('regPass').value;
   let display_name = el('regName').value.trim();
+  let question = el('regQuestion').value;
+  let answerHash = await hashAnswer(el('regAnswer').value);
   if(!id || !password || !display_name) return showAuthErr('Isi ID, Password & Nama dulu!');
-  let r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password,display_name,gender:regGender,avatar:regAvatar})});
+  if(!el('regAnswer').value.trim()) return showAuthErr('Isi jawaban pertanyaan keamanan!');
+  let r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password,display_name,gender:regGender,avatar:regAvatar,question,answerHash})});
   let j = await r.json();
   if(!j.ok) return showAuthErr(j.error||'Gagal daftar!');
   if(el('saveLogin')) el('saveLogin').checked = true;
@@ -3334,7 +3364,6 @@ window.addEventListener('popstate', function(e){
     backToHome();
   }
 });
-</script>  <-- yang ini, ini penutupnya
 </script>
 </body>
 </html>
