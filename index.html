@@ -2735,7 +2735,7 @@ applyTileColor(currentTileColor);
     let pos = posMap[idx] || 'top';
     let slot = slots[pos];
     let isTurn = p.name===turn;
-    slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span><small>• ${p.handCount} tile</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill(backTileHTML()).join('')}</div>`<div class="oppFlower" style="font-size:11px;color:#fbcfe8;writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;line-height:1.4;${p.flowers.length?'':'visibility:hidden'}">🌸 ${p.flowers.length} bunga</div>``;
+       slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span><small>• ${p.handCount} tile</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill(backTileHTML()).join('')}</div><div class="oppFlower" style="font-size:11px;color:#fbcfe8;writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;line-height:1.4;${p.flowers.length?'':'visibility:hidden'}">🌸 ${p.flowers.length} bunga</div>`;
     let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join('');
     if(meldHtml && meldSlots[pos]) meldSlots[pos].innerHTML = meldHtml;
   });
