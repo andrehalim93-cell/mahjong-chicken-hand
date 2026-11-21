@@ -1452,6 +1452,37 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     transform:translateX(-50%) !important;
   }
 }
+/* HP ONLY - BUNGA KIRI-KANAN TENGAH + PILL & FRAME MENTOK KIRI-KANAN */
+@media (max-width:768px){
+  /* 1. PILL ATAS: mentok kiri-kanan, buang jarak ijo kiri-kanan */
+  #gameScreen .gameTop{
+    margin:4px -34px 8px -34px !important;
+    width:calc(100% + 68px) !important;
+    border-radius:0 !important;
+  }
+  /* 2. FRAME KARTU LU DI BAWAH: mentok kiri-kanan juga */
+  #gameScreen .myArea{
+    margin-left:-34px !important; margin-right:-34px !important;
+    width:calc(100% + 68px) !important;
+    border-radius:0 !important; border-left:none !important; border-right:none !important;
+  }
+  /* 3. BUNGA KIRI: di tengah tinggi meja, di kanan tiang ijo SARI */
+  #gameScreen .seatPos.left .oppFlower{
+    position:absolute !important; left:30px !important; right:auto !important;
+    top:50% !important; transform:translateY(-50%) !important;
+  }
+  /* 4. BUNGA KANAN: di tengah tinggi meja, di kiri tiang ijo ANDI */
+  #gameScreen .seatPos.right .oppFlower{
+    position:absolute !important; right:30px !important; left:auto !important;
+    top:50% !important; transform:translateY(-50%) !important;
+  }
+  /* 5. BUNGA ATAS: tetep di tengah bawah nama WATI, jangan ikut kegeser */
+  #gameScreen .seatPos.top .oppFlower{
+    position:absolute !important; left:50% !important; top:auto !important;
+    bottom:-22px !important; transform:translateX(-50%) !important;
+    writing-mode:horizontal-tb !important;
+  }
+}
 </style>
 </head>
 <body>
