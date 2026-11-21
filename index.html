@@ -2729,6 +2729,7 @@ function renderPending(list){
 function respondFriend(fromId, accept){ socket.emit('respondFriendRequest', { myId: myUserId(), fromId, accept }); }
 function renderFriendList(list){
   friendListData = list||[];
+  if(el('inviteFriendsModal') && el('inviteFriendsModal').style.display==='flex') renderInviteFriendsList();
   if(onlineListData && onlineListData.length) setTimeout(()=>renderOnlineUsers(onlineListData), 50);
   let box = el('friendListBox'); if(!box) return;
   if(!list.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:13px">Belum ada temen. Cari di atas / pencet + di orang online.</div>'; return; }
@@ -2736,18 +2737,22 @@ function renderFriendList(list){
 }
 function inviteFriend(toId){
   if(!myCode){ toast('Bikin meja dulu baru bisa undang!'); return; }
-  socket.emit('inviteFriend', { fromId: myUserId(), toId, code: myCode, roomName: 'Meja '+ (currentUser?currentUser.display_name:'') });
+  let target = String(toId||'').toLowerCase();
+  console.log('inviteFriend ke:', target, 'dari:', myUserId(), 'kode:', myCode);
+  if(!socket || !socket.connected){ toast('📶 Lagi putus, nyambung lagi...'); return; }
+  socket.emit('inviteFriend', { fromId: myUserId(), toId: target, code: myCode, roomName: 'Meja '+ (currentUser?currentUser.display_name:'') });
+  toast('Undangan ke @'+target+' dikirim!');
 }
 function openInviteFriends(){
   let titleEl2 = document.querySelector('#inviteFriendsModal b'); if(titleEl2) titleEl2.innerText = '👥 UNDANG KE MEJA';
-  console.log('openInviteFriends dipencet, myCode=', myCode);
   if(!myCode){ toast('Bikin / join meja dulu baru bisa undang! (myCode kosong)'); return; }
   refreshFriends();
   el('inviteFriendsCode').innerText = '('+myCode+')';
   let m = el('inviteFriendsModal');
   m.style.display = 'flex';
   m.style.zIndex = '999';
-  setTimeout(renderInviteFriendsList, 400);
+  // Render langsung pake data lama, nanti ke-refresh lagi pas data baru dateng
+  renderInviteFriendsList();
 }
 // Delegation: sekali pasang, gak bakal kehapus walau seatsWrap di-rebuild 100x
 document.addEventListener('click', function(e){
@@ -2779,19 +2784,22 @@ function openFriendChatList(){
 }
 function closeInviteFriends(){ el('inviteFriendsModal').style.display = 'none'; }
 function renderInviteFriendsList(){
-  // Nama yang udah di meja ini, jangan ditampilin lagi
-  let inRoom = (currentPlayers||[]).map(p=>p.name);
-  let friends = (friendListData||[]).filter(u=>!inRoom.includes(u.display_name));
-  let online = (onlineListData||[]).filter(u=>u.id!==myUserId() && u.roomCode!==myCode && !inRoom.includes(u.display_name) && !(friendListData||[]).some(f=>f.id===u.id));
+  let myId = myUserId();
+  let inRoom = (currentPlayers||[]).map(p=>String(p.name||'').toLowerCase());
+  let friends = (friendListData||[]).filter(u=>!inRoom.includes(String(u.display_name||'').toLowerCase()));
+  let online = (onlineListData||[]).filter(u=>{
+    let uid = String(u.id||'').toLowerCase();
+    return uid!==myId && String(u.roomCode||'')!==String(myCode||'') && !inRoom.includes(String(u.display_name||'').toLowerCase()) && !(friendListData||[]).some(f=>String(f.id||'').toLowerCase()===uid);
+  });
   let fb = el('inviteFriendsList');
   if(fb){
     if(!friends.length) fb.innerHTML = '<div style="color:#94a3b8;font-size:13px">Belum ada temen. Add dulu di tab TEMEN.</div>';
-    else fb.innerHTML = friends.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="inviteFriend('${esc(u.id)}');toast('Undangan ke ${esc(u.display_name)} dikirim!')">🀄 UNDANG</button></div>`).join('');
+    else fb.innerHTML = friends.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="inviteFriend('${esc(u.id)}')">🀄 UNDANG</button></div>`).join('');
   }
   let ob = el('inviteOnlineList');
   if(ob){
     if(!online.length) ob.innerHTML = '<div style="color:#94a3b8;font-size:13px">Gak ada yang online di luar meja ini.</div>';
-    else ob.innerHTML = online.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="inviteFriend('${esc(u.id)}');toast('Undangan ke ${esc(u.display_name)} dikirim!')">🀄 UNDANG</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="sendFriendRequest('${esc(u.id)}')">+ ADD</button></div>`).join('');
+    else ob.innerHTML = online.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="inviteFriend('${esc(u.id)}')">🀄 UNDANG</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="sendFriendRequest('${esc(u.id)}')">+ ADD</button></div>`).join('');
   }
 }
 function openPrivateChat(friendId, displayName){
@@ -3698,8 +3706,8 @@ window.addEventListener('popstate', function(e){
   </div>
 </div>
 <!-- MODAL UNDANG TEMEN KE MEJA INI -->
-<div id="inviteFriendsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:250;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) closeInviteFriends()">
-  <div class="card" style="max-width:420px;width:100%;margin:0">
+<<div id="inviteFriendsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto" onclick="if(event.target===this) closeInviteFriends()">
+  <div class="card" style="max-width:420px;width:100%;margin:20px 0;max-height:88vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center"><b>👥 UNDANG KE MEJA <span id="inviteFriendsCode"></span></b><button onclick="closeInviteFriends()" style="background:none;border:none;color:#fff;font-size:20px">✕</button></div>
     <div style="font-size:12px;color:#a7f3d0;margin-top:6px">Yang diundang bakal dapet popup <b>✅ IKUT MEJA</b>, langsung masuk ke meja ini. Kalo dia lagi di meja lain, dia harus keluar dulu.</div>
     <div class="lbl">👥 TEMEN KAMU</div>
