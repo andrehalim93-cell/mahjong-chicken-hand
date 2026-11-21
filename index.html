@@ -2719,7 +2719,7 @@ socket.on('gameStarted', d=>{
   el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s';
   el('turnName').innerText=d.turn; currentPlayers=d.players; el('myNameLabel').innerHTML = avatarHTML(currentUser?currentUser.avatar:'🧑', 20)+' '+esc(myName);
   isMyTurn = (d.turn===myName);
-  el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...';
+  el('myStatus').innerText = '';
   playMjSound('dice'); showDiceRoll(d.turn, d.dice);
   setTimeout(()=>{ showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Kamu dealer, buang 1 tile!'); } }, 2100);
   addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!');
