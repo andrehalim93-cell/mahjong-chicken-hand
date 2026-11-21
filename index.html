@@ -1793,6 +1793,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     <button class="homeTabBtn active" data-tab="lobby" onclick="switchHomeTab('lobby')">🀄 LOBBY</button>
     <button class="homeTabBtn" data-tab="leaderboard" onclick="switchHomeTab('leaderboard')">🏆 LEADERBOARD</button>
     <button class="homeTabBtn" data-tab="howto" onclick="switchHomeTab('howto')">❓ CARA MAIN</button>
+    <button class="homeTabBtn" data-tab="friends" onclick="switchHomeTab('friends')">👥 TEMEN <span id="friendBadge" style="display:none;background:#dc2626;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px">0</span></button>
   </div>
   <div id="tab-lobby" class="homeTabPanel">
     <div class="card">
@@ -1801,6 +1802,27 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
       <div id="publicRoomList" style="display:flex;flex-direction:column;gap:8px">Memuat meja...</div>
       <button class="btn btn-dark" onclick="refreshRooms()">🔄 REFRESH MEJA</button>
       <div id="homeErr" style="display:none;margin-top:10px;background:#7f1d1d;color:#fecaca;padding:10px;border-radius:10px;font-size:13px"></div>
+    </div>
+  </div>
+    <div id="tab-friends" class="homeTabPanel hidden">
+    <div class="card">
+      <h2>👥 TEMEN</h2>
+      <div class="lbl">🔍 CARI TEMEN PAKE NAMA / @ID</div>
+      <div style="display:flex;gap:8px">
+        <input id="friendSearchInput" class="inp" placeholder="Ketik HANI atau @hani1..." style="flex:1" onkeydown="if(event.key==='Enter') searchFriend()">
+        <button class="btn btn-gold" onclick="searchFriend()" style="width:auto;padding:13px 16px">🔍 CARI</button>
+      </div>
+      <div id="friendSearchResult" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>
+
+      <div class="lbl">🟢 ORANG ONLINE DI LOBBY</div>
+      <div id="onlineUsersList" style="display:flex;flex-direction:column;gap:8px"><div style="color:#94a3b8;font-size:13px;text-align:center">Memuat...</div></div>
+      <button class="btn btn-dark" onclick="refreshFriends()">🔄 REFRESH TEMEN</button>
+
+      <div class="lbl">📩 PERMINTAAN MASUK <span id="friendPendingCount"></span></div>
+      <div id="friendPendingList" style="display:flex;flex-direction:column;gap:8px"><div style="color:#94a3b8;font-size:13px">Gak ada permintaan.</div></div>
+
+      <div class="lbl">👥 DAFTAR TEMEN KAMU</div>
+      <div id="friendListBox" style="display:flex;flex-direction:column;gap:8px"><div style="color:#94a3b8;font-size:13px">Belum ada temen.</div></div>
     </div>
   </div>
   <div id="tab-leaderboard" class="homeTabPanel hidden">
@@ -2188,6 +2210,7 @@ function loginSuccess(user, passwordForSave, showProfile){
     toast('Halo '+user.display_name+'!');
   if(showProfile){ clearTimeout(window._profileTimer); window._profileTimer = setTimeout(()=>{ openProfile(false); }, 900); }
   refreshRooms();
+  registerOnlineFriend();
   try{
     let savedRoom = JSON.parse(sessionStorage.getItem('mahjong_room'));
     if(savedRoom && savedRoom.code && socket && socket.connected){
@@ -2630,6 +2653,116 @@ function pickPrivate(v){ selectedPrivate=v; el('privNo').className=!v?'btn btn-g
 function submitCreateRoom(){ if(!currentUser) return showErr('Login dulu!'); myName=currentUser.display_name; let roomName=el('inputRoomName').value.trim()||('Meja '+myName); let password=selectedPrivate?el('inputRoomPass').value.trim():''; if(selectedPrivate && !password) return showErr('Isi password meja!'); closeCreateModal(); socket.emit('createRoom',{name:myName, roomName, mode:selectedMode, isPrivate:selectedPrivate, password, avatar: currentUser ? currentUser.avatar : '🧑'}); }
 // ===== MEJA PUBLIK + LEADERBOARD =====
 function refreshRooms(){ if(typeof socket!=='undefined' && socket) socket.emit('getRooms'); }
+// ============ TEMEN - JANGAN UBAH YANG LAIN ============
+let friendListData = [], onlineListData = [], pendingListData = [], currentPrivateFriend = null, pendingInviteCode = '';
+function myUserId(){ return currentUser ? String(currentUser.id||'').toLowerCase() : ''; }
+function registerOnlineFriend(){
+  if(!currentUser || !socket) return;
+  socket.emit('registerOnline', { id: myUserId(), display_name: currentUser.display_name, avatar: currentUser.avatar });
+}
+function refreshFriends(){
+  if(!currentUser) return;
+  socket.emit('getFriends', { myId: myUserId() });
+  socket.emit('getFriendPending', { myId: myUserId() });
+  socket.emit('getOnlineUsers', {});
+}
+function searchFriend(){
+  let q = el('friendSearchInput').value.trim();
+  if(!q) return toast('Ketik nama / @id dulu!');
+  el('friendSearchResult').innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center">Mencari...</div>';
+  socket.emit('searchUser', { q, myId: myUserId() });
+}
+function renderSearchResult(list){
+  let box = el('friendSearchResult'); if(!box) return;
+  if(!list || !list.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center">Gak ketemu. Coba ketik nama / @id lain.</div>'; return; }
+  box.innerHTML = list.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="sendFriendRequest('${esc(u.id)}')">+ ADD</button></div>`).join('');
+}
+function sendFriendRequest(toId){ socket.emit('sendFriendRequest', { fromId: myUserId(), toId }); toast('Mengirim request...'); }
+function renderOnlineUsers(list){
+  onlineListData = list||[];
+  let box = el('onlineUsersList'); if(!box) return;
+  let others = list.filter(u=>u.id!==myUserId());
+  if(!others.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center">Cuma kamu yang online.</div>'; return; }
+  box.innerHTML = others.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}${u.roomCode ? ' • Meja '+u.roomCode : ''}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="sendFriendRequest('${esc(u.id)}')">+ ADD</button></div>`).join('');
+}
+function renderPending(list){
+  pendingListData = list||[];
+  let box = el('friendPendingList'); if(!box) return;
+  let badge = el('friendBadge');
+  if(badge){ badge.style.display = list.length ? 'inline-block' : 'none'; badge.innerText = list.length; }
+  let c = el('friendPendingCount'); if(c) c.innerText = list.length ? '('+list.length+')' : '';
+  if(!list.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:13px">Gak ada permintaan.</div>'; return; }
+  box.innerHTML = list.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#451a03;border:1px solid #f59e0b;border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.from_id)} mau jadi temen lu</span></div><button class="btn btn-gold" style="width:auto;padding:8px 10px;font-size:12px" onclick="respondFriend('${esc(u.from_id)}',true)">✅ TERIMA</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="respondFriend('${esc(u.from_id)}',false)">❌ TOLAK</button></div>`).join('');
+}
+function respondFriend(fromId, accept){ socket.emit('respondFriendRequest', { myId: myUserId(), fromId, accept }); }
+function renderFriendList(list){
+  friendListData = list||[];
+  let box = el('friendListBox'); if(!box) return;
+  if(!list.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:13px">Belum ada temen. Cari di atas / pencet + di orang online.</div>'; return; }
+  box.innerHTML = list.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 10px;font-size:12px" onclick="inviteFriend('${esc(u.id)}')">🀄 UNDANG</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="openPrivateChat('${esc(u.id)}','${esc(u.display_name)}')">💬 CHAT</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="if(confirm('Hapus ${esc(u.display_name)} dari temen?')) socket.emit('removeFriend',{myId:myUserId(),friendId:'${esc(u.id)}'})">🗑️</button></div>`).join('');
+}
+function inviteFriend(toId){
+  if(!myCode){ toast('Bikin meja dulu baru bisa undang!'); return; }
+  socket.emit('inviteFriend', { fromId: myUserId(), toId, code: myCode, roomName: 'Meja '+ (currentUser?currentUser.display_name:'') });
+}
+function openPrivateChat(friendId, displayName){
+  currentPrivateFriend = friendId;
+  el('privateChatTitle').innerText = '💬 Chat - ' + displayName + ' (@'+friendId+')';
+  el('privateChatMessages').innerHTML = '<div style="color:#94a3b8;font-size:12px;text-align:center">Memuat...</div>';
+  el('privateChatModal').style.display = 'flex';
+  socket.emit('getPrivateChat', { myId: myUserId(), friendId });
+}
+function closePrivateChat(){ el('privateChatModal').style.display = 'none'; currentPrivateFriend = null; }
+function sendPrivateChat(){
+  let inp = el('privateChatInput'); let m = inp.value.trim(); if(!m || !currentPrivateFriend) return;
+  socket.emit('privateChat', { fromId: myUserId(), toId: currentPrivateFriend, msg: m }); inp.value='';
+}
+function renderPrivateHistory(messages){
+  let box = el('privateChatMessages'); if(!box) return;
+  if(!messages || !messages.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:12px;text-align:center">Belum ada chat. Say hi dulu!</div>'; return; }
+  box.innerHTML = messages.map(m=>{ let mine = m.from_id===myUserId(); return `<div style="align-self:${mine?'flex-end':'flex-start'};background:${mine?'#facc15':'#334155'};color:${mine?'#422006':'#fff'};padding:8px 10px;border-radius:12px;max-width:80%;font-size:13px">${esc(m.msg)}<br><span style="font-size:10px;opacity:.7">${new Date(m.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span></div>`; }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+function appendPrivateMsg(m){
+  let box = el('privateChatMessages'); if(!box) return;
+  if(box.innerText.includes('Belum ada chat')) box.innerHTML='';
+  let mine = m.from_id===myUserId();
+  box.innerHTML += `<div style="align-self:${mine?'flex-end':'flex-start'};background:${mine?'#facc15':'#334155'};color:${mine?'#422006':'#fff'};padding:8px 10px;border-radius:12px;max-width:80%;font-size:13px">${esc(m.msg)}</div>`;
+  box.scrollTop = box.scrollHeight;
+}
+function acceptFriendInvite(){
+  closeFriendInvite();
+  if(!pendingInviteCode) return;
+  myName = currentUser ? currentUser.display_name : '';
+  socket.emit('joinRoom', { code: pendingInviteCode, name: myName, password: '', avatar: currentUser?currentUser.avatar:'🧑' });
+}
+function closeFriendInvite(){ el('friendInviteModal').style.display='none'; }
+
+// Listener temen - tempel di bawah semua socket.on yang udah ada, jangan hapus yang lama
+socket.on('searchUserResult', renderSearchResult);
+socket.on('onlineUsersUpdated', renderOnlineUsers);
+socket.on('friendList', renderFriendList);
+socket.on('friendPending', renderPending);
+socket.on('friendOk', m=>toast(m));
+socket.on('friendError', m=>{ showErr(m); toast(m); });
+socket.on('friendRequestIncoming', d=>{
+  toast('📩 '+d.display_name+' mau jadi temen lu!');
+  refreshFriends();
+  if(confirm(d.display_name+' (@'+d.from_id+') mau jadi temen lu. Terima?')) respondFriend(d.from_id, true);
+  else respondFriend(d.from_id, false);
+});
+socket.on('friendInvite', d=>{
+  pendingInviteCode = d.code;
+  el('friendInviteText').innerText = d.from_name + ' ngundang main!';
+  el('friendInviteSub').innerText = 'Meja: ' + d.roomName + ' • Kode: ' + d.code;
+  el('friendInviteModal').style.display = 'flex';
+});
+socket.on('privateChatHistory', d=>{ if(d.friendId===currentPrivateFriend) renderPrivateHistory(d.messages); });
+socket.on('privateChatIncoming', m=>{
+  if(currentPrivateFriend && (m.from_id===currentPrivateFriend || m.to_id===currentPrivateFriend)) appendPrivateMsg(m);
+  else toast('💬 Chat baru dari @'+m.from_id+'! Buka tab TEMEN -> CHAT');
+});
+socket.on('privateChatSent', m=>{ if(currentPrivateFriend) appendPrivateMsg(m); });
 function joinPublicRoom(code, isPrivate){
   myName = el('nameInput').value.trim() || (currentUser ? currentUser.display_name : '');
   if(!myName) return showErr('Isi nama dulu!');
@@ -2656,6 +2789,7 @@ function switchHomeTab(tab){
   document.querySelectorAll('.homeTabPanel').forEach(p=>p.classList.add('hidden'));
   let elp=document.getElementById('tab-'+tab); if(elp) elp.classList.remove('hidden');
   if(tab==='leaderboard') loadLeaderboardTab();
+  if(tab==='friends') refreshFriends();
   if(tab==='howto'){ tutIdx=0; renderTut(); }
 }
 function openLeaderboard(){ switchHomeTab('leaderboard'); }
@@ -3457,5 +3591,22 @@ window.addEventListener('popstate', function(e){
   }
 });
 </script>
+<!-- MODAL CHAT PRIBADI 1 LAWAN 1 -->
+<div id="privateChatModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:250;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) closePrivateChat()">
+  <div class="card" style="max-width:420px;width:100%;margin:0">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b id="privateChatTitle">💬 Chat</b><button onclick="closePrivateChat()" style="background:none;border:none;color:#fff;font-size:20px">✕</button></div>
+    <div id="privateChatMessages" style="height:280px;overflow-y:auto;background:rgba(0,0,0,.4);border-radius:12px;padding:10px;margin:12px 0;display:flex;flex-direction:column;gap:6px"></div>
+    <div style="display:flex;gap:8px"><input id="privateChatInput" class="inp" placeholder="Ketik pesan..." style="flex:1" onkeydown="if(event.key==='Enter') sendPrivateChat()"><button class="btn btn-gold" onclick="sendPrivateChat()" style="width:auto;padding:13px 16px">➡️</button></div>
+  </div>
+</div>
+<!-- MODAL UNDANGAN TEMEN -->
+<div id="friendInviteModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:250;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="max-width:360px;width:100%;margin:0;text-align:center">
+    <div style="font-size:44px">🀄</div><h2 id="friendInviteText">Temen ngundang main!</h2>
+    <div id="friendInviteSub" style="font-size:13px;color:#a7f3d0;margin:8px 0"></div>
+    <button class="btn btn-gold" onclick="acceptFriendInvite()">✅ IKUT MEJA</button>
+    <button class="btn btn-dark" onclick="closeFriendInvite()" style="margin-top:8px">❌ TOLAK</button>
+  </div>
+</div>
 </body>
 </html>
