@@ -1303,6 +1303,34 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   /* PUNYA LU: KALO KOSONG HILANG, KALO ADA NONGOL DI TEMPATNYA */
   #gameScreen #myMelds:empty, #gameScreen #myFlowers:empty{ display:none !important; }
 }
+/* HP ONLY - NAMA DI LUAR MEJA + SLOT BUNGA SELALU ADA */
+@media (max-width:768px){
+  /* Kasih napas di sekeliling meja, biar nama bisa keluar */
+  #gameScreen{ padding:24px 40px 0 40px !important; }
+  #gameScreen .table{ overflow:visible !important; }
+
+  /* Nama atas: di ATAS meja, bukan di dalem */
+  #gameScreen .seatPos.top .playerChip{
+    position:absolute !important; top:-22px !important; left:50% !important;
+    transform:translateX(-50%) !important; z-index:10 !important;
+  }
+  /* Nama kiri: di KIRI meja, vertikal */
+  #gameScreen .seatPos.left .playerChip{
+    position:absolute !important; left:-38px !important; top:50% !important;
+    transform:translateY(-50%) rotate(180deg) !important; z-index:10 !important;
+  }
+  /* Nama kanan: di KANAN meja, vertikal */
+  #gameScreen .seatPos.right .playerChip{
+    position:absolute !important; right:-38px !important; top:50% !important;
+    transform:translateY(-50%) !important; z-index:10 !important;
+  }
+
+  /* Slot bunga lawan: ukurannya dikunci, biar kalo kosong gak ilang */
+  #gameScreen .oppFlower{
+    min-height:16px !important; min-width:70px !important;
+    text-align:center !important; display:block !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -2707,7 +2735,7 @@ applyTileColor(currentTileColor);
     let pos = posMap[idx] || 'top';
     let slot = slots[pos];
     let isTurn = p.name===turn;
-    slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span><small>• ${p.handCount} tile</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill(backTileHTML()).join('')}</div>${p.flowers.length?`<div class="oppFlower" style="font-size:11px;color:#fbcfe8;writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;line-height:1.4">🌸 ${p.flowers.length} bunga</div>`:''}`;
+    slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span><small>• ${p.handCount} tile</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill(backTileHTML()).join('')}</div>`<div class="oppFlower" style="font-size:11px;color:#fbcfe8;writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;line-height:1.4;${p.flowers.length?'':'visibility:hidden'}">🌸 ${p.flowers.length} bunga</div>``;
     let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join('');
     if(meldHtml && meldSlots[pos]) meldSlots[pos].innerHTML = meldHtml;
   });
