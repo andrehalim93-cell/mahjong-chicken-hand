@@ -2020,7 +2020,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 </div>
   <div class="myArea">
-    <div class="myTools"><button id="friendFab" onclick="openInviteFriends()" title="Undang Temen">👥</button><button id="emoteFab" onclick="toggleEmote()" title="Quick Emote">😀</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
+    <div class="myTools"><button id="friendFab" onclick="onFriendFabClick()" title="Temen">👥</button><button id="emoteFab" onclick="toggleEmote()" title="Quick Emote">😀</button><button id="chatFab" onclick="toggleChat()">💬<span id="chatBadge" style="display:none;position:absolute;top:-2px;right:-2px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center">0</span><span id="chatFabDot" style="display:none;position:absolute;top:6px;right:6px;width:9px;height:9px;background:#ef4444;border-radius:50%"></span></button></div>
     <div class="myTop"><div><b id="myNameLabel">Kamu</b> <span id="myStatus">• Menunggu giliran...</span></div><div><span id="myCount">13 tile</span> • <span id="myMeldCount">0 set</span><span id="myFlowerCount"></span></div></div>
     <div class="meldsRow" id="myMelds"></div><div class="flowersRow" id="myFlowers"></div><div class="myHand" id="myHand"></div>
 <div style="text-align:center;margin-top:6px"><button id="hintBtn" class="hintBtn" onclick="useHint()" style="display:none;padding:10px 16px;border:none;border-radius:14px;font-weight:900;font-size:13px;box-shadow:0 6px 16px rgba(0,0,0,.35);cursor:pointer">💡 HINT: BUANG APA?</button><div id="hintLabel" class="hintLabel" style="display:none">💡 Buang ini paling aman!</div></div>
@@ -2718,18 +2718,42 @@ function renderFriendList(list){
   friendListData = list||[];
   let box = el('friendListBox'); if(!box) return;
   if(!list.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:13px">Belum ada temen. Cari di atas / pencet + di orang online.</div>'; return; }
-  box.innerHTML = list.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 10px;font-size:12px" onclick="inviteFriend('${esc(u.id)}')">🀄 UNDANG</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="openPrivateChat('${esc(u.id)}','${esc(u.display_name)}')">💬 CHAT</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="if(confirm('Hapus ${esc(u.display_name)} dari temen?')) socket.emit('removeFriend',{myId:myUserId(),friendId:'${esc(u.id)}'})">🗑️</button></div>`).join('');
+  box.innerHTML = list.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 10px;font-size:12px" onclick="openPrivateChat('${esc(u.id)}','${esc(u.display_name)}')">💬 CHAT</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="if(confirm('Hapus ${esc(u.display_name)} dari temen?')) socket.emit('removeFriend',{myId:myUserId(),friendId:'${esc(u.id)}'})">🗑️</button></div>`).join('');
 }
 function inviteFriend(toId){
   if(!myCode){ toast('Bikin meja dulu baru bisa undang!'); return; }
   socket.emit('inviteFriend', { fromId: myUserId(), toId, code: myCode, roomName: 'Meja '+ (currentUser?currentUser.display_name:'') });
 }
 function openInviteFriends(){
+  let titleEl2 = document.querySelector('#inviteFriendsModal b'); if(titleEl2) titleEl2.innerText = '👥 UNDANG KE MEJA';
   if(!myCode){ toast('Bikin / join meja dulu baru bisa undang!'); return; }
   refreshFriends();
   el('inviteFriendsCode').innerText = '('+myCode+')';
   el('inviteFriendsModal').style.display = 'flex';
   setTimeout(renderInviteFriendsList, 400);
+}
+function onFriendFabClick(){
+  // UNDANG cuma boleh kalo lagi di lobby meja (belum mulai main)
+  let inLobbyRoom = el('lobbyScreen') && !el('lobbyScreen').classList.contains('hidden');
+  if(inLobbyRoom) openInviteFriends();
+  else openFriendChatList();
+}
+function openFriendChatList(){
+  refreshFriends();
+  el('inviteFriendsCode').innerText = '(CHAT)';
+  let titleEl = document.querySelector('#inviteFriendsModal b');
+  if(titleEl) titleEl.innerText = '👥 TEMEN - CHAT';
+  el('inviteFriendsModal').style.display = 'flex';
+  setTimeout(()=>{
+    let fb = el('inviteFriendsList');
+    if(fb){
+      let friends = friendListData || [];
+      if(!friends.length) fb.innerHTML = '<div style="color:#94a3b8;font-size:13px">Belum ada temen. Add dulu di tab TEMEN.</div>';
+      else fb.innerHTML = friends.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="closeInviteFriends();openPrivateChat('${esc(u.id)}','${esc(u.display_name)}')">💬 CHAT</button></div>`).join('');
+    }
+    let ob = el('inviteOnlineList');
+    if(ob) ob.innerHTML = '<div style="color:#94a3b8;font-size:13px">Pas di halaman depan / lagi main, cuma bisa chat sama temen yang udah di-add.</div>';
+  }, 400);
 }
 function closeInviteFriends(){ el('inviteFriendsModal').style.display = 'none'; }
 function renderInviteFriendsList(){
