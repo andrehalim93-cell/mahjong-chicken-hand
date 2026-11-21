@@ -15,6 +15,17 @@ const io = new Server(server, { cors: { origin: "*", methods: ["GET","POST"] }, 
 const PORT = process.env.PORT || 3000;
 // ============ TAMBAHAN BARU: AUTH + SUPABASE + HASH - JANGAN UBAH YANG LAIN ============
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+// Token HU sekali pakai - gak perlu disimpen di DB, cuma di memori server
+const HU_SECRET = process.env.HU_SECRET || ('hu-secret-' + Date.now() + '-' + Math.random());
+const huTokens = new Map(); // token -> { exp }
+function makeHuToken(roomCode, winnerSocketId){
+  let token = crypto.createHash('sha256').update(roomCode + '|' + winnerSocketId + '|' + Date.now() + '|' + Math.random() + '|' + HU_SECRET).digest('hex');
+  huTokens.set(token, { exp: Date.now() + 5*60*1000 });
+  // Bersihin token kadaluarsa biar memori gak penuh
+  for(let [k,v] of huTokens){ if(v.exp < Date.now()) huTokens.delete(k); }
+  return token;
+}
 const { createClient } = require('@supabase/supabase-js');
 
 // ISI 2 INI DARI SUPABASE LU (yang tadi lu copy di notes)
@@ -128,16 +139,16 @@ app.post('/api/forgot-password', async (req, res) => {
 });
 app.post('/api/add-hu', async (req, res)=>{
   try{
-    let {id, mode, playerCount} = req.body || {};
-    // TANDING: cuma dihitung kalau full 4 orang asli
-    if(mode==='tanding' && Number(playerCount)!==4){
-      return res.json({ok:false, counted:false, reason:'need-4-players'});
-    }
-    if(mode!=='tanding'){
-      return res.json({ok:false, counted:false, reason:'latihan'});
-    }
+    let {id, mode, playerCount, huToken} = req.body || {};
+    if(mode!=='tanding') return res.json({ok:false, counted:false, reason:'latihan'});
+    if(Number(playerCount)!==4) return res.json({ok:false, counted:false, reason:'need-4-players'});
     if(!id) return res.json({ok:false, counted:false, reason:'no-id'});
-    // Ambil HU sekarang, tambah 1, simpen balik ke Supabase
+    // INI KUNCINYA: tanpa token yang valid, ditolak. Token cuma didapat dari menang beneran.
+    if(!huToken || !huTokens.has(huToken)) return res.json({ok:false, counted:false, reason:'no-token'});
+    let tok = huTokens.get(huToken);
+    huTokens.delete(huToken); // Sekali pakai, langsung hangus
+    if(tok.exp < Date.now()) return res.json({ok:false, counted:false, reason:'token-expired'});
+
     let { data:u } = await supabase.from('users').select('hu').eq('id', id).maybeSingle();
     let newHu = (u?.hu||0) + 1;
     await supabase.from('users').update({hu: newHu}).eq('id', id);
@@ -160,8 +171,16 @@ app.get('/api/leaderboard', async (req,res)=>{
   }catch(e){ console.log('LEADERBOARD EX:', e); res.json({ ok:false, users:[] }); }
 });
 app.post('/api/change-avatar', async (req,res)=>{
-  await supabase.from('users').update({ avatar:req.body.avatar }).eq('id', req.body.id);
-  res.json({ok:true});
+  try{
+    let {id, avatar, password} = req.body || {};
+    if(!id || !avatar || !password) return res.status(400).json({ok:false, error:'ID, avatar & password wajib!'});
+    let { data: user } = await supabase.from('users').select('password_hash').eq('id', id).maybeSingle();
+    if(!user) return res.status(400).json({ok:false, error:'ID tidak ditemukan!'});
+    let match = await bcrypt.compare(String(password), user.password_hash);
+    if(!match) return res.status(403).json({ok:false, error:'Password salah!'});
+    await supabase.from('users').update({ avatar: String(avatar).slice(0,100) }).eq('id', id);
+    res.json({ok:true});
+  }catch(e){ res.status(500).json({ok:false}); }
 });
 // ============ AKHIR TAMBAHAN BARU ============
 app.get('/health', (req, res) => res.send('OK'))
@@ -667,7 +686,9 @@ function endGameWin(room, winnerName, msg, winningTile){
   emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: fullHand, melds: winner?winner.melds:[], winningTile: winningTile||null, mode: room.mode, playerCount: realCount, counted: counted, finalHands: buildFinalHands(room, winnerName, winningTile) });
   addLog(room, '🏆 '+msg);
     if(winner && !winner.isBot){
-    io.to(winner.id).emit('youHu', { mode: room.mode, playerCount: realCount, counted: counted });
+    // Cuma kalo counted, baru kasih token. Kalo latihan / gak full 4, gak dikasih token.
+    let huToken = counted ? makeHuToken(room.code, winner.id) : null;
+    io.to(winner.id).emit('youHu', { mode: room.mode, playerCount: realCount, counted: counted, huToken: huToken });
   }
 }
 
