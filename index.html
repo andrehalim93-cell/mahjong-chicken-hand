@@ -1729,6 +1729,41 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   font-size:11px; font-weight:900; color:#422006;
   background:#fff7cc; border-radius:50%; border:1px solid #f59e0b;
 }
+/* KELUAR BARU - PILL ELEGAN, BUKAN KOTAK MERAH FULL */
+#gameScreen .gameTop{
+  align-items:center !important;
+}
+#gameScreen .gameTop #exitBotPill{
+  background:rgba(127,29,29,.85) !important;
+  border:1px solid rgba(252,165,165,.6) !important;
+  border-radius:999px !important;
+  padding:0 !important;
+  margin:0 !important;
+  overflow:hidden !important;
+  display:flex !important;
+  align-items:center !important;
+  flex:0 0 auto !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.35) !important;
+  backdrop-filter:blur(4px);
+}
+#gameScreen .gameTop #exitBotPill button{
+  background:transparent !important;
+  color:#fee2e2 !important;
+  font-weight:800 !important;
+  font-size:12px !important;
+  letter-spacing:.5px !important;
+  padding:7px 12px !important;
+  border:none !important;
+  border-radius:999px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:5px !important;
+  cursor:pointer !important;
+}
+#gameScreen .gameTop #exitBotPill button:active{
+  background:rgba(255,255,255,.15) !important;
+  transform:scale(.96);
+}
 </style>
 </head>
 <body>
@@ -1975,7 +2010,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <button class="tileBtn" data-tile="silver" style="background:linear-gradient(180deg,#cbd5e1,#475569)" onclick="setTileColor('silver')">⚪ Silver</button>
 <button class="tileBtn" data-tile="jingga" style="background:linear-gradient(180deg,#fb923c,#c2410c)" onclick="setTileColor('jingga')">🟠 Jingga</button>
     </div>
-    <button class="btn btn-gold" onclick="openInviteFriends()" style="width:100%;font-size:15px;padding:14px;margin-bottom:8px">👥 UNDANG TEMEN KE MEJA INI</button>
     <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-gold" id="startBtn" style="flex:2;font-size:16px;padding:16px" onclick="startGame()">🚀 MULAI GAME</button><button class="btn btn-dark" style="flex:1" onclick="backToHome()">⬅️ KELUAR</button></div>
   </div>
 </div>
@@ -1989,7 +2023,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 </div>
 <div id="gameScreen" class="hidden">
-  <div class="gameTop"><div class="pill">🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div><div class="pill fsPill"><button id="fullBtnInGame" onclick="toggleFull()" class="fsBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">FULL</span></button></div><div class="pill" id="exitBotPill" style="display:none;background:#7f1d1d"><button onclick="exitBotGame()" style="background:none;color:#fecaca;font-weight:900;border:none;cursor:pointer">🚪 KELUAR</button></div></div>
+  <div class="gameTop"><div class="pill">🧱 Sisa: <b id="wallLeft">144</b> • ⏱️ <b id="turnTimer">30s</b></div><div class="pill">🎯 Giliran: <b id="turnName">-</b></div><div class="pill">🔊 <button onclick="toggleSound()" id="soundBtn" style="background:none;color:#fff;font-weight:900">ON</button></div><div class="pill fsPill"><button id="fullBtnInGame" onclick="toggleFull()" class="fsBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">FULL</span></button></div><div class="pill" id="exitBotPill" style="display:none;background:#7f1d1d"><button onclick="exitBotGame()" style="background:none;color:#fecaca;font-weight:900;border:none;cursor:pointer">✕ KELUAR</button></div></div>
   <div class="table" id="tableEl">
   <div class="turnArrow" title="Arah giliran: berlawanan jarum jam">
   <div class="turnArrowTxt">🔄 Giliran: berlawanan jarum jam</div>
