@@ -2194,7 +2194,11 @@ function closeProfile(){ clearTimeout(window._profileTimer); let m = el('profile
 async function changeAvatar(a){
   currentUser.avatar = a; el('profileAvatarBig').innerHTML = avatarHTML(a, 64);
   if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(a, 24) + ' ' + esc(currentUser.display_name) + ' (' + esc(currentUser.id) + ')';
-  try{ await fetch('/api/change-avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, avatar: a})}); }catch(e){}
+  try{
+    let saved = {};
+    try{ saved = JSON.parse(sessionStorage.getItem('mahjong_user')||'{}'); }catch(e){}
+    await fetch('/api/change-avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, avatar: a, password: saved.password||''})});
+  }catch(e){}
   openProfile();
 }
 let TUTS = [
@@ -3021,7 +3025,7 @@ socket.on('youHu', async d=>{
   let newHu = oldHu;
   try{
     // FIX: kirim playerCount, kalau enggak server selalu nolak (counted:false)
-    let r = await fetch('/api/add-hu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, mode: d.mode, playerCount: d.playerCount})});
+    let r = await fetch('/api/add-hu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, mode: d.mode, playerCount: d.playerCount, huToken: d.huToken})});
     let j = await r.json();
     if(j.ok && j.counted && typeof j.hu === 'number') newHu = j.hu;
   }catch(e){}
