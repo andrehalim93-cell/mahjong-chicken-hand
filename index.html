@@ -1270,6 +1270,20 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     width:24px !important; height:34px !important; transform:rotate(90deg) !important;
   }
 }
+/* HP ONLY - BENERIN FLEX TANGAN LAWAN DOANG, YANG LAIN JANGAN DIUBAH */
+@media (max-width:768px){
+  #gameScreen .seatPos.left .miniHand,
+  #gameScreen .seatPos.right .miniHand{
+    display:flex !important; flex-direction:column !important;
+    flex-wrap:nowrap !important; gap:1px !important;
+    justify-content:flex-start !important; align-items:center !important;
+  }
+  #gameScreen .seatPos.top .miniHand{
+    display:flex !important; flex-direction:row !important;
+    flex-wrap:nowrap !important; gap:1px !important;
+    justify-content:center !important;
+  }
+}
 </style>
 </head>
 <body>
