@@ -3939,18 +3939,51 @@ function addAchStat(k,v){ let d=getAchData(); d.stats[k]=(d.stats[k]||0)+(v||1);
 function openAchModal(){
   let d=getAchData();
   let stars=getAchStars();
-  document.getElementById('achProgress').innerText='⭐ '+achStarsText()+' • Kamu udah buka '+d.unlocked.length+' dari '+ACH_LIST.length+' achievement';
+  document.getElementById('achProgress').innerText='⭐ '+achStarsText()+' • '+d.unlocked.length+' dari '+ACH_LIST.length+' achievement';
   document.getElementById('achList').innerHTML=stars.map(c=>{
-    let head=`<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px"><b style="color:#fff;font-size:14px">${c.icon} ${c.name} ${c.done?'⭐':''}</b><span style="font-size:11px;color:${c.done?'#facc15':'#94a3b8'}">${c.got}/${c.total} ${c.done?'• LENGKAP!':''}</span></div>`;
+    let pct = c.total ? Math.round(c.got/c.total*100) : 0;
     let items=c.ids.map(id=>{
       let a=ACH_LIST.find(x=>x.id===id); if(!a) return '';
       let got=d.unlocked.includes(id);
-      if(a.hidden && !got) return `<div style="background:#0f172a;border:1px dashed #475569;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;margin-bottom:6px"><div style="font-size:24px">❓</div><div><b style="color:#94a3b8">??? Achievement Tersembunyi ???</b><br><span style="color:#64748b;font-size:12px">???</span></div></div>`;
-      return `<div style="background:${got?'#14532d':'#0f172a'};border:1px solid ${got?'#22c55e':'#334155'};border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;margin-bottom:6px"><div style="font-size:24px;${got?'':'filter:grayscale(1);opacity:.5'}">${a.icon}</div><div><b style="color:${got?'#fff':'#94a3b8'}">${a.name} ${got?'✅':''}</b><br><span style="color:#94a3b8;font-size:12px">${a.desc}</span></div></div>`;
+      if(a.hidden && !got) return `<div style="background:#0f172a;border:1px dashed #475569;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;margin-bottom:6px"><div style="font-size:22px">❓</div><div><b style="color:#94a3b8">??? Achievement Tersembunyi ???</b><br><span style="color:#64748b;font-size:12px">???</span></div></div>`;
+      return `<div style="background:${got?'#14532d':'#0f172a'};border:1px solid ${got?'#22c55e':'#334155'};border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;margin-bottom:6px"><div style="font-size:22px;${got?'':'filter:grayscale(1);opacity:.5'}">${a.icon}</div><div><b style="color:${got?'#fff':'#94a3b8'}">${a.name} ${got?'✅':''}</b><br><span style="color:#94a3b8;font-size:12px">${a.desc}</span></div></div>`;
     }).join('');
-    return head+items;
+    return `
+    <div style="margin-bottom:8px;border:1px solid ${c.done?'#facc15':'#334155'};border-radius:14px;overflow:hidden;background:#0f172a">
+      <div onclick="toggleAchCat('${c.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:12px;cursor:pointer">
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b style="color:#fff;font-size:14px">${c.icon} ${c.name} ${c.done?'⭐':''}</b>
+            <span style="font-size:11px;color:${c.done?'#facc15':'#94a3b8'}">${c.got}/${c.total} • ${pct}%</span>
+          </div>
+          <div style="height:6px;background:#1e293b;border-radius:99px;margin-top:8px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${c.done?'#facc15':'#22c55e'};border-radius:99px;transition:width .3s"></div>
+          </div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:6px">${c.done?'Bintang udah kebuka!':'Klik buat liat isinya'}</div>
+        </div>
+        <div id="achArrow-${c.id}" style="font-size:16px;margin-left:10px;color:#94a3b8">▼</div>
+      </div>
+      <div id="achBody-${c.id}" style="display:none;padding:0 10px 10px">${items}</div>
+    </div>`;
   }).join('');
   document.getElementById('achModal').style.display='flex';
+  // Buka otomatis yang belum lengkap pertama, biar langsung keliatan targetnya
+  let firstOpen = stars.find(c=>!c.done) || stars[0];
+  if(firstOpen) toggleAchCat(firstOpen.id, true);
+}
+function toggleAchCat(catId, forceOpen){
+  let body=document.getElementById('achBody-'+catId);
+  let arrow=document.getElementById('achArrow-'+catId);
+  if(!body) return;
+  let isOpen = body.style.display==='block';
+  if(forceOpen) isOpen=false;
+  if(isOpen){
+    body.style.display='none';
+    if(arrow) arrow.innerText='▼';
+  } else {
+    body.style.display='block';
+    if(arrow) arrow.innerText='▲';
+  }
 }
 function closeAchModal(){ document.getElementById('achModal').style.display='none'; }
 // state per-game
