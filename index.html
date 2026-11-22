@@ -2610,7 +2610,6 @@ function randomBotName(){ let pool=BOT_NAMES.filter(n=>!usedBotNames.includes(n)
 function setTurnTime(sec, btn){ if(!isHost){ toast('Cuma HOST yang bisa ganti waktu!'); return; } turnTimeSec=sec; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); el('timeInfo').innerText = sec===0 ? 'Saat ini: Tanpa batas' : 'Saat ini: '+sec+' detik per giliran'; el('turnTimer').innerText = sec===0 ? '♾️' : sec+'s'; socket.emit('setTurnTime',{code:myCode, seconds:sec}); }
 let meldPopupTimer=null;
 function showMeldPopup(by, meld){
-  achOnMeld(d.meld, d.by);
   let p = el('meldPopup'); if(!p || !meld) return;
   let pl = (currentPlayers||[]).find(x=>x.name===by);
   el('meldAvatar').innerHTML = avatarHTML(pl && pl.avatar ? pl.avatar : '🧑', 42);
