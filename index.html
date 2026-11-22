@@ -2177,7 +2177,7 @@ async function refreshMyGelar(){
       currentUser.hu = j.hu;
       // Update label di home + profil, gelar aja tanpa angka
       let home = el('homeUserLabel');
-      if(home) home.innerHTML = avatarHTML(currentUser.avatar, 24) + ' ' + esc(currentUser.display_name) + ' <span class="rankBadge">' + gelarLabel(currentUser.hu) + '</span>';
+      if(home) home.innerHTML = avatarHTML(currentUser.avatar, 24) + ' ' + esc(currentUser.display_name) + ' <span class="rankBadge">' + gelarLabel(currentUser.hu) + '</span> <span style="font-size:12px;letter-spacing:1px" title="'+achStarsText()+'">'+achStarsHTML()+'</span>';
       let ph = el('profileHu');
      if(ph) ph.innerHTML = '<b style="font-size:18px">' + getGelar(currentUser.hu).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + currentUser.hu + '</span><br><span style="font-size:11px;color:#a7f3d0">' + (getGelar(currentUser.hu).next ? 'Berikutnya: ' + getGelar(currentUser.hu).next : 'Gelar tertinggi!') + '</span>';
     }
@@ -2287,7 +2287,7 @@ function loginSuccess(user, passwordForSave, showProfile){
     localStorage.removeItem('mahjong_saved_login');
   }
   if(el('nameInput')){ el('nameInput').value = user.display_name; el('nameInput').readOnly = true; }
-  if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(user.avatar, 24)+' '+esc(user.display_name)+' <span class="rankBadge">'+gelarLabel(user.hu||0)+'</span>';
+  if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(user.avatar, 24)+' '+esc(user.display_name)+' <span class="rankBadge">'+gelarLabel(user.hu||0)+'</span> <span style="font-size:12px;letter-spacing:1px">'+achStarsHTML()+'</span>';
   loadAchFromServer();
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
@@ -3868,6 +3868,27 @@ const ACH_LIST=[
   {id:'lose10',icon:'💀',name:'Sial Bertubi-tubi',desc:'Kalah 10x berturut-turut',hidden:true},
   {id:'perfect_defense',icon:'🛡️',name:'Tembok Raksasa',desc:'Menang + lawan gak pernah ngambil buangan lu + lu gak pernah chat',hidden:true},
 ];
+// ===== 5 KATEGORI ACHIEVEMENT = 5 BINTANG =====
+const ACH_CATS=[
+  {id:'teknik', icon:'🀄', name:'Teknik', ids:['first_pong','first_chow','first_kong','pong10','pong50','chow10','chow50','kong10','kong2','meld100','combo_meld']},
+  {id:'menang', icon:'🏆', name:'Menang & Setia', ids:['first_game','first_hu','hu10','hu25','hu50','hu100','fast_hu','clean_win','hu_from_discard','streak3','streak5','streak10','perfect_hu','comeback','last_tile_hu','flower4','flower8','unlucky_to_lucky','self_hu5','login7','login30','games10','games100','games500']},
+  {id:'bot', icon:'🤖', name:'Bot', ids:['bot1','bot10','bot20','bot50','bot_streak10','bot_fast']},
+  {id:'sosial', icon:'👯', name:'Sosial', ids:['play_friend','invite10','chat100','chat500','emote50','emote200','loyal_friend','best_friend']},
+  {id:'rahasia', icon:'❓', name:'Rahasia', ids:['ninja','owl','revenge','midnight_hu','silent_killer','first_try','lose10','perfect_defense']},
+];
+function achCatOf(id){ let c=ACH_CATS.find(x=>x.ids.includes(id)); return c||ACH_CATS[1]; }
+function getAchStars(){
+  let d=getAchData();
+  return ACH_CATS.map(c=>({ ...c, got:c.ids.filter(id=>d.unlocked.includes(id)).length, total:c.ids.length, done:c.ids.every(id=>d.unlocked.includes(id)) }));
+}
+function achStarsHTML(){
+  let s=getAchStars();
+  return s.map(c=>c.done?'⭐':'☆').join('');
+}
+function achStarsText(){
+  let s=getAchStars();
+  return s.filter(c=>c.done).length+'/5 Bintang';
+}
 function getAchData(){ try{ return JSON.parse(localStorage.getItem('mj_ach')||'{"unlocked":[],"stats":{}}'); }catch(e){ return {unlocked:[],stats:{}}; } }
 function saveAchData(d){ localStorage.setItem('mj_ach',JSON.stringify(d)); updateAchLabel(); syncAchToServer(d); }
 function getAchPassword(){ try{ return JSON.parse(sessionStorage.getItem('mahjong_user')||'{}').password||''; }catch(e){ return ''; } }
@@ -3899,9 +3920,16 @@ function unlockAch(id){
   let d=getAchData(); if(d.unlocked.includes(id)) return;
   let a=ACH_LIST.find(x=>x.id===id); if(!a) return;
   d.unlocked.push(id); saveAchData(d);
+    // Cek apa kategori ini baru aja lengkap -> dapet bintang
+  let cat=achCatOf(id);
+  let wasDone = cat.ids.filter(x=>x!==id).every(x=>d.unlocked.includes(x));
+  if(wasDone){
+    document.getElementById('achUnlockDesc').innerText = a.desc + ' — ⭐ Kategori '+cat.name+' LENGKAP! Bintang baru kebuka!';
+  } else {
+    document.getElementById('achUnlockDesc').innerText = a.desc;
+  }
   document.getElementById('achUnlockIcon').innerText=a.icon;
   document.getElementById('achUnlockName').innerText=a.name;
-  document.getElementById('achUnlockDesc').innerText=a.desc;
   document.getElementById('achUnlockPopup').style.display='flex';
   if(typeof playMjSound==='function') playMjSound('win');
   clearTimeout(window._achPopupTimer); window._achPopupTimer=setTimeout(closeAchUnlockPopup,4000);
@@ -3910,11 +3938,17 @@ function closeAchUnlockPopup(){ let p=document.getElementById('achUnlockPopup');
 function addAchStat(k,v){ let d=getAchData(); d.stats[k]=(d.stats[k]||0)+(v||1); saveAchData(d); return d.stats[k]; }
 function openAchModal(){
   let d=getAchData();
-  document.getElementById('achProgress').innerText='Kamu udah buka '+d.unlocked.length+' dari '+ACH_LIST.length+' achievement';
-  document.getElementById('achList').innerHTML=ACH_LIST.map(a=>{
-    let got=d.unlocked.includes(a.id);
-    if(a.hidden && !got) return `<div style="background:#0f172a;border:1px dashed #475569;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center"><div style="font-size:24px">❓</div><div><b style="color:#94a3b8">??? Achievement Tersembunyi ???</b><br><span style="color:#64748b;font-size:12px">???</span></div></div>`;
-    return `<div style="background:${got?'#14532d':'#0f172a'};border:1px solid ${got?'#22c55e':'#334155'};border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center"><div style="font-size:24px;${got?'':'filter:grayscale(1);opacity:.5'}">${a.icon}</div><div><b style="color:${got?'#fff':'#94a3b8'}">${a.name} ${got?'✅':''}</b><br><span style="color:#94a3b8;font-size:12px">${a.desc}</span></div></div>`;
+  let stars=getAchStars();
+  document.getElementById('achProgress').innerText='⭐ '+achStarsText()+' • Kamu udah buka '+d.unlocked.length+' dari '+ACH_LIST.length+' achievement';
+  document.getElementById('achList').innerHTML=stars.map(c=>{
+    let head=`<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px"><b style="color:#fff;font-size:14px">${c.icon} ${c.name} ${c.done?'⭐':''}</b><span style="font-size:11px;color:${c.done?'#facc15':'#94a3b8'}">${c.got}/${c.total} ${c.done?'• LENGKAP!':''}</span></div>`;
+    let items=c.ids.map(id=>{
+      let a=ACH_LIST.find(x=>x.id===id); if(!a) return '';
+      let got=d.unlocked.includes(id);
+      if(a.hidden && !got) return `<div style="background:#0f172a;border:1px dashed #475569;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;margin-bottom:6px"><div style="font-size:24px">❓</div><div><b style="color:#94a3b8">??? Achievement Tersembunyi ???</b><br><span style="color:#64748b;font-size:12px">???</span></div></div>`;
+      return `<div style="background:${got?'#14532d':'#0f172a'};border:1px solid ${got?'#22c55e':'#334155'};border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;margin-bottom:6px"><div style="font-size:24px;${got?'':'filter:grayscale(1);opacity:.5'}">${a.icon}</div><div><b style="color:${got?'#fff':'#94a3b8'}">${a.name} ${got?'✅':''}</b><br><span style="color:#94a3b8;font-size:12px">${a.desc}</span></div></div>`;
+    }).join('');
+    return head+items;
   }).join('');
   document.getElementById('achModal').style.display='flex';
 }
