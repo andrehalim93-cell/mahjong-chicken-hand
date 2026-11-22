@@ -219,6 +219,29 @@ app.post('/api/change-avatar', async (req,res)=>{
     res.json({ok:true});
   }catch(e){ res.status(500).json({ok:false}); }
 });
+// ===== ACHIEVEMENT PERMANEN - nyimpen di Supabase, bukan cuma di HP =====
+app.get('/api/get-ach', async (req,res)=>{
+  try{
+    let { data:u } = await supabase.from('users').select('ach').eq('id', normId(req.query.id)).maybeSingle();
+    let ach = u?.ach || {unlocked:[],stats:{}};
+    if(typeof ach==='string'){ try{ ach=JSON.parse(ach); }catch(e){ ach={unlocked:[],stats:{}}; } }
+    res.json({ok:true, ach});
+  }catch(e){ console.log('GET-ACH EX:', e); res.json({ok:false, ach:{unlocked:[],stats:{}}}); }
+});
+app.post('/api/save-ach', async (req,res)=>{
+  try{
+    let {id, password, ach} = req.body || {};
+    if(!id || !password || !ach) return res.status(400).json({ok:false});
+    let { data:user } = await supabase.from('users').select('password_hash').eq('id', normId(id)).maybeSingle();
+    if(!user) return res.status(400).json({ok:false});
+    let match = await bcrypt.compare(String(password), user.password_hash);
+    if(!match) return res.status(403).json({ok:false});
+    // Cuma simpen yang valid, biar DB gak jebol
+    let clean = {unlocked:Array.isArray(ach.unlocked)?ach.unlocked.slice(0,100):[], stats:(ach.stats&&typeof ach.stats==='object')?ach.stats:{}};
+    await supabase.from('users').update({ach: clean}).eq('id', normId(id));
+    res.json({ok:true});
+  }catch(e){ console.log('SAVE-ACH EX:', e); res.status(500).json({ok:false}); }
+});
 // ============ AKHIR TAMBAHAN BARU ============
 app.get('/health', (req, res) => res.send('OK'))
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
