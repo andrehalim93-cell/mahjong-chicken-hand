@@ -27,12 +27,9 @@ function makeHuToken(roomCode, winnerSocketId){
   return token;
 }
 const { createClient } = require('@supabase/supabase-js');
-
-// ISI 2 INI DARI SUPABASE LU (yang tadi lu copy di notes)
-// Cara isi di Render: Settings -> Environment -> Tambah SUPABASE_URL & SUPABASE_ANON_KEY
-// Kalau jalanin di lokal, ganti process.env.xxx jadi string langsung "https://xxx.supabase.co"
-const SUPABASE_URL = process.env.SUPABASE_URL ||   'https://iisxxgaihgtcuzynjcus.supabase.co' ;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY ||   'sb_publishable_y2IpdW-81zOi5qha15J0Ew_OTmhdrNA' ;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+if(!SUPABASE_URL || !SUPABASE_ANON_KEY){ console.error('SUPABASE ENV BELUM KEISI DI RENDER!'); }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ============ TEMEN - ONLINE + FRIENDS - JANGAN UBAH YANG LAIN ============
