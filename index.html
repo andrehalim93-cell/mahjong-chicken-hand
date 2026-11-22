@@ -2288,6 +2288,7 @@ function loginSuccess(user, passwordForSave, showProfile){
   }
   if(el('nameInput')){ el('nameInput').value = user.display_name; el('nameInput').readOnly = true; }
   if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(user.avatar, 24)+' '+esc(user.display_name)+' <span class="rankBadge">'+gelarLabel(user.hu||0)+'</span>';
+  loadAchFromServer();
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
     toast('Halo '+user.display_name+'!');
@@ -3845,7 +3846,31 @@ const ACH_LIST=[
  {id:'first_try',icon:'🎲',name:'Sekali Coba',desc:'HU di game pertama setelah buka app',hidden:true},
 ];
 function getAchData(){ try{ return JSON.parse(localStorage.getItem('mj_ach')||'{"unlocked":[],"stats":{}}'); }catch(e){ return {unlocked:[],stats:{}}; } }
-function saveAchData(d){ localStorage.setItem('mj_ach',JSON.stringify(d)); updateAchLabel(); }
+function saveAchData(d){ localStorage.setItem('mj_ach',JSON.stringify(d)); updateAchLabel(); syncAchToServer(d); }
+function getAchPassword(){ try{ return JSON.parse(sessionStorage.getItem('mahjong_user')||'{}').password||''; }catch(e){ return ''; } }
+function syncAchToServer(d){
+  if(!currentUser || !currentUser.id) return;
+  let pw = getAchPassword(); if(!pw) return;
+  clearTimeout(window._achSyncTimer);
+  window._achSyncTimer = setTimeout(()=>{
+    fetch('/api/save-ach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentUser.id,password:pw,ach:d})}).catch(()=>{});
+  }, 500);
+}
+async function loadAchFromServer(){
+  if(!currentUser || !currentUser.id) return;
+  try{
+    let r = await fetch('/api/get-ach?id='+encodeURIComponent(currentUser.id));
+    let j = await r.json(); if(!j.ok || !j.ach) return;
+    let local = getAchData();
+    // Server menang kalo lebih banyak, biar ganti HP tetep ikut. Kalo lokal lebih banyak (main offline), upload lokal ke server
+    if((j.ach.unlocked||[]).length >= (local.unlocked||[]).length){
+      localStorage.setItem('mj_ach', JSON.stringify({unlocked:j.ach.unlocked||[], stats:j.ach.stats||{}}));
+    } else {
+      syncAchToServer(local);
+    }
+    updateAchLabel();
+  }catch(e){}
+}
 function updateAchLabel(){ let d=getAchData(); let el2=document.getElementById('achCountLabel'); if(el2) el2.innerText='('+d.unlocked.length+'/'+ACH_LIST.length+')'; }
 function unlockAch(id){
   let d=getAchData(); if(d.unlocked.includes(id)) return;
