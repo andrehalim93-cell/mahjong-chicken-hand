@@ -3751,8 +3751,8 @@ function toggleChat(){
   if(chatOpen){ emoteOpen=false; el('emotePanel').classList.remove('show'); }
   if(chatOpen){ chatUnread=0; el('chatBadge').style.display='none'; el('chatFabDot').style.display='none'; setTimeout(()=>el('chatInput').focus(),100); }
 }
-function sendChat(){ let inp = el('chatInput'); let m = inp.value.trim(); if(!m) return; socket.emit('tableChat', {code:myCode, msg:m}); inp.value=''; inp.focus(); window._achGame.chatInGame++; if(addAchStat('chat',1)>=100) unlockAch('chat100'); }
-function quickChat(m){ socket.emit('tableChat', {code:myCode, msg:m}); window._achGame.chatInGame++; if(addAchStat('chat',1)>=100) unlockAch('chat100'); }
+function sendChat(){ let inp = el('chatInput'); let m = inp.value.trim(); if(!m) return; socket.emit('tableChat', {code:myCode, msg:m}); inp.value=''; inp.focus(); window._achGame.chatInGame++; let ch=addAchStat('chat',1); if(ch>=100) unlockAch('chat100'); if(ch>=500) unlockAch('chat500'); }
+function quickChat(m){ socket.emit('tableChat', {code:myCode, msg:m}); window._achGame.chatInGame++; let ch=addAchStat('chat',1); if(ch>=100) unlockAch('chat100'); if(ch>=500) unlockAch('chat500'); }
 let emoteOpen=false;
 function toggleEmote(){
   emoteOpen=!emoteOpen;
@@ -3761,7 +3761,7 @@ function toggleEmote(){
 }
 function sendEmote(m){
   socket.emit('tableChat', {code:myCode, msg:m});
-  if(addAchStat('emote',1)>=50) unlockAch('emote50');
+  let em=addAchStat('emote',1); if(em>=50) unlockAch('emote50'); if(em>=200) unlockAch('emote200');
   showFloatingEmote(m);
   emoteOpen=false; el('emotePanel').classList.remove('show');
 }
@@ -3893,6 +3893,32 @@ const ACH_CATS=[
   {id:'sosial', icon:'👯', name:'Sosial', ids:['play_friend','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend']},
   {id:'rahasia', icon:'❓', name:'Rahasia', ids:['ninja','owl','revenge','midnight_hu','silent_killer','first_try','lose10','perfect_defense','maraton5','maraton10','tukang_intip','no_flower_win','kembar','kalah_tipis','bangkit3']},
 ];
+// ===== PROGRESS BERANTAI: id -> [nama stat di mj_ach, target] =====
+const ACH_PROGRESS={
+  first_pong:['pong_total',1], pong10:['pong_total',10], pong20:['pong_total',20], pong35:['pong_total',35], pong50:['pong_total',50], pong100:['pong_total',100],
+  first_chow:['chow_total',1], chow10:['chow_total',10], chow20:['chow_total',20], chow35:['chow_total',35], chow50:['chow_total',50], chow100:['chow_total',100],
+  first_kong:['kong_total',1], kong10:['kong_total',10],
+  meld100:['meld_total',100],
+  first_game:['games',1], games10:['games',10], games100:['games',100], games500:['games',500],
+  first_hu:['hu_total',1], hu10:['hu_total',10], hu25:['hu_total',25], hu50:['hu_total',50], hu100:['hu_total',100],
+  hu_from_discard:['hu_discard',5], self_hu5:['self_hu',5],
+  streak3:['win_streak',3], streak5:['win_streak',5], streak10:['win_streak',10],
+  login7:['loginStreak',7], login30:['loginStreak',30],
+  silent_killer:['silent_wins',5], lose10:['lose_streak',10],
+  bot1:['bot_win',1], bot10:['bot_win',10], bot20:['bot_win',20], bot50:['bot_win',50], bot_streak10:['bot_streak',10],
+  invite10:['invite',10], invite50:['invite',50],
+  chat100:['chat',100], chat500:['chat',500],
+  emote50:['emote',50], emote200:['emote',200],
+  loyal_friend:['friend_games',20], best_friend:['friend_games',100],
+  maraton5:['maraton_session',5], maraton10:['maraton_session',10],
+};
+function achProgress(id){
+  let p=ACH_PROGRESS[id]; if(!p) return null;
+  let d=getAchData();
+  let cur = p[0]==='maraton_session' ? (window._maraton||0) : (d.stats[p[0]]||0);
+  cur=Math.min(cur, p[1]);
+  return {cur:cur, target:p[1], pct:Math.round(cur/p[1]*100), left:Math.max(0, p[1]-cur)};
+}
 function achCatOf(id){ let c=ACH_CATS.find(x=>x.ids.includes(id)); return c||ACH_CATS[1]; }
 function getAchStars(){
   let d=getAchData();
@@ -3963,7 +3989,13 @@ function openAchModal(){
       let a=ACH_LIST.find(x=>x.id===id); if(!a) return '';
       let got=d.unlocked.includes(id);
       if(a.hidden && !got) return `<div style="background:#0f172a;border:1px dashed #475569;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;margin-bottom:6px"><div style="font-size:22px">❓</div><div><b style="color:#94a3b8">??? Achievement Tersembunyi ???</b><br><span style="color:#64748b;font-size:12px">???</span></div></div>`;
-      return `<div style="background:${got?'#14532d':'#0f172a'};border:1px solid ${got?'#22c55e':'#334155'};border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;margin-bottom:6px"><div style="font-size:22px;${got?'':'filter:grayscale(1);opacity:.5'}">${a.icon}</div><div><b style="color:${got?'#fff':'#94a3b8'}">${a.name} ${got?'✅':''}</b><br><span style="color:#94a3b8;font-size:12px">${a.desc}</span></div></div>`;
+            let pr=achProgress(id);
+      let prHTML='';
+      if(pr){
+        if(got) prHTML=`<div style="font-size:11px;color:#4ade80;margin-top:4px">✅ ${pr.cur}/${pr.target} - BERES!</div>`;
+        else prHTML=`<div style="font-size:11px;color:#facc15;margin-top:4px">${pr.cur}/${pr.target} • kurang ${pr.left} lagi</div><div style="height:5px;background:#1e293b;border-radius:99px;margin-top:4px;overflow:hidden"><div style="height:100%;width:${pr.pct}%;background:#22c55e;border-radius:99px"></div></div>`;
+      }
+      return `<div style="background:${got?'#14532d':'#0f172a'};border:1px solid ${got?'#22c55e':'#334155'};border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center;margin-bottom:6px"><div style="font-size:22px;${got?'':'filter:grayscale(1);opacity:.5'}">${a.icon}</div><div style="flex:1"><b style="color:${got?'#fff':'#94a3b8'}">${a.name} ${got?'✅':''}</b><br><span style="color:#94a3b8;font-size:12px">${a.desc}</span>${prHTML}</div></div>`;
     }).join('');
     return `
     <div style="margin-bottom:8px;border:1px solid ${c.done?'#facc15':'#334155'};border-radius:14px;overflow:hidden;background:#0f172a">
