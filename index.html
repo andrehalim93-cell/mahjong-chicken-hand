@@ -1954,7 +1954,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     <div id="profileHu" style="margin:12px 0;background:#422006;border-radius:12px;padding:10px;font-weight:900;color:#fde68a">🏆 TOTAL HU TANDING: 0</div>
     <button class="btn btn-gold" onclick="openAchModal()" style="margin:8px 0 0">🏆 ACHIEVEMENT <span id="achCountLabel"></span></button>
     <div class="lbl" id="profileAvatarLabel" style="text-align:left">GANTI AVATAR</div>
-    <div id="profileAvatarPick" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
+    <button id="profileAvatarBtn" class="btn btn-dark" onclick="openAvatarPicker()" style="margin-top:10px">🖼️ GANTI AVATAR ▸</button>
     <button class="btn btn-gold" style="margin-top:14px" onclick="closeProfile()">✅ TUTUP</button>
   </div>
 </div>
@@ -2312,20 +2312,9 @@ async function openProfile(allowEdit){
   el('profileName').innerText = currentUser.display_name || '-';
   el('profileId').innerText = '@' + currentUser.id;
   el('profileHu').innerHTML = '<b style="font-size:18px">' + getGelar(currentUser.hu || 0).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + (currentUser.hu || 0) + '</span>';
-  // Kalau abis login, SEMBUNYIIN ganti avatar. Kalau klik profil manual, TAMPILIN.
-  let pick = el('profileAvatarPick');
-  let label = el('profileAvatarLabel');
-  if(pick) pick.style.display = allowEdit ? 'flex' : 'none';
-  if(label) label.style.display = allowEdit ? 'block' : 'none';
-  if(allowEdit && pick){
-    pick.innerHTML = '';
-    profileAvatars.forEach(a=>{
-      let b = document.createElement('button');
-      b.innerHTML = avatarHTML(a, 40); b.style.cssText = 'background:'+(a===currentUser.avatar?'#facc15':'#1e293b')+';border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:52px;height:52px';
-      b.onclick = ()=>changeAvatar(a);
-      pick.appendChild(b);
-    });
-  }
+  // GANTI AVATAR sekarang jadi tombol doang, grid-nya pindah ke popup
+  let avBtn = el('profileAvatarBtn');
+  if(avBtn) avBtn.style.display = allowEdit ? 'block' : 'none';
   el('profileModal').style.display = 'flex';
   try{
     let r = await fetch('/api/get-hu?id=' + currentUser.id);
@@ -2337,7 +2326,19 @@ async function openProfile(allowEdit){
     }catch(e){}
 }
 function closeProfile(){ clearTimeout(window._profileTimer); let m = el('profileModal'); if(m) m.style.display = 'none'; }
-async function changeAvatar(a){
+function openAvatarPicker(){
+  let grid = el('avatarPickerGrid');
+  grid.innerHTML = '';
+  profileAvatars.forEach(a=>{
+    let b = document.createElement('button');
+    b.innerHTML = avatarHTML(a, 40);
+    b.style.cssText = 'background:'+(a===currentUser.avatar?'#facc15':'#1e293b')+';border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:52px;height:52px';
+    b.onclick = ()=>{ changeAvatar(a); closeAvatarPicker(); };
+    grid.appendChild(b);
+  });
+  el('avatarPickerModal').style.display = 'flex';
+}
+function closeAvatarPicker(){ el('avatarPickerModal').style.display = 'none'; }
   currentUser.avatar = a; el('profileAvatarBig').innerHTML = avatarHTML(a, 64);
   if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(a, 24) + ' ' + esc(currentUser.display_name) + ' (' + esc(currentUser.id) + ')';
   try{
@@ -3969,6 +3970,15 @@ updateAchLabel();
     <div id="achUnlockName" style="font-size:22px;font-weight:900;color:#422006">-</div>
     <div id="achUnlockDesc" style="font-size:13px;color:#78350f;margin-top:6px">-</div>
     <button onclick="closeAchUnlockPopup()" style="margin-top:16px;background:#422006;color:#fef3c7;border:none;border-radius:99px;padding:10px 24px;font-weight:900;cursor:pointer;width:100%">MANTAP! 👍</button>
+  </div>
+</div>
+<!-- POPUP PILIH AVATAR -->
+<div id="avatarPickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) closeAvatarPicker()">
+  <div class="card" style="max-width:420px;width:100%;margin:0;text-align:center;position:relative;max-height:85vh;overflow:auto">
+    <button onclick="closeAvatarPicker()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:#fff;font-size:20px;font-weight:900;cursor:pointer">✕</button>
+    <b style="font-size:16px">🖼️ PILIH AVATAR</b>
+    <div id="avatarPickerGrid" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px"></div>
+    <button class="btn btn-dark" onclick="closeAvatarPicker()" style="margin-top:14px">⬅️ KEMBALI</button>
   </div>
 </div>
 </body>
