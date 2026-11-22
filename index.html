@@ -1233,11 +1233,18 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 #lobbyScreen .seats .seat:nth-child(4){left:10px;top:50%;transform:translateY(-50%)}
 .lobbyBottom{max-width:560px;margin:14px auto 0}
 #tutorialModal .card{max-height:90vh;overflow:auto}
-.homeTop{max-width:460px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px}
-.homeProfile{display:flex;align-items:center;gap:10px;cursor:pointer;background:linear-gradient(180deg,#0d3a22,#071f10);border:1px solid rgba(250,204,21,.55);border-radius:999px;padding:6px 14px 6px 6px;font-size:15px;color:#fde68a;font-weight:900;line-height:1.15;min-width:0;box-shadow:0 6px 18px rgba(0,0,0,.4)}
-.homeProfile img{width:44px!important;height:44px!important;border-radius:50%!important;object-fit:cover!important;border:2px solid #facc15;flex:none}
-.homeProfile .rankBadge{display:block!important;margin-top:3px;font-size:11px!important;font-weight:800!important;color:#0a2412!important;background:linear-gradient(180deg,#fde047,#f59e0b)!important;padding:2px 8px!important;border-radius:999px!important;width:fit-content}
-.homeLogout{background:#7f1d1d;color:#fecaca;border:1px solid rgba(255,255,255,.25);padding:9px 14px;border-radius:999px;font-weight:900;font-size:12px;flex:none;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.homeTop{max-width:460px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:6px}
+.homeProfile{display:flex;align-items:center;gap:10px;cursor:pointer;background:linear-gradient(180deg,#0d3a22,#071f10);border:1px solid rgba(250,204,21,.55);border-radius:18px;padding:8px 12px 8px 8px;color:#fde68a;font-weight:900;line-height:1.2;min-width:0;flex:1;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.homeProfile img{width:48px!important;height:48px!important;border-radius:50%!important;object-fit:cover!important;border:2px solid #facc15;flex:none}
+.homeUserText{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.homeUserName{font-size:16px;color:#fde68a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.homeUserMeta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.homeProfile .rankBadge{display:inline-flex!important;margin-top:0!important;font-size:11px!important;font-weight:800!important;color:#fde68a!important;background:transparent!important;border:1px solid rgba(250,204,21,.8)!important;padding:2px 8px!important;border-radius:999px!important;width:fit-content}
+.homeAchStars{display:inline-flex;align-items:center;gap:1px;font-size:14px;letter-spacing:1px;line-height:1}
+.homeAchStars .st-on{color:#facc15;text-shadow:0 0 6px rgba(250,204,21,.9)}
+.homeAchStars .st-off{color:#475569}
+.homeAchCount{font-size:11px;color:#a7f3d0;font-weight:700}
+.homeLogout{background:#7f1d1d;color:#fecaca;border:1px solid rgba(255,255,255,.25);padding:10px 12px;border-radius:14px;font-weight:900;font-size:12px;flex:none;box-shadow:0 6px 16px rgba(0,0,0,.35);margin-top:2px}
 .homeTabs{max-width:460px;margin:10px auto 0;display:flex;gap:8px}
 .homeTabBtn{flex:1;padding:12px 4px;border-radius:14px;font-weight:900;font-size:12px;background:rgba(0,0,0,.35);color:#cbd5e1;border:1px solid rgba(255,255,255,.15)}
 .homeTabBtn.active{background:linear-gradient(180deg,#fde047,#f59e0b);color:#422006;border-color:#facc15;box-shadow:0 8px 20px rgba(245,158,11,.4)}
@@ -2177,7 +2184,7 @@ async function refreshMyGelar(){
       currentUser.hu = j.hu;
       // Update label di home + profil, gelar aja tanpa angka
       let home = el('homeUserLabel');
-      if(home) home.innerHTML = avatarHTML(currentUser.avatar, 24) + ' ' + esc(currentUser.display_name) + ' <span class="rankBadge">' + gelarLabel(currentUser.hu) + '</span> <span style="font-size:12px;letter-spacing:1px" title="'+achStarsText()+'">'+achStarsHTML()+'</span>';
+            if(home) home.innerHTML = avatarHTML(currentUser.avatar, 48) + '<div class="homeUserText"><div class="homeUserName">'+esc(currentUser.display_name)+'</div><div class="homeUserMeta"><span class="rankBadge">'+gelarLabel(currentUser.hu)+'</span><span title="'+achStarsText()+'">'+achStarsHTML()+'</span></div></div>';
       let ph = el('profileHu');
      if(ph) ph.innerHTML = '<b style="font-size:18px">' + getGelar(currentUser.hu).label + '</b><br><span style="font-size:12px;color:#fde68a">🏆 TOTAL HU TANDING: ' + currentUser.hu + '</span><br><span style="font-size:11px;color:#a7f3d0">' + (getGelar(currentUser.hu).next ? 'Berikutnya: ' + getGelar(currentUser.hu).next : 'Gelar tertinggi!') + '</span>';
     }
@@ -2287,7 +2294,7 @@ function loginSuccess(user, passwordForSave, showProfile){
     localStorage.removeItem('mahjong_saved_login');
   }
   if(el('nameInput')){ el('nameInput').value = user.display_name; el('nameInput').readOnly = true; }
-  if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(user.avatar, 24)+' '+esc(user.display_name)+' <span class="rankBadge">'+gelarLabel(user.hu||0)+'</span> <span style="font-size:12px;letter-spacing:1px">'+achStarsHTML()+'</span>';
+    if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(user.avatar, 48)+'<div class="homeUserText"><div class="homeUserName">'+esc(user.display_name)+'</div><div class="homeUserMeta"><span class="rankBadge">'+gelarLabel(user.hu||0)+'</span><span title="'+achStarsText()+'">'+achStarsHTML()+'</span></div></div>';
   loadAchFromServer();
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
@@ -3926,7 +3933,7 @@ function getAchStars(){
 }
 function achStarsHTML(){
   let s=getAchStars();
-  return s.map(c=>c.done?'⭐':'☆').join('');
+  return '<span class="homeAchStars">'+s.map(c=>'<span class="'+(c.done?'st-on':'st-off')+'">★</span>').join('')+'</span> <span class="homeAchCount">'+s.filter(c=>c.done).length+'/5</span>';
 }
 function achStarsText(){
   let s=getAchStars();
