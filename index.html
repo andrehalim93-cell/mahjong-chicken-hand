@@ -1312,12 +1312,12 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 /* HP ONLY - NAMA DI LUAR MEJA + SLOT BUNGA SELALU ADA */
 @media (max-width:768px){
   /* Kasih napas di sekeliling meja, biar nama bisa keluar */
-  #gameScreen{ padding:64px 40px 0 40px !important; }
+  #gameScreen{ padding:24px 40px 0 40px !important; }
   #gameScreen .table{ overflow:visible !important; }
 
   /* Nama atas: di ATAS meja, bukan di dalem */
   #gameScreen .seatPos.top .playerChip{
-    position:absolute !important; top:-36px !important; left:50% !important;
+    position:absolute !important; top:-22px !important; left:50% !important;
     transform:translateX(-50%) !important; z-index:10 !important;
   }
   /* Nama kiri: di KIRI meja, vertikal */
@@ -1788,21 +1788,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   flex-wrap:nowrap !important;
   gap:1px !important;
   margin:0 !important;
-}
-/* FIX: Chip ZARA bener-bener di luar meja */
-@media (max-width:768px){
-  #gameScreen{ padding:70px 40px 0 40px !important; }
-  #gameScreen .table{ margin-top:0px !important; }
-  #gameScreen .table #seatTop{ top:0px !important; }
-  #gameScreen .table #seatTop .playerChip{
-    top:-38px !important;
-    left:50% !important;
-    transform:translateX(-50%) !important;
-    z-index:20 !important;
-  }
-  #gameScreen .table #seatTop .miniHand{
-    margin-top:4px !important;
-  }
 }
 </style>
 </head>
