@@ -3732,10 +3732,10 @@ function openClaimPopup(c, discardTile){
     claimTimeoutInt=setTimeout(()=>{ closeClaimPopup(); socket.emit('claim',{code:myCode, action:'pass'}); }, turnTimeSec*1000);
   }
 }
-function doClaim(action){ closeClaimPopup(); if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
+function doClaim(action){ if(action==='hu') window._achLastHuFromDiscard = true; closeClaimPopup(); if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
 function doClaimChow(chowNums){ closeClaimPopup(); if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action:'chow', chowNums}); el('actionBar').innerHTML=''; }
 function doClaimChowByIdx(idx){ let chowNums = (window._lastChows||[])[idx]; console.log('KLIK CHOW idx:', idx, 'isi:', chowNums); doClaimChow(chowNums); }
-function selfHu(){ console.log('KLIK HU, hand:', myHand, 'melds:', myMelds); playMjSound('anKong'); socket.emit('selfHu',{code:myCode}); }
+function selfHu(){ window._achLastHuFromDiscard = false; console.log('KLIK HU, hand:', myHand, 'melds:', myMelds); playMjSound('anKong'); socket.emit('selfHu',{code:myCode}); }
 function doJiaKong(tileId){ let bar=document.getElementById('actionBar'); if(bar) bar.innerHTML=''; playMjSound('kong'); socket.emit('jiaKong',{code:myCode, tileId}); }
 function doAnKong(key){ let bar=document.getElementById('actionBar'); if(bar) bar.innerHTML=''; socket.emit('anKong',{code:myCode, tileKey:key}); }
 function openDiscards(){ let pool=document.querySelector('.poolAllBottom'); let body=document.getElementById('discardModalBody'); if(pool && body){ body.innerHTML=pool.innerHTML; body.querySelectorAll('.mTile').forEach(function(el2){ el2.style.width='32px'; el2.style.height='44px'; }); } document.getElementById('discardModal').classList.add('open'); }
@@ -3890,6 +3890,10 @@ function achOnMeld(meld,by){
 }
 function achOnWin(d){
   unlockAch('first_hu');
+  // MATA ELANG - cuma kalo HU-nya dari buangan lawan
+  if(window._achLastHuFromDiscard){ if(addAchStat('hu_discard',1)>=5) unlockAch('hu_from_discard'); }
+  // RAJA BUNGA - myFlowers itu isi bunga lu, udah ke-update otomatis
+  if(myFlowers && myFlowers.length>=4) unlockAch('flower4');
   let hu=addAchStat('hu_total',1); if(hu>=50) unlockAch('hu50'); if(hu>=100) unlockAch('hu100');
   let ws=addAchStat('win_streak',1); addAchStat('lose_streak',-addAchStat('lose_streak',0)); // reset kalah
   if(ws>=3) unlockAch('streak3');
