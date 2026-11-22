@@ -2339,6 +2339,7 @@ function openAvatarPicker(){
   el('avatarPickerModal').style.display = 'flex';
 }
 function closeAvatarPicker(){ el('avatarPickerModal').style.display = 'none'; }
+async function changeAvatar(a){
   currentUser.avatar = a; el('profileAvatarBig').innerHTML = avatarHTML(a, 64);
   if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(a, 24) + ' ' + esc(currentUser.display_name) + ' (' + esc(currentUser.id) + ')';
   try{
