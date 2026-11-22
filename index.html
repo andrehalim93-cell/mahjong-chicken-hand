@@ -3842,7 +3842,31 @@ const ACH_LIST=[
  {id:'revenge',icon:'😤',name:'Balas Dendam',desc:'Kalah dari orang yang sama lalu menang lagi',hidden:true},
  {id:'midnight_hu',icon:'🌙',name:'HU Tengah Malam',desc:'HU tepat jam 00.00 - 01.00',hidden:true},
  {id:'silent_killer',icon:'🤫',name:'Silent Killer',desc:'Menang 5x tanpa pernah PONG / CHOW',hidden:true},
- {id:'first_try',icon:'🎲',name:'Sekali Coba',desc:'HU di game pertama setelah buka app',hidden:true},
+   {id:'first_try',icon:'🎲',name:'Sekali Coba',desc:'HU di game pertama setelah buka app',hidden:true},
+  // --- BARU: GRIND ---
+  {id:'pong10',icon:'🀄',name:'Tukang Pong',desc:'PONG total 10x'},
+  {id:'pong50',icon:'🀄',name:'Raja Pong',desc:'PONG total 50x'},
+  {id:'chow10',icon:'🍜',name:'Tukang Chow',desc:'CHOW total 10x'},
+  {id:'chow50',icon:'🍜',name:'Raja Chow',desc:'CHOW total 50x'},
+  {id:'kong10',icon:'💥',name:'Tukang Kong',desc:'KONG total 10x'},
+  {id:'games10',icon:'⚔️',name:'Pemain Setia',desc:'Main 10x total'},
+  {id:'games500',icon:'⚔️',name:'Legenda Mahjong',desc:'Main 500x total'},
+  {id:'hu10',icon:'🏆',name:'Sudah Bisa',desc:'Menang total 10x'},
+  {id:'hu25',icon:'🏆',name:'Jagoan',desc:'Menang total 25x'},
+  {id:'meld100',icon:'🧩',name:'Tukang Set',desc:'Bikin 100 set total (Pong/Chow/Kong)'},
+  // --- BARU: GAYA MENANG ---
+  {id:'self_hu5',icon:'✋',name:'Tangan Sendiri',desc:'HU 5x dari tile yang lu ambil sendiri, bukan dari buangan lawan'},
+  {id:'streak5',icon:'🔥',name:'On Fire',desc:'Menang 5x berturut-turut'},
+  {id:'streak10',icon:'🔥',name:'Tak Terkalahkan',desc:'Menang 10x berturut-turut'},
+  {id:'combo_meld',icon:'🎭',name:'Komplit',desc:'Dalam 1 game, berhasil PONG + CHOW + KONG'},
+  {id:'flower8',icon:'🌸',name:'Taman Bunga',desc:'Dapet 8 bunga total dalam 1 game'},
+  // --- BARU: SOSIAL ---
+  {id:'chat500',icon:'💬',name:'Radio Rusak',desc:'Kirim 500 chat di meja'},
+  {id:'emote200',icon:'😂',name:'Raja Emote',desc:'Kirim 200 emote'},
+  {id:'best_friend',icon:'🤝',name:'Sahabat Sejati',desc:'Main 100x sama temen (bukan bot)'},
+  // --- BARU: TERSEMBUNYI ---
+  {id:'lose10',icon:'💀',name:'Sial Bertubi-tubi',desc:'Kalah 10x berturut-turut',hidden:true},
+  {id:'perfect_defense',icon:'🛡️',name:'Tembok Raksasa',desc:'Menang + lawan gak pernah ngambil buangan lu + lu gak pernah chat',hidden:true},
 ];
 function getAchData(){ try{ return JSON.parse(localStorage.getItem('mj_ach')||'{"unlocked":[],"stats":{}}'); }catch(e){ return {unlocked:[],stats:{}}; } }
 function saveAchData(d){ localStorage.setItem('mj_ach',JSON.stringify(d)); updateAchLabel(); syncAchToServer(d); }
@@ -3900,9 +3924,10 @@ window._achGame={kong:0,myMeldTaken:0,chatInGame:0,myPongChow:0,discards:0,wasBe
 function achOnGameStart(players){
   window._achGame={kong:0,myMeldTaken:0,chatInGame:0,myPongChow:0,discards:0,wasBehind:0,lastLoser:window._achGame.lastLoser,firstGameAfterOpen:window._achGame.firstGameAfterOpen};
   unlockAch('first_game');
-  let g=addAchStat('games',1); if(g>=100) unlockAch('games100');
+  let g=addAchStat('games',1); if(g>=10) unlockAch('games10'); if(g>=100) unlockAch('games100'); if(g>=500) unlockAch('games500');
+  if(window._achGame) { window._achGame.pongInGame=0; window._achGame.chowInGame=0; window._achGame.kongInGame=0; }
   let hasBot=(players||[]).some(p=>p.isBot);
-  if(!hasBot) { unlockAch('play_friend'); addAchStat('friend_games',1); if(addAchStat('friend_games',0)>=20) unlockAch('loyal_friend'); }
+  if(!hasBot) { unlockAch('play_friend'); addAchStat('friend_games',1); if(addAchStat('friend_games',0)>=20) unlockAch('loyal_friend'); if(addAchStat('friend_games',0)>=100) unlockAch('best_friend'); }
   window._achGame.hasBot=hasBot; window._achGame.players=players;
   // login streak
   let today=new Date().toDateString(); let d=getAchData();
@@ -3910,9 +3935,10 @@ function achOnGameStart(players){
 }
 function achOnMeld(meld,by){
   if(by!==myName) { if(meld.type==='pong'||meld.type==='chow') window._achGame.myMeldTaken++; return; }
-  if(meld.type==='pong'){ unlockAch('first_pong'); window._achGame.myPongChow++; }
-  if(meld.type==='chow'){ unlockAch('first_chow'); window._achGame.myPongChow++; }
-  if(meld.type==='kong'){ unlockAch('first_kong'); window._achGame.kong++; if(window._achGame.kong>=2) unlockAch('kong2'); }
+  if(meld.type==='pong'){ unlockAch('first_pong'); window._achGame.myPongChow++; window._achGame.pongInGame=1; if(addAchStat('pong_total',1)>=10) unlockAch('pong10'); if(addAchStat('pong_total',0)>=50) unlockAch('pong50'); }
+  if(meld.type==='chow'){ unlockAch('first_chow'); window._achGame.myPongChow++; window._achGame.chowInGame=1; if(addAchStat('chow_total',1)>=10) unlockAch('chow10'); if(addAchStat('chow_total',0)>=50) unlockAch('chow50'); }
+  if(meld.type==='kong'){ unlockAch('first_kong'); window._achGame.kong++; window._achGame.kongInGame=1; if(window._achGame.kong>=2) unlockAch('kong2'); if(addAchStat('kong_total',1)>=10) unlockAch('kong10'); }
+  let mt=addAchStat('meld_total',1); if(mt>=100) unlockAch('meld100');
 }
 function achOnWin(d){
   unlockAch('first_hu');
@@ -3920,9 +3946,13 @@ function achOnWin(d){
   if(window._achLastHuFromDiscard){ if(addAchStat('hu_discard',1)>=5) unlockAch('hu_from_discard'); }
   // RAJA BUNGA - myFlowers itu isi bunga lu, udah ke-update otomatis
   if(myFlowers && myFlowers.length>=4) unlockAch('flower4');
-  let hu=addAchStat('hu_total',1); if(hu>=50) unlockAch('hu50'); if(hu>=100) unlockAch('hu100');
+  let hu=addAchStat('hu_total',1); if(hu>=10) unlockAch('hu10'); if(hu>=25) unlockAch('hu25'); if(hu>=50) unlockAch('hu50'); if(hu>=100) unlockAch('hu100');
+  if(!window._achLastHuFromDiscard){ if(addAchStat('self_hu',1)>=5) unlockAch('self_hu5'); }
+  if(window._achGame.pongInGame && window._achGame.chowInGame && window._achGame.kongInGame) unlockAch('combo_meld');
+  if(myFlowers && myFlowers.length>=8) unlockAch('flower8');
   let ws=addAchStat('win_streak',1); addAchStat('lose_streak',-addAchStat('lose_streak',0)); // reset kalah
-  if(ws>=3) unlockAch('streak3');
+  if(ws>=3) unlockAch('streak3'); if(ws>=5) unlockAch('streak5'); if(ws>=10) unlockAch('streak10');
+  if(window._achGame.myMeldTaken===0 && window._achGame.chatInGame===0) unlockAch('perfect_defense');
   if(window._achGame.chatInGame===0) unlockAch('ninja');
   let h=new Date().getHours(); if(h>=0&&h<3) unlockAch('owl'); if(h===0) unlockAch('midnight_hu');
   if(window._achGame.firstGameAfterOpen) unlockAch('first_try');
@@ -3944,6 +3974,7 @@ function achOnWin(d){
 function achOnLose(winnerName){
   addAchStat('win_streak',-addAchStat('win_streak',0));
   let ls=addAchStat('lose_streak',1);
+  if(ls>=10) unlockAch('lose10');
   addAchStat('bot_streak',-addAchStat('bot_streak',0));
   window._achGame.lastLoser=winnerName;
   window._achGame.firstGameAfterOpen=false;
