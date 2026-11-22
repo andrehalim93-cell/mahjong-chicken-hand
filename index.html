@@ -1952,6 +1952,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     <h2 id="profileName" style="margin:6px 0 2px">-</h2>
     <div id="profileId" style="color:#a7f3d0;font-size:13px">@-</div>
     <div id="profileHu" style="margin:12px 0;background:#422006;border-radius:12px;padding:10px;font-weight:900;color:#fde68a">🏆 TOTAL HU TANDING: 0</div>
+    <button class="btn btn-gold" onclick="openAchModal()" style="margin:8px 0 0">🏆 ACHIEVEMENT <span id="achCountLabel"></span></button>
     <div class="lbl" id="profileAvatarLabel" style="text-align:left">GANTI AVATAR</div>
     <div id="profileAvatarPick" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center"></div>
     <button class="btn btn-gold" style="margin-top:14px" onclick="closeProfile()">✅ TUTUP</button>
@@ -2606,6 +2607,7 @@ function randomBotName(){ let pool=BOT_NAMES.filter(n=>!usedBotNames.includes(n)
 function setTurnTime(sec, btn){ if(!isHost){ toast('Cuma HOST yang bisa ganti waktu!'); return; } turnTimeSec=sec; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); el('timeInfo').innerText = sec===0 ? 'Saat ini: Tanpa batas' : 'Saat ini: '+sec+' detik per giliran'; el('turnTimer').innerText = sec===0 ? '♾️' : sec+'s'; socket.emit('setTurnTime',{code:myCode, seconds:sec}); }
 let meldPopupTimer=null;
 function showMeldPopup(by, meld){
+  achOnMeld(d.meld, d.by);
   let p = el('meldPopup'); if(!p || !meld) return;
   let pl = (currentPlayers||[]).find(x=>x.name===by);
   el('meldAvatar').innerHTML = avatarHTML(pl && pl.avatar ? pl.avatar : '🧑', 42);
@@ -2804,6 +2806,7 @@ function inviteFriend(toId){
   let target = String(toId||'').toLowerCase();
   console.log('inviteFriend ke:', target, 'dari:', myUserId());
   if(!socket || !socket.connected){ toast('📶 Lagi putus, nyambung lagi...'); return; }
+  if(addAchStat('invite',1)>=10) unlockAch('invite10');
   socket.emit('inviteFriend', { fromId: myUserId(), toId: target, code: myCode, roomName: 'Meja '+ (currentUser?currentUser.display_name:'') });
   toast('Undangan ke @'+target+' dikirim!');
 }
@@ -3261,6 +3264,7 @@ socket.on('gameStarted', d=>{
   addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!');
   renderSeats(d.players, d.turn); renderCentralPool(d.players);
   updateExitBotBtn();
+  achOnGameStart(d.players);
 });
 socket.on('youDrew', d=>{ playMjSound('draw'); if(d.tile){ lastDrawnTileId=d.tile.id; if(!myHand.some(x=>x.id===d.tile.id)){ myHand.push(d.tile); } } renderMyHand(); });
 function canHuLocal(){
@@ -3319,7 +3323,7 @@ socket.on('turnChanged', d=>{
     renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]);
   }
 } });
-socket.on('meldMade', d=>{ if(d.by===myName) lastDrawnTileId=null; currentPlayers=d.players; showMeldPopup(d.by, d.meld); if(d.meld.type==='pong') playMjSound('pong'); else if(d.meld.type==='kong') playMjSound(d.meld.kongType==='an' ? 'anKong' : 'kong'); else playMjSound('chow'); addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); if(d.by===myName && isMyTurn && canHuLocal()){ renderActionBar([{type:'selfHu'}]); } });
+socket.on('meldMade', d=>{ if(d.by===myName) lastDrawnTileId=null; currentPlayers=d.players; showMeldPopup(d.by, d.meld); achOnMeld(d.meld, d.by); if(d.meld.type==='pong') playMjSound('pong'); else if(d.meld.type==='kong') playMjSound(d.meld.kongType==='an' ? 'anKong' : 'kong'); else playMjSound('chow'); addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); if(d.by===myName && isMyTurn && canHuLocal()){ renderActionBar([{type:'selfHu'}]); } });
 function groupHuTiles(tiles){
   function key(t){ return t.type+'|'+(t.suit??'')+'|'+(t.num??''); }
   function order(t){ return t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); }
@@ -3382,6 +3386,7 @@ function groupHuTiles(tiles){
   return groups;
 }
 socket.on('youHu', async d=>{
+  achOnWin(d);
   let oldHu = Number(currentUser ? currentUser.hu : 0) || 0;
   // Kalau HU lama belum ke-load, ambil dulu dari server biar perbandingannya bener
   try{
@@ -3412,6 +3417,7 @@ socket.on('gameOver', d=>{
   if(el('meldPopup')) el('meldPopup').style.display='none';
   // Kalau SERI, gak ada efek, langsung popup aja
   if(!d.winner){ showWinModal(d); return; }
+  if(d.winner && d.winner!==myName) achOnLose(d.winner);
   playMjSound('hu');
   // 1. Layar gelap dulu
   let fx = el('huFx');
@@ -3743,8 +3749,8 @@ function toggleChat(){
   if(chatOpen){ emoteOpen=false; el('emotePanel').classList.remove('show'); }
   if(chatOpen){ chatUnread=0; el('chatBadge').style.display='none'; el('chatFabDot').style.display='none'; setTimeout(()=>el('chatInput').focus(),100); }
 }
-function sendChat(){ let inp = el('chatInput'); let m = inp.value.trim(); if(!m) return; socket.emit('tableChat', {code:myCode, msg:m}); inp.value=''; inp.focus(); }
-function quickChat(m){ socket.emit('tableChat', {code:myCode, msg:m}); }
+function sendChat(){ let inp = el('chatInput'); let m = inp.value.trim(); if(!m) return; socket.emit('tableChat', {code:myCode, msg:m}); inp.value=''; inp.focus(); window._achGame.chatInGame++; if(addAchStat('chat',1)>=100) unlockAch('chat100'); }
+function quickChat(m){ socket.emit('tableChat', {code:myCode, msg:m}); window._achGame.chatInGame++; if(addAchStat('chat',1)>=100) unlockAch('chat100'); }
 let emoteOpen=false;
 function toggleEmote(){
   emoteOpen=!emoteOpen;
@@ -3753,6 +3759,7 @@ function toggleEmote(){
 }
 function sendEmote(m){
   socket.emit('tableChat', {code:myCode, msg:m});
+  if(addAchStat('emote',1)>=50) unlockAch('emote50');
   showFloatingEmote(m);
   emoteOpen=false; el('emotePanel').classList.remove('show');
 }
@@ -3795,6 +3802,123 @@ window.addEventListener('popstate', function(e){
     backToHome();
   }
 });
+// ===== ACHIEVEMENT SYSTEM =====
+const ACH_LIST=[
+ {id:'first_game',icon:'👋',name:'Selamat Datang',desc:'Main game pertama kali'},
+ {id:'first_pong',icon:'🀄',name:'Pong Pertama',desc:'Berhasil PONG 1x'},
+ {id:'first_chow',icon:'🍜',name:'Chow Pertama',desc:'Berhasil CHOW 1x'},
+ {id:'first_kong',icon:'💥',name:'Kong Pertama',desc:'Berhasil KONG 1x'},
+ {id:'first_hu',icon:'🏆',name:'HU Pertama',desc:'Menang 1x'},
+ {id:'login7',icon:'🔥',name:'7 Hari Beruntun',desc:'Login 7 hari berturut-turut'},
+ {id:'login30',icon:'🗓️',name:'30 Hari Beruntun',desc:'Login 30 hari berturut-turut'},
+ {id:'games100',icon:'⚔️',name:'100 Pertandingan',desc:'Main 100x total'},
+ {id:'hu50',icon:'🎯',name:'50x HU',desc:'Menang total 50x'},
+ {id:'hu100',icon:'👑',name:'100x HU',desc:'Menang total 100x'},
+ {id:'bot1',icon:'🤖',name:'Pemburu Bot',desc:'Menang 1x lawan bot'},
+ {id:'bot10',icon:'🤖',name:'Pembasmi Bot',desc:'Menang 10x lawan bot'},
+ {id:'bot20',icon:'🤖',name:'Raja Bot',desc:'Menang 20x lawan bot'},
+ {id:'bot50',icon:'🤖',name:'Mimpi Buruk Bot',desc:'Menang 50x lawan bot'},
+ {id:'bot_streak10',icon:'🤖',name:'Bot Pun Menyerah',desc:'Menang 10x berturut-turut lawan bot'},
+ {id:'bot_fast',icon:'🤖',name:'Tanpa Ampun',desc:'HU cepat lawan bot (di bawah 20 buangan)'},
+ {id:'fast_hu',icon:'⚡',name:'Kilat',desc:'HU dalam 15 giliran pertama'},
+ {id:'clean_win',icon:'🛡️',name:'Tembok Besar',desc:'Menang tanpa tile buangan lu diambil lawan'},
+ {id:'hu_from_discard',icon:'👀',name:'Mata Elang',desc:'Menang 5x dari buangan lawan'},
+ {id:'streak3',icon:'🧠',name:'Jago Baca',desc:'Menang 3x berturut-turut'},
+ {id:'perfect_hu',icon:'💎',name:'HU Sempurna',desc:'HU dengan 4 meld + 1 pasang'},
+ {id:'comeback',icon:'🎭',name:'Comeback King',desc:'Menang padahal ketinggalan 2 meld'},
+ {id:'last_tile_hu',icon:'🍀',name:'Hoki Seumur Hidup',desc:'HU dari tile terakhir di tembok'},
+ {id:'flower4',icon:'🌸',name:'Raja Bunga',desc:'Dapet 4 bunga dalam 1 game'},
+ {id:'kong2',icon:'🔥',name:'Kong Gila',desc:'KONG 2x dalam 1 game'},
+ {id:'unlucky_to_lucky',icon:'💀',name:'Sial Tapi Hoki',desc:'Kalah 5x berturut-turut lalu HU'},
+ {id:'play_friend',icon:'👯',name:'Main Bareng',desc:'Main 1x sama temen (bukan bot)'},
+ {id:'invite10',icon:'👥',name:'Tukang Undang',desc:'Undang 10 temen ke meja'},
+ {id:'chat100',icon:'💬',name:'Cerewet',desc:'Kirim 100 chat di meja'},
+ {id:'emote50',icon:'😂',name:'Tukang Emote',desc:'Kirim 50 emote'},
+ {id:'loyal_friend',icon:'🤝',name:'Setia Kawan',desc:'Main 20x sama orang yang sama'},
+ {id:'ninja',icon:'🥷',name:'Ninja',desc:'Menang tanpa CHAT sama sekali',hidden:true},
+ {id:'owl',icon:'🦉',name:'Begadang',desc:'Main jam 00.00 - 03.00 dan menang',hidden:true},
+ {id:'revenge',icon:'😤',name:'Balas Dendam',desc:'Kalah dari orang yang sama lalu menang lagi',hidden:true},
+ {id:'midnight_hu',icon:'🌙',name:'HU Tengah Malam',desc:'HU tepat jam 00.00 - 01.00',hidden:true},
+ {id:'silent_killer',icon:'🤫',name:'Silent Killer',desc:'Menang 5x tanpa pernah PONG / CHOW',hidden:true},
+ {id:'first_try',icon:'🎲',name:'Sekali Coba',desc:'HU di game pertama setelah buka app',hidden:true},
+];
+function getAchData(){ try{ return JSON.parse(localStorage.getItem('mj_ach')||'{"unlocked":[],"stats":{}}'); }catch(e){ return {unlocked:[],stats:{}}; } }
+function saveAchData(d){ localStorage.setItem('mj_ach',JSON.stringify(d)); updateAchLabel(); }
+function updateAchLabel(){ let d=getAchData(); let el2=document.getElementById('achCountLabel'); if(el2) el2.innerText='('+d.unlocked.length+'/'+ACH_LIST.length+')'; }
+function unlockAch(id){
+  let d=getAchData(); if(d.unlocked.includes(id)) return;
+  let a=ACH_LIST.find(x=>x.id===id); if(!a) return;
+  d.unlocked.push(id); saveAchData(d);
+  document.getElementById('achUnlockIcon').innerText=a.icon;
+  document.getElementById('achUnlockName').innerText=a.name;
+  document.getElementById('achUnlockDesc').innerText=a.desc;
+  document.getElementById('achUnlockPopup').style.display='flex';
+  if(typeof playMjSound==='function') playMjSound('win');
+  clearTimeout(window._achPopupTimer); window._achPopupTimer=setTimeout(closeAchUnlockPopup,4000);
+}
+function closeAchUnlockPopup(){ let p=document.getElementById('achUnlockPopup'); if(p) p.style.display='none'; }
+function addAchStat(k,v){ let d=getAchData(); d.stats[k]=(d.stats[k]||0)+(v||1); saveAchData(d); return d.stats[k]; }
+function openAchModal(){
+  let d=getAchData();
+  document.getElementById('achProgress').innerText='Kamu udah buka '+d.unlocked.length+' dari '+ACH_LIST.length+' achievement';
+  document.getElementById('achList').innerHTML=ACH_LIST.map(a=>{
+    let got=d.unlocked.includes(a.id);
+    if(a.hidden && !got) return `<div style="background:#0f172a;border:1px dashed #475569;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center"><div style="font-size:24px">❓</div><div><b style="color:#94a3b8">??? Achievement Tersembunyi ???</b><br><span style="color:#64748b;font-size:12px">???</span></div></div>`;
+    return `<div style="background:${got?'#14532d':'#0f172a'};border:1px solid ${got?'#22c55e':'#334155'};border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center"><div style="font-size:24px;${got?'':'filter:grayscale(1);opacity:.5'}">${a.icon}</div><div><b style="color:${got?'#fff':'#94a3b8'}">${a.name} ${got?'✅':''}</b><br><span style="color:#94a3b8;font-size:12px">${a.desc}</span></div></div>`;
+  }).join('');
+  document.getElementById('achModal').style.display='flex';
+}
+function closeAchModal(){ document.getElementById('achModal').style.display='none'; }
+// state per-game
+window._achGame={kong:0,myMeldTaken:0,chatInGame:0,myPongChow:0,discards:0,wasBehind:0,lastLoser:null,firstGameAfterOpen:true};
+function achOnGameStart(players){
+  window._achGame={kong:0,myMeldTaken:0,chatInGame:0,myPongChow:0,discards:0,wasBehind:0,lastLoser:window._achGame.lastLoser,firstGameAfterOpen:window._achGame.firstGameAfterOpen};
+  unlockAch('first_game');
+  let g=addAchStat('games',1); if(g>=100) unlockAch('games100');
+  let hasBot=(players||[]).some(p=>p.isBot);
+  if(!hasBot) { unlockAch('play_friend'); addAchStat('friend_games',1); if(addAchStat('friend_games',0)>=20) unlockAch('loyal_friend'); }
+  window._achGame.hasBot=hasBot; window._achGame.players=players;
+  // login streak
+  let today=new Date().toDateString(); let d=getAchData();
+  let last=d.stats.lastLoginDay||''; if(last!==today){ let streak=(d.stats.loginStreak||0); let y=new Date(Date.now()-86400000).toDateString(); streak=(last===y)?streak+1:1; d.stats.loginStreak=streak; d.stats.lastLoginDay=today; saveAchData(d); if(streak>=7) unlockAch('login7'); if(streak>=30) unlockAch('login30'); }
+}
+function achOnMeld(meld,by){
+  if(by!==myName) { if(meld.type==='pong'||meld.type==='chow') window._achGame.myMeldTaken++; return; }
+  if(meld.type==='pong'){ unlockAch('first_pong'); window._achGame.myPongChow++; }
+  if(meld.type==='chow'){ unlockAch('first_chow'); window._achGame.myPongChow++; }
+  if(meld.type==='kong'){ unlockAch('first_kong'); window._achGame.kong++; if(window._achGame.kong>=2) unlockAch('kong2'); }
+}
+function achOnWin(d){
+  unlockAch('first_hu');
+  let hu=addAchStat('hu_total',1); if(hu>=50) unlockAch('hu50'); if(hu>=100) unlockAch('hu100');
+  let ws=addAchStat('win_streak',1); addAchStat('lose_streak',-addAchStat('lose_streak',0)); // reset kalah
+  if(ws>=3) unlockAch('streak3');
+  if(window._achGame.chatInGame===0) unlockAch('ninja');
+  let h=new Date().getHours(); if(h>=0&&h<3) unlockAch('owl'); if(h===0) unlockAch('midnight_hu');
+  if(window._achGame.firstGameAfterOpen) unlockAch('first_try');
+  if(myMelds && myMelds.length>=4) unlockAch('perfect_hu');
+  if(window._achGame.wasBehind) unlockAch('comeback');
+  if(window._achGame.myPongChow===0){ if(addAchStat('silent_wins',1)>=5) unlockAch('silent_killer'); }
+  if(window._achGame.myMeldTaken===0) unlockAch('clean_win');
+  if(window._achGame.discards<=15) unlockAch('fast_hu');
+  // lawan bot?
+  if(window._achGame.hasBot){ let b=addAchStat('bot_win',1); if(b>=1) unlockAch('bot1'); if(b>=10) unlockAch('bot10'); if(b>=20) unlockAch('bot20'); if(b>=50) unlockAch('bot50'); let bs=addAchStat('bot_streak',1); if(bs>=10) unlockAch('bot_streak10'); if(window._achGame.discards<20) unlockAch('bot_fast'); }
+  else addAchStat('bot_streak',-addAchStat('bot_streak',0));
+  if(d && d.wallLeft===0) unlockAch('last_tile_hu');
+  // balas dendam: kalah sebelumnya dari pemenang sebelumnya? disederhanakan: kalo lastLoser ada
+  if(window._achGame.lastLoser) unlockAch('revenge');
+  // sial tapi hoki: kalah 5x lalu menang
+  let ls=getAchData().stats.lose_streak||0; if(ls>=5) unlockAch('unlucky_to_lucky');
+  window._achGame.firstGameAfterOpen=false;
+}
+function achOnLose(winnerName){
+  addAchStat('win_streak',-addAchStat('win_streak',0));
+  let ls=addAchStat('lose_streak',1);
+  addAchStat('bot_streak',-addAchStat('bot_streak',0));
+  window._achGame.lastLoser=winnerName;
+  window._achGame.firstGameAfterOpen=false;
+}
+updateAchLabel();
 </script>
 <!-- MODAL CHAT PRIBADI 1 LAWAN 1 -->
 <div id="privateChatModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:250;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) closePrivateChat()">
@@ -3823,6 +3947,24 @@ window.addEventListener('popstate', function(e){
     <div class="lbl">🟢 ONLINE TAPI BELUM DI MEJA INI</div>
     <div id="inviteOnlineList" style="display:flex;flex-direction:column;gap:8px"></div>
     <button class="btn btn-dark" onclick="refreshFriends();setTimeout(renderInviteFriendsList,300)" style="margin-top:10px">🔄 REFRESH</button>
+  </div>
+</div>
+<!-- MODAL DAFTAR ACHIEVEMENT -->
+<div id="achModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);align-items:center;justify-content:center;padding:12px" onclick="if(event.target===this) closeAchModal()">
+  <div style="width:100%;max-width:420px;max-height:85vh;background:#1e293b;border-radius:20px;padding:16px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px;color:#facc15">🏆 ACHIEVEMENT</b><button onclick="closeAchModal()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer">✕</button></div>
+    <div id="achProgress" style="color:#94a3b8;font-size:12px;margin:8px 0"></div>
+    <div id="achList" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+<!-- POPUP ACHIEVEMENT TERBUKA - INFOIN APA YANG KEBUKA -->
+<div id="achUnlockPopup" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:16px">
+  <div style="width:100%;max-width:340px;background:linear-gradient(180deg,#fef3c7,#fde68a);border-radius:24px;padding:20px;text-align:center;border:3px solid #f59e0b">
+    <div style="font-size:12px;font-weight:900;letter-spacing:2px;color:#92400e">🏆 ACHIEVEMENT TERBUKA!</div>
+    <div id="achUnlockIcon" style="font-size:64px;margin:10px 0">🏆</div>
+    <div id="achUnlockName" style="font-size:22px;font-weight:900;color:#422006">-</div>
+    <div id="achUnlockDesc" style="font-size:13px;color:#78350f;margin-top:6px">-</div>
+    <button onclick="closeAchUnlockPopup()" style="margin-top:16px;background:#422006;color:#fef3c7;border:none;border-radius:99px;padding:10px 24px;font-weight:900;cursor:pointer;width:100%">MANTAP! 👍</button>
   </div>
 </div>
 </body>
