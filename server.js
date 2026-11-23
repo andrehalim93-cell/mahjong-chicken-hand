@@ -918,7 +918,8 @@ io.on('connection', (socket)=>{
     if(room.players.length>=4){ socket.emit('errorMsg', 'Room penuh!'); return; }
     if(room.phase==='playing'){ socket.emit('errorMsg', 'Game sudah mulai!'); return; }
     if(room.isPrivate && room.password!==(password||'')){ socket.emit('errorMsg','Password salah!'); return; }
-        let cleanName = (name||'Player').trim() || 'Player';
+      let cleanName = (name||'Player').trim() || 'Player';
+       let oldP = room.players.find(x=>x.name===cleanName && !x.isBot);
        if(oldP && oldP.userId && socket.myUserId && oldP.userId!==socket.myUserId){ socket.emit('errorMsg','Kursi ini milik user lain!'); return; }
        if(oldP){
        if(oldP.disconnected){
