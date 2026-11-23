@@ -205,6 +205,19 @@ app.get('/api/get-hu', async (req,res)=>{
   let { data:u } = await supabase.from('users').select('hu').eq('id', req.query.id).maybeSingle();
   res.json({ok:true, hu: u?.hu||0});
 });
+app.post('/api/me', async (req, res)=>{
+  try{
+    let { id, authToken } = req.body||{};
+    id = normId(id);
+    if(!id || !authToken) return res.json({ok:false, error:'No session'});
+    let at = authTokens.get(authToken);
+    if(!at || at.exp<Date.now() || at.userId!==id) return res.json({ok:false, error:'Session expired'});
+    let { data:user } = await supabase.from('users').select('*').eq('id', id).maybeSingle();
+    if(!user) return res.json({ok:false, error:'User tidak ditemukan!'});
+    delete user.password_hash; delete user.answer_hash;
+    return res.json({ok:true, user:{...user, created_at_wib: formatWIB(user.created_at)}, authToken});
+  }catch(e){ return res.json({ok:false, error:'Server error'}); }
+});
 app.get('/api/leaderboard', async (req,res)=>{
   try{
     let { data, error } = await supabase.from('users').select('id, display_name, avatar, hu').order('hu', { ascending:false }).limit(1000);
@@ -215,12 +228,12 @@ app.get('/api/leaderboard', async (req,res)=>{
 });
 app.post('/api/change-avatar', async (req,res)=>{
   try{
-    let {id, avatar, password} = req.body || {};
-    if(!id || !avatar || !password) return res.status(400).json({ok:false, error:'ID, avatar & password wajib!'});
+       let {id, avatar, password, authToken} = req.body || {};
+    if(!id || !avatar) return res.status(400).json({ok:false, error:'ID & avatar wajib!'});
     let { data: user } = await supabase.from('users').select('password_hash, ach').eq('id', id).maybeSingle();
     if(!user) return res.status(400).json({ok:false, error:'ID tidak ditemukan!'});
-    let match = await bcrypt.compare(String(password), user.password_hash);
-    if(!match) return res.status(403).json({ok:false, error:'Password salah!'});
+    if(authToken){ let at = authTokens.get(authToken); if(!at || at.exp<Date.now() || at.userId!==normId(id)) return res.status(403).json({ok:false, error:'Sesi kadaluarsa, login ulang!'}); }
+    else { if(!password) return res.status(400).json({ok:false, error:'Butuh auth!'}); let match = await bcrypt.compare(String(password), user.password_hash); if(!match) return res.status(403).json({ok:false, error:'Password salah!'}); }
 
     // ===== CEK AVATAR SPESIAL - JANGAN PERCAYA HP DOANG =====
     let av = String(avatar).slice(0,100);
@@ -263,13 +276,11 @@ app.get('/api/get-ach', async (req,res)=>{
 });
 app.post('/api/save-ach', async (req,res)=>{
   try{
-    let {id, password, ach} = req.body || {};
-    if(!id || !password || !ach) return res.status(400).json({ok:false});
-    let { data:user } = await supabase.from('users').select('password_hash').eq('id', normId(id)).maybeSingle();
-    if(!user) return res.status(400).json({ok:false});
-    let match = await bcrypt.compare(String(password), user.password_hash);
-    if(!match) return res.status(403).json({ok:false});
-   const KNOWN_ACH = ['first_pong','first_chow','first_kong','pong10','pong20','pong35','pong50','pong100','chow10','chow20','chow35','chow50','chow100','kong10','kong2','meld100','combo_meld','first_game','first_hu','hu10','hu25','hu50','hu100','fast_hu','clean_win','hu_from_discard','streak3','streak5','streak10','perfect_hu','comeback','last_tile_hu','flower4','flower8','unlucky_to_lucky','self_hu5','login7','login30','games10','games100','games500','bot1','bot10','bot20','bot50','bot_streak10','bot_fast','play_friend','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend','ninja','owl','revenge','midnight_hu','silent_killer','first_try','lose10','perfect_defense','maraton5','maraton10','tukang_intip','no_flower_win','kembar','kalah_tipis','bangkit3'];
+        let {id, password, authToken, ach} = req.body || {};
+    if(!id || !ach) return res.status(400).json({ok:false});
+    if(authToken){ let at = authTokens.get(authToken); if(!at || at.exp<Date.now() || at.userId!==normId(id)) return res.status(403).json({ok:false}); }
+    else { if(!password) return res.status(400).json({ok:false}); let { data:user } = await supabase.from('users').select('password_hash').eq('id', normId(id)).maybeSingle(); if(!user) return res.status(400).json({ok:false}); let match = await bcrypt.compare(String(password), user.password_hash); if(!match) return res.status(403).json({ok:false}); }
+const KNOWN_ACH = ['first_pong','first_chow','first_kong','pong10','pong20','pong35','pong50','pong100','chow10','chow20','chow35','chow50','chow100','kong10','kong2','meld100','combo_meld','first_game','first_hu','hu10','hu25','hu50','hu100','fast_hu','clean_win','hu_from_discard','streak3','streak5','streak10','perfect_hu','comeback','last_tile_hu','flower4','flower8','unlucky_to_lucky','self_hu5','login7','login30','games10','games100','games500','bot1','bot10','bot20','bot50','bot_streak10','bot_fast','play_friend','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend','ninja','owl','revenge','midnight_hu','silent_killer','first_try','lose10','perfect_defense','maraton5','maraton10','tukang_intip','no_flower_win','kembar','kalah_tipis','bangkit3'];
 let { data:oldRow } = await supabase.from('users').select('ach').eq('id', normId(id)).maybeSingle();
 let oldAch = oldRow?.ach||{unlocked:[],stats:{}}; if(typeof oldAch==='string'){ try{ oldAch=JSON.parse(oldAch); }catch(e){ oldAch={unlocked:[],stats:{}}; } }
 let oldSet = new Set(oldAch.unlocked||[]);
