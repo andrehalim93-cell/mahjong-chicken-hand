@@ -32,6 +32,7 @@ const huTokens = new Map(); // token -> { exp, ownerId, ownerSocketId }
 function makeHuToken(roomCode, winnerSocketId, ownerId){
   let token = crypto.createHash('sha256').update(roomCode + '|' + winnerSocketId + '|' + Date.now() + '|' + Math.random() + '|' + HU_SECRET).digest('hex');
   huTokens.set(token, { exp: Date.now() + 5*60*1000, ownerId: ownerId ? String(ownerId).toLowerCase() : '', ownerSocketId: winnerSocketId });
+  }
 const { createClient } = require('@supabase/supabase-js');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
