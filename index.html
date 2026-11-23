@@ -4050,12 +4050,19 @@ function achOnGameStart(players){
   window._maraton=(window._maraton||0)+1;
   if(window._maraton>=5) unlockAch('maraton5');
   if(window._maraton>=10) unlockAch('maraton10');
-  // KEMBAR - cek tangan awal 0.8 detik setelah game mulai, soalnya myHand baru keisi abis itu
+    // KEMBAR - FIX: pake t.key (udah bener di seluruh game), jangan rakit sendiri pake || soalnya suit=0 ilang
+  // + snapshot tangan awal, + token biar timeout game lama gak ngecek game baru
+  let _kembarToken = Date.now()+Math.random();
+  window._achKembarToken = _kembarToken;
   setTimeout(()=>{
+    if(window._achKembarToken!==_kembarToken) return;
     try{
+      let hand = myHand||[];
+      if(hand.length < 13) return; // tangan belum keisi penuh, jangan tebak-tebak
       let counts={};
-      (myHand||[]).forEach(t=>{ let k=(t.suit||'')+'-'+(t.num||t.value||t.id); counts[k]=(counts[k]||0)+1; });
+      hand.forEach(t=>{ let k=t.key || (t.type+'|'+(t.suit??'')+'|'+(t.num??t.value??'')); counts[k]=(counts[k]||0)+1; });
       let pairs=Object.values(counts).filter(v=>v>=2).length;
+      // console.log('CEK KEMBAR', counts, 'pasang:', pairs);
       if(pairs>=3) unlockAch('kembar');
     }catch(e){}
   },800);
