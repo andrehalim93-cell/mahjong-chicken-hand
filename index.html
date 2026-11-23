@@ -3079,7 +3079,6 @@ function leaderboardNameHTML(u){
   return '<span class="legend-name">'+esc(u.display_name||u.id)+'</span><span class="legend-badge">✨ LEGEND</span>';
 }
 function loadLeaderboardTab(){
-function loadLeaderboardTab(){
   el('leaderboardList').innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Memuat...</td></tr>';
   el('leaderboardMyRank').innerHTML = '';
   fetch('/api/leaderboard').then(r=>r.json()).then(j=>{
