@@ -2954,7 +2954,7 @@ function openFriendChatList(){
     if(fb){
       let friends = friendListData || [];
       if(!friends.length) fb.innerHTML = '<div style="color:#94a3b8;font-size:13px">Belum ada temen. Add dulu di tab TEMEN.</div>';
-      else fb.innerHTML = friends.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="closeInviteFriends();openPrivateChat('${esc(u.id)}','${esc(u.display_name)}')">💬 CHAT</button></div>`).join('');
+      else fb.innerHTML = friends.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#1e293b;border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.id)} • ${(onlineListData||[]).some(o=>String(o.id||'').toLowerCase()===String(u.id||'').toLowerCase()) ? 'Di Meja' : u.status}</span></div><button class="btn btn-gold" style="width:auto;padding:8px 12px;font-size:12px" onclick="closeInviteFriends();openPrivateChat('${esc(u.id)}','${esc(u.display_name)}')">💬 CHAT</button></div>`).join('');
     }
     let ob = el('inviteOnlineList');
     if(ob) ob.innerHTML = '<div style="color:#94a3b8;font-size:13px">Pas di halaman depan / lagi main, cuma bisa chat sama temen yang udah di-add.</div>';
@@ -4391,5 +4391,6 @@ updateAchLabel();
 </div>
 </body>
 </html>
+
 
 
