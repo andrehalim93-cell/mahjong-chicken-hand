@@ -26,14 +26,12 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 // Token HU sekali pakai - gak perlu disimpen di DB, cuma di memori server
 const HU_SECRET = process.env.HU_SECRET || ('hu-secret-' + Date.now() + '-' + Math.random());
-const huTokens = new Map(); // token -> { exp }
-function makeHuToken(roomCode, winnerSocketId){
+const authTokens = new Map(); // token -> { userId, exp }
+function makeAuthToken(userId){ let tok = crypto.randomBytes(32).toString('hex'); authTokens.set(tok,{userId:String(userId).toLowerCase(),exp:Date.now()+7*24*60*60*1000}); for(let [k,v] of authTokens){ if(v.exp<Date.now()) authTokens.delete(k); } return tok; }
+const huTokens = new Map(); // token -> { exp, ownerId, ownerSocketId }
+function makeHuToken(roomCode, winnerSocketId, ownerId){
   let token = crypto.createHash('sha256').update(roomCode + '|' + winnerSocketId + '|' + Date.now() + '|' + Math.random() + '|' + HU_SECRET).digest('hex');
-  huTokens.set(token, { exp: Date.now() + 5*60*1000 });
-  // Bersihin token kadaluarsa biar memori gak penuh
-  for(let [k,v] of huTokens){ if(v.exp < Date.now()) huTokens.delete(k); }
-  return token;
-}
+  huTokens.set(token, { exp: Date.now() + 5*60*1000, ownerId: ownerId ? String(ownerId).toLowerCase() : '', ownerSocketId: winnerSocketId });
 const { createClient } = require('@supabase/supabase-js');
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -119,7 +117,7 @@ app.post('/api/register', async (req, res) => {
       console.log('REGISTER ERROR:', error);
       return res.status(500).json({ ok:false, error:'Gagal daftar: ' + error.message });
     }
-    return res.json({ ok:true, user: { ...data, created_at_wib: formatWIB(data.created_at) } });
+    return res.json({ ok:true, user: { ...data, created_at_wib: formatWIB(data.created_at) }, authToken: makeAuthToken(data.id) });
   }catch(e){
     console.log('REGISTER EX:', e);
     return res.status(500).json({ ok:false, error:'Server error saat daftar!' });
@@ -143,7 +141,7 @@ app.post('/api/login', async (req, res) => {
        // JANGAN kirim hash ke client! Ini yang paling penting.
     delete user.password_hash;
     delete user.answer_hash;
-    return res.json({ ok:true, user: { ...user, created_at_wib: formatWIB(user.created_at) } });
+    return res.json({ ok:true, user: { ...user, created_at_wib: formatWIB(user.created_at) }, authToken: makeAuthToken(user.id) });
   }catch(e){
     console.log('LOGIN EX:', e);
     return res.status(500).json({ ok:false, error:'Server error saat login!' });
@@ -188,13 +186,15 @@ app.post('/api/add-hu', async (req, res)=>{
     // INI KUNCINYA: tanpa token yang valid, ditolak. Token cuma didapat dari menang beneran.
     if(!huToken || !huTokens.has(huToken)) return res.json({ok:false, counted:false, reason:'no-token'});
     let tok = huTokens.get(huToken);
-    huTokens.delete(huToken); // Sekali pakai, langsung hangus
-    if(tok.exp < Date.now()) return res.json({ok:false, counted:false, reason:'token-expired'});
+huTokens.delete(huToken);
+if(tok.exp < Date.now()) return res.json({ok:false, counted:false, reason:'token-expired'});
+if(tok.ownerId && normId(id) !== tok.ownerId) return res.json({ok:false, counted:false, reason:'token-owner-mismatch'});
 
-    let { data:u } = await supabase.from('users').select('hu').eq('id', id).maybeSingle();
-    let newHu = (u?.hu||0) + 1;
-    await supabase.from('users').update({hu: newHu}).eq('id', id);
-    return res.json({ok:true, counted:true, hu: newHu});
+let { data:u } = await supabase.from('users').select('hu').eq('id', normId(id)).maybeSingle();
+let oldHu = u?.hu||0; let newHu = oldHu + 1;
+let { data:upd, error:updErr } = await supabase.from('users').update({hu: newHu}).eq('id', normId(id)).eq('hu', oldHu).select('hu').maybeSingle();
+if(updErr || !upd){ let { data:u2 } = await supabase.from('users').select('hu').eq('id', normId(id)).maybeSingle(); return res.json({ok:true, counted:true, hu: u2?.hu||oldHu}); }
+return res.json({ok:true, counted:true, hu: upd.hu});
   }catch(e){
     console.log('ADD-HU EX:', e);
     return res.json({ok:false, counted:false});
@@ -268,9 +268,18 @@ app.post('/api/save-ach', async (req,res)=>{
     if(!user) return res.status(400).json({ok:false});
     let match = await bcrypt.compare(String(password), user.password_hash);
     if(!match) return res.status(403).json({ok:false});
-    // Cuma simpen yang valid, biar DB gak jebol
-    let clean = {unlocked:Array.isArray(ach.unlocked)?ach.unlocked.slice(0,100):[], stats:(ach.stats&&typeof ach.stats==='object')?ach.stats:{}};
-    await supabase.from('users').update({ach: clean}).eq('id', normId(id));
+   const KNOWN_ACH = ['first_pong','first_chow','first_kong','pong10','pong20','pong35','pong50','pong100','chow10','chow20','chow35','chow50','chow100','kong10','kong2','meld100','combo_meld','first_game','first_hu','hu10','hu25','hu50','hu100','fast_hu','clean_win','hu_from_discard','streak3','streak5','streak10','perfect_hu','comeback','last_tile_hu','flower4','flower8','unlucky_to_lucky','self_hu5','login7','login30','games10','games100','games500','bot1','bot10','bot20','bot50','bot_streak10','bot_fast','play_friend','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend','ninja','owl','revenge','midnight_hu','silent_killer','first_try','lose10','perfect_defense','maraton5','maraton10','tukang_intip','no_flower_win','kembar','kalah_tipis','bangkit3'];
+let { data:oldRow } = await supabase.from('users').select('ach').eq('id', normId(id)).maybeSingle();
+let oldAch = oldRow?.ach||{unlocked:[],stats:{}}; if(typeof oldAch==='string'){ try{ oldAch=JSON.parse(oldAch); }catch(e){ oldAch={unlocked:[],stats:{}}; } }
+let oldSet = new Set(oldAch.unlocked||[]);
+let incoming = Array.isArray(ach.unlocked)?[...new Set(ach.unlocked.filter(x=>KNOWN_ACH.includes(x)))]:[];
+let added = incoming.filter(x=>!oldSet.has(x));
+if(added.length>10) return res.status(403).json({ok:false, error:'Unlock achievement mencurigakan, ditolak!'});
+let merged = [...oldSet, ...added];
+let cleanStats = {}; if(ach.stats&&typeof ach.stats==='object'){ for(let k in ach.stats){ let v=Number(ach.stats[k]); if(Number.isFinite(v)) cleanStats[k]=Math.max(0,Math.min(v,1000000)); } }
+for(let k in (oldAch.stats||{})){ if(cleanStats[k]===undefined) cleanStats[k]=oldAch.stats[k]; }
+let clean = {unlocked:merged, stats:cleanStats};
+await supabase.from('users').update({ach: clean}).eq('id', normId(id));
     res.json({ok:true});
   }catch(e){ console.log('SAVE-ACH EX:', e); res.status(500).json({ok:false}); }
 });
@@ -681,14 +690,6 @@ else if(action==='kong'){
   need = claimer.hand.filter(t=>t.key===tile.key).slice(0,3);
   if(need.length<3) return;
 }
-  if(action==='pong'){
-    need = claimer.hand.filter(t=>t.key===tile.key).slice(0,2);
-    if(need.length<2) return;
-  } 
-  else if(action==='kong'){
-  need = claimer.hand.filter(t=>t.key===tile.key).slice(0,3);
-  if(need.length<3) return;
-}
   else if(action==='chow' && chowNums){
     chowNums.forEach(n=>{
       if(n===tile.num) return;
@@ -779,7 +780,7 @@ function endGameWin(room, winnerName, msg, winningTile){
   addLog(room, '🏆 '+msg);
     if(winner && !winner.isBot){
     // Cuma kalo counted, baru kasih token. Kalo latihan / gak full 4, gak dikasih token.
-    let huToken = counted ? makeHuToken(room.code, winner.id) : null;
+    let huToken = counted ? makeHuToken(room.code, winner.id, winner.userId || winner.name) : null;
     io.to(winner.id).emit('youHu', { mode: room.mode, playerCount: realCount, counted: counted, huToken: huToken });
   }
 }
@@ -788,16 +789,17 @@ function endGameWin(room, winnerName, msg, winningTile){
 io.on('connection', (socket)=>{
   console.log('User connected:', socket.id);
   // ----- TEMEN: DAFTAR ONLINE -----
-  socket.on('registerOnline', async ({ id, display_name, avatar })=>{
-    id = normId(id); if(!id) return;
-    socket.myUserId = id;
+  socket.on('registerOnline', async ({ id, display_name, avatar, authToken })=>{
+  id = normId(id); if(!id) return;
+  if(authToken){ let at = authTokens.get(authToken); if(!at || at.exp<Date.now() || at.userId!==id){ socket.emit('friendError','Sesi login kadaluarsa, login ulang!'); return; } socket.authToken=authToken; }
+  socket.myUserId = id;
     onlineUsers.set(id, { socketId: socket.id, id, display_name: display_name||id, avatar: avatar||'🧑', roomCode: socket.myRoomCode||'' });
     broadcastOnline();
   });
 
   // ----- TEMEN: CARI PAKE NAMA / @ID -----
   socket.on('searchUser', async ({ q, myId })=>{
-    q = String(q||'').trim(); myId = normId(myId);
+    q = String(q||'').trim().replace(/[%_\\]/g,''); myId = normId(myId);
     if(!q) return socket.emit('searchUserResult', []);
     // Cari di display_name ATAU id, biar ketik HANI / @hani1 sama-sama ketemu
     let { data } = await supabase.from('users').select('id, display_name, avatar, hu').or(`display_name.ilike.%${q}%,id.ilike.%${q}%`).limit(10);
@@ -810,7 +812,8 @@ io.on('connection', (socket)=>{
 
   // ----- TEMEN: KIRIM REQUEST -----
   socket.on('sendFriendRequest', async ({ fromId, toId })=>{
-    fromId = normId(fromId); toId = normId(toId);
+  if(socket.myUserId) fromId = socket.myUserId;
+  fromId = normId(fromId); toId = normId(toId);
     if(!fromId || !toId || fromId===toId) return socket.emit('friendError', 'Gak bisa add diri sendiri!');
     let target = await getUserPublicById(toId);
     if(!target) return socket.emit('friendError', 'User @'+toId+' gak ketemu!');
@@ -832,7 +835,8 @@ io.on('connection', (socket)=>{
 
   // ----- TEMEN: TERIMA / TOLAK -----
   socket.on('respondFriendRequest', async ({ myId, fromId, accept })=>{
-    myId = normId(myId); fromId = normId(fromId);
+  if(socket.myUserId) myId = socket.myUserId;
+  myId = normId(myId); fromId = normId(fromId);
     if(accept){
       await supabase.from('friends').update({ status:'accepted' }).eq('from_id', fromId).eq('to_id', myId).eq('status','pending');
     } else {
@@ -849,13 +853,14 @@ io.on('connection', (socket)=>{
   });
 
   // ----- TEMEN: AMBIL LIST TEMEN + PENDING + ONLINE -----
-  socket.on('getFriends', async ({ myId })=>{ socket.emit('friendList', await getFriendsFor(myId)); });
-  socket.on('getFriendPending', async ({ myId })=>{ socket.emit('friendPending', await getPendingFor(myId)); });
+  socket.on('getFriends', async ({ myId })=>{ if(socket.myUserId) myId=socket.myUserId; socket.emit('friendList', await getFriendsFor(myId)); });
+  socket.on('getFriendPending', async ({ myId })=>{ if(socket.myUserId) myId=socket.myUserId; socket.emit('friendPending', await getPendingFor(myId)); });
   socket.on('getOnlineUsers', ()=>{ socket.emit('onlineUsersUpdated', getOnlineList()); });
 
   // ----- TEMEN: HAPUS TEMEN -----
   socket.on('removeFriend', async ({ myId, friendId })=>{
-    myId = normId(myId); friendId = normId(friendId);
+  if(socket.myUserId) myId = socket.myUserId;
+  myId = normId(myId); friendId = normId(friendId);
     await supabase.from('friends').delete().or(`and(from_id.eq.${myId},to_id.eq.${friendId}),and(from_id.eq.${friendId},to_id.eq.${myId})`).eq('status','accepted');
     socket.emit('friendList', await getFriendsFor(myId));
     let other = getSocketByUserId(friendId);
@@ -874,7 +879,8 @@ io.on('connection', (socket)=>{
 
   // ----- TEMEN: CHAT PRIBADI 1 LAWAN 1 -----
   socket.on('privateChat', async ({ fromId, toId, msg })=>{
-    fromId = normId(fromId); toId = normId(toId); msg = String(msg||'').trim().slice(0,500);
+  if(socket.myUserId) fromId = socket.myUserId;
+  fromId = normId(fromId); toId = normId(toId); msg = String(msg||'').trim().slice(0,500);
     if(!fromId || !toId || !msg) return;
     await supabase.from('private_messages').insert({ from_id: fromId, to_id: toId, msg });
     let payload = { from_id: fromId, to_id: toId, msg, created_at: new Date().toISOString() };
@@ -883,11 +889,13 @@ io.on('connection', (socket)=>{
     socket.emit('privateChatSent', payload);
   });
   socket.on('getPrivateChat', async ({ myId, friendId })=>{
-    myId = normId(myId); friendId = normId(friendId);
+  if(socket.myUserId) myId = socket.myUserId;
+  myId = normId(myId); friendId = normId(friendId);
+  if(socket.myUserId && socket.myUserId!==myId) return;
     let { data } = await supabase.from('private_messages').select('*').or(`and(from_id.eq.${myId},to_id.eq.${friendId}),and(from_id.eq.${friendId},to_id.eq.${myId})`).order('created_at', { ascending:true }).limit(100);
     socket.emit('privateChatHistory', { friendId, messages: data||[] });
   });
-  socket.on('createRoom', ({ name, roomName, isPrivate, password, mode, avatar })=>{
+  socket.on('createRoom', ({ name, roomName, isPrivate, password, mode, avatar })=>{ let _uid = socket.myUserId||'';
   let code = genCode();
   let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec:30, turnTimer:null, lastDice:null, passCount:0, passNeeded:0, passedNames:[], claimTimer:null, skin:'hijau',
     roomName: (roomName||'Meja '+(name||'Player')).trim(),
@@ -895,7 +903,7 @@ io.on('connection', (socket)=>{
     mode: mode==='tanding' ? 'tanding' : 'latihan',
     hostName: (name||'Player').trim()
   };
-    let host = { id:socket.id, name:(name||'Player').trim(), isBot:false, isHost:true, hand:[], melds:[], discards:[], flowers:[], level:'', avatar: avatar||'🧑' };
+    let host = { id:socket.id, name:(name||'Player').trim(), isBot:false, isHost:true, hand:[], melds:[], discards:[], flowers:[], level:'', avatar: avatar||'🧑', userId:_uid };
   room.players.push(host);
     rooms[code]=room; socket.join(code);
   if(socket.myUserId){ let u = onlineUsers.get(socket.myUserId); if(u){ u.roomCode = code; onlineUsers.set(socket.myUserId, u); } socket.myRoomCode = code; broadcastOnline(); }
@@ -911,7 +919,7 @@ io.on('connection', (socket)=>{
     if(room.phase==='playing'){ socket.emit('errorMsg', 'Game sudah mulai!'); return; }
     if(room.isPrivate && room.password!==(password||'')){ socket.emit('errorMsg','Password salah!'); return; }
         let cleanName = (name||'Player').trim() || 'Player';
-       let oldP = room.players.find(x=>x.name===cleanName && !x.isBot);
+       if(oldP && oldP.userId && socket.myUserId && oldP.userId!==socket.myUserId){ socket.emit('errorMsg','Kursi ini milik user lain!'); return; }
        if(oldP){
        if(oldP.disconnected){
         if(oldP.disconnectTimer){ clearTimeout(oldP.disconnectTimer); oldP.disconnectTimer = null; }
@@ -928,7 +936,7 @@ io.on('connection', (socket)=>{
       }
       socket.emit('errorMsg','Nama udah dipake! Ganti nama lain!'); return;
     }
-    let p = { id:socket.id, name:cleanName, isBot:false, isHost:false, hand:[], melds:[], discards:[], flowers:[], level:'', avatar: avatar || '🧑' };
+    let p = { id:socket.id, name:cleanName, isBot:false, isHost:false, hand:[], melds:[], discards:[], flowers:[], level:'', avatar: avatar || '🧑', userId: socket.myUserId||'' };
        room.players.push(p);
     socket.join(code);
     if(socket.myUserId){ let u = onlineUsers.get(socket.myUserId); if(u){ u.roomCode = code; onlineUsers.set(socket.myUserId, u); } socket.myRoomCode = code; broadcastOnline(); }
@@ -1019,7 +1027,7 @@ socket.on('fillBots', ({ code, level })=>{
     addLog(room, `🎨 Skin meja diganti jadi ${skin}!`);
   });
 
-  socket.on('startGame', ({ code, turnTimeSec })=>{
+  socket.on('startGame', ({ code, turnTimeSec })=>{ if(turnTimeSec!==undefined){ turnTimeSec=Number(turnTimeSec); if(!Number.isFinite(turnTimeSec)||(turnTimeSec!==0&&(turnTimeSec<5||turnTimeSec>120))) turnTimeSec=30; }
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
     // FIX 5: cuma HOST yang bisa mulai
@@ -1029,7 +1037,7 @@ socket.on('fillBots', ({ code, level })=>{
     startGame(room, turnTimeSec);
   });
 
-   socket.on('playAgain', ({ code })=>{ socket.emit('rematchUpdate', { count: 0, total: 1 }); });
+   socket.on('playAgain', ({ code })=>{ socket.emit('errorMsg','Pake tombol Rematch, bukan Play Again!'); });
   socket.on('rematch', ({ code })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
@@ -1145,6 +1153,7 @@ socket.on('fillBots', ({ code, level })=>{
 });
   // An Kong: 4 sama di tangan sendiri habis draw
 socket.on('anKong', ({ code, tileKey })=>{
+  let _r = rooms[(code||'').toUpperCase()]; if(_r && _r.waitingClaim) return;
   let room = rooms[(code||'').toUpperCase()];
   if(!room || room.phase!=='playing') return;
   let p = room.players.find(x=>x.id===socket.id);
@@ -1162,6 +1171,7 @@ socket.on('anKong', ({ code, tileKey })=>{
 
 // Jia Kong: PONG yang udah kebuka + dapet tile ke-4 pas draw
 socket.on('jiaKong', ({ code, tileId })=>{
+  let _r2 = rooms[(code||'').toUpperCase()]; if(_r2 && _r2.waitingClaim) return;
   let room = rooms[(code||'').toUpperCase()];
   if(!room || room.phase!=='playing') return;
   let p = room.players.find(x=>x.id===socket.id);
@@ -1178,6 +1188,7 @@ socket.on('jiaKong', ({ code, tileId })=>{
   room.players.forEach(x=>sendHand(room,x));
 });
   socket.on('tableChat', ({ code, msg })=>{
+    msg = String(msg||'').trim().slice(0,500); if(!msg) return;
     let room = rooms[(code||'').toUpperCase()];
     if(!room) return;
     let p = room.players.find(x=>x.id===socket.id);
@@ -1302,6 +1313,10 @@ setInterval(()=>{
       changed = true;
       continue;
     }
+    if(room.phase==='playing' && humans.length>0 && activeHumans.length===0){
+  let allOldPlaying = humans.every(p=>p.disconnectedAt && (Date.now() - p.disconnectedAt > 600000));
+  if(allOldPlaying){ clearTurnTimer(room); delete rooms[code]; changed=true; continue; }
+}
         if(room.phase!=='playing' && activeHumans.length===0 && humans.length>0){
       let allOld = humans.every(p=>p.disconnectedAt && (Date.now() - p.disconnectedAt > 120000));
       if(allOld){
