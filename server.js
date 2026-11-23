@@ -208,11 +208,38 @@ app.post('/api/change-avatar', async (req,res)=>{
   try{
     let {id, avatar, password} = req.body || {};
     if(!id || !avatar || !password) return res.status(400).json({ok:false, error:'ID, avatar & password wajib!'});
-    let { data: user } = await supabase.from('users').select('password_hash').eq('id', id).maybeSingle();
+    let { data: user } = await supabase.from('users').select('password_hash, ach').eq('id', id).maybeSingle();
     if(!user) return res.status(400).json({ok:false, error:'ID tidak ditemukan!'});
     let match = await bcrypt.compare(String(password), user.password_hash);
     if(!match) return res.status(403).json({ok:false, error:'Password salah!'});
-    await supabase.from('users').update({ avatar: String(avatar).slice(0,100) }).eq('id', id);
+
+    // ===== CEK AVATAR SPESIAL - JANGAN PERCAYA HP DOANG =====
+    let av = String(avatar).slice(0,100);
+    if(av.startsWith('/avatars/special-')){
+      let ach = user.ach || {unlocked:[]};
+      if(typeof ach==='string'){ try{ ach=JSON.parse(ach); }catch(e){ ach={unlocked:[]}; } }
+      let unlocked = new Set(ach.unlocked||[]);
+      // Harus sama persis kayak ACH_CATS di index.html
+      const REQ = {
+        'special-teknik.png': ['first_pong','first_chow','first_kong','pong10','pong20','pong35','pong50','pong100','chow10','chow20','chow35','chow50','chow100','kong10','kong2','meld100','combo_meld'],
+        'special-menang.png': ['first_game','first_hu','hu10','hu25','hu50','hu100','fast_hu','clean_win','hu_from_discard','streak3','streak5','streak10','perfect_hu','comeback','last_tile_hu','flower4','flower8','unlucky_to_lucky','self_hu5','login7','login30','games10','games100','games500'],
+        'special-bot.png': ['bot1','bot10','bot20','bot50','bot_streak10','bot_fast'],
+        'special-sosial.png': ['play_friend','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend'],
+        'special-rahasia.png': ['ninja','owl','revenge','midnight_hu','silent_killer','first_try','lose10','perfect_defense','maraton5','maraton10','tukang_intip','no_flower_win','kembar','kalah_tipis','bangkit3'],
+      };
+      let file = av.split('/').pop();
+      if(file==='special-legend.png'){
+        let allOk = Object.values(REQ).every(list=>list.every(x=>unlocked.has(x)));
+        if(!allOk) return res.status(403).json({ok:false, error:'Avatar LEGEND belum kebuka! Semua kategori harus 100% dulu.'});
+      } else {
+        let need = REQ[file];
+        if(!need) return res.status(403).json({ok:false, error:'Avatar spesial tidak dikenal!'});
+        let missing = need.filter(x=>!unlocked.has(x));
+        if(missing.length) return res.status(403).json({ok:false, error:'Avatar ini belum kebuka! Masih kurang '+missing.length+' achievement di kategori itu.'});
+      }
+    }
+
+    await supabase.from('users').update({ avatar: av }).eq('id', id);
     res.json({ok:true});
   }catch(e){ res.status(500).json({ok:false}); }
 });
