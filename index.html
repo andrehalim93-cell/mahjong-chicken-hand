@@ -2329,13 +2329,15 @@ function loginSuccess(user, passwordForSave, showProfile, authToken){
   let save = el('saveLogin') ? el('saveLogin').checked : false;
   // Simpen di sessionStorage aja: refresh tetep login, close browser auto logout
   localStorage.removeItem('mahjong_user');
-  try{ sessionStorage.setItem('mahjong_user', JSON.stringify({user: user, password: passwordForSave || ''})); }catch(e){}
+    try{ sessionStorage.setItem('mahjong_user', JSON.stringify({user: user, authToken: authToken||''})); }catch(e){}
   if(save){
-    // Cuma simpen ID + Pass buat auto-isi form
-    localStorage.setItem('mahjong_saved_login', JSON.stringify({id:user.id, password:passwordForSave||''}));
+    // B: Remember Me - simpen ID + TOKEN, BUKAN password. Token kadaluarsa 7 hari, bisa dicabut.
+    localStorage.setItem('mahjong_saved_login', JSON.stringify({id:user.id}));
+    if(authToken){ try{ localStorage.setItem('mahjong_remember_token', JSON.stringify({id:user.id, authToken:authToken})); }catch(e){} }
   } else {
-    // Kalau gak dicentang, hapus yang kesimpen
+    // Gak dicentang: token cuma di session, close browser langsung ilang
     localStorage.removeItem('mahjong_saved_login');
+    localStorage.removeItem('mahjong_remember_token');
   }
   if(el('nameInput')){ el('nameInput').value = user.display_name; el('nameInput').readOnly = true; }
     if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(user.avatar, 48)+'<div class="homeUserText"><div class="homeUserName">'+esc(user.display_name)+'</div><div class="homeUserMeta"><span class="rankBadge">'+gelarLabel(user.hu||0)+'</span><span title="'+achStarsText()+'">'+achStarsHTML()+'</span></div></div>';
@@ -2422,9 +2424,8 @@ async function changeAvatar(a){
   currentUser.avatar = a; el('profileAvatarBig').innerHTML = avatarHTML(a, 64);
   if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(a, 24) + ' ' + esc(currentUser.display_name) + ' (' + esc(currentUser.id) + ')';
   try{
-    let saved = {};
-    try{ saved = JSON.parse(sessionStorage.getItem('mahjong_user')||'{}'); }catch(e){}
-    let r = await fetch('/api/change-avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, avatar: a, password: saved.password||''})});
+    let _tok=''; try{ _tok=sessionStorage.getItem('mahjong_auth_token')||''; }catch(e){}
+    let r = await fetch('/api/change-avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, avatar: a, authToken: _tok})});
     let j = await r.json();
     if(!j.ok) toast('❌ '+ (j.error||'Avatar spesial belum kebuka!'));
   }catch(e){}
@@ -2610,7 +2611,9 @@ function exitBotGame(){
     function doLogout(){
   currentUser = null;
   localStorage.removeItem('mahjong_user');
+  localStorage.removeItem('mahjong_remember_token');
   sessionStorage.removeItem('mahjong_user');
+  sessionStorage.removeItem('mahjong_auth_token');
   sessionStorage.removeItem('mahjong_room');
   if(el('nameInput')){ el('nameInput').value=''; el('nameInput').readOnly=false; }
   el('homeScreen').classList.add('hidden');
@@ -2618,24 +2621,47 @@ function exitBotGame(){
   // Auto-isi lagi kalau tadi dicentang
   try{
     let s = localStorage.getItem('mahjong_saved_login');
-    if(s){ let c=safeParse(s, null)||{}; if(el('loginId')) el('loginId').value=c.id; if(el('loginPass')) el('loginPass').value=c.password; if(el('saveLogin')) el('saveLogin').checked=true; }
+    if(s){ let c=safeParse(s, null)||{}; if(el('loginId')) el('loginId').value=c.id||''; if(el('loginPass')) el('loginPass').value=''; if(el('saveLogin')) el('saveLogin').checked=true; }
     else { if(el('loginId')) el('loginId').value=''; if(el('loginPass')) el('loginPass').value=''; if(el('saveLogin')) el('saveLogin').checked=false; }
   }catch(e){}
   toast('Udah logout!');
 }
 function checkSavedLogin(){
   renderAvatarPick();
+  // B: Remember Me dulu - kalo dicentang, langsung masuk pake TOKEN, gak usah ketik password
+  try{
+    let rem = localStorage.getItem('mahjong_remember_token');
+    if(rem){
+      let rc = safeParse(rem, null);
+      if(rc && rc.id && rc.authToken){
+        fetch('/api/me',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:rc.id, authToken:rc.authToken})})
+        .then(r=>r.text()).then(txt=>{
+          try{ let j = JSON.parse(txt); if(j.ok){ loginSuccess(j.user, '', true, j.authToken||rc.authToken); return; } }catch(e){}
+          localStorage.removeItem('mahjong_remember_token');
+          showLoginScreen();
+        }).catch(()=>showLoginScreen());
+        return;
+      }
+    }
+  }catch(e){}
   // 1. Cek session dulu - kalau ada, berarti ini refresh, bukan close browser
   try{
     let sess = sessionStorage.getItem('mahjong_user');
     if(sess){
-      let s = JSON.parse(sess);
-      if(s && s.user && s.password){
-        // Auto-login diam-diam pake ID + password yang ke-save di session
+      let s = safeParse(sess, null);
+      // MIGRASI 1x: sesi lama masih ada password-nya, login pake itu 1x terakhir, abis itu password dibuang
+      if(s && s.user && s.password && !s.authToken){
         fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:s.user.id, password:s.password})})
         .then(r=>r.text()).then(txt=>{
-          try{ let j = JSON.parse(txt); if(j.ok){ loginSuccess(j.user, s.password, true, j.authToken); return; } }catch(e){}
-          // Kalau gagal (password diganti dll), jatuh ke login biasa
+          try{ let j = JSON.parse(txt); if(j.ok){ loginSuccess(j.user, '', true, j.authToken); return; } }catch(e){}
+          showLoginScreen();
+        }).catch(()=>showLoginScreen());
+        return;
+      }
+      if(s && s.user && s.authToken){
+        fetch('/api/me',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:s.user.id, authToken:s.authToken})})
+        .then(r=>r.text()).then(txt=>{
+          try{ let j = JSON.parse(txt); if(j.ok){ loginSuccess(j.user, '', true, j.authToken||s.authToken); return; } }catch(e){}
           showLoginScreen();
         }).catch(()=>showLoginScreen());
         return;
@@ -2653,9 +2679,9 @@ function showLoginScreen(){
     let saved = localStorage.getItem('mahjong_saved_login');
     if(saved){
       let c=safeParse(saved, null)||{};
-      if(el('loginId')) el('loginId').value=c.id;
-      if(el('loginPass')) el('loginPass').value=c.password;
-      if(el('saveLogin')) el('saveLogin').checked=true;
+      if(el('loginId')) el('loginId').value=c.id||'';
+      if(el('loginPass')) el('loginPass').value='';
+      if(el('saveLogin')) el('saveLogin').checked=!!localStorage.getItem('mahjong_remember_token');
     }
   }catch(e){}
   el('authScreen').classList.remove('hidden');
@@ -4093,13 +4119,13 @@ function achStarsText(){
 }
 function getAchData(){ try{ return JSON.parse(localStorage.getItem('mj_ach')||'{"unlocked":[],"stats":{}}'); }catch(e){ return {unlocked:[],stats:{}}; } }
 function saveAchData(d){ localStorage.setItem('mj_ach',JSON.stringify(d)); updateAchLabel(); syncAchToServer(d); }
-function getAchPassword(){ try{ return JSON.parse(sessionStorage.getItem('mahjong_user')||'{}').password||''; }catch(e){ return ''; } }
+function getAchToken(){ try{ return sessionStorage.getItem('mahjong_auth_token')||''; }catch(e){ return ''; } }
 function syncAchToServer(d){
   if(!currentUser || !currentUser.id) return;
-  let pw = getAchPassword(); if(!pw) return;
+  let _tok = getAchToken(); if(!_tok) return;
   clearTimeout(window._achSyncTimer);
   window._achSyncTimer = setTimeout(()=>{
-    fetch('/api/save-ach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentUser.id,password:pw,ach:d})}).catch(()=>{});
+    fetch('/api/save-ach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentUser.id,authToken:_tok,ach:d})}).catch(()=>{});
   }, 500);
 }
 async function loadAchFromServer(){
