@@ -2398,10 +2398,10 @@ function openAvatarPicker(){
     let unlocked = isSpecialUnlocked(sp);
     let b = document.createElement('button');
     b.innerHTML = unlocked ? avatarHTML(sp.file, 40) : '<span style="font-size:28px">🔒</span>';
-    b.title = unlocked ? sp.name : '🔒 '+sp.name+' - '+sp.desc;
+    b.title = unlocked ? sp.name : '🔒 Avatar Misterius - Selesaikan kategorinya sampai 100%';
     b.style.cssText = 'background:'+(sp.file===currentUser.avatar?'#facc15':(unlocked?'#14532d':'#0f172a'))+';border:1px solid '+(unlocked?'#22c55e':'#334155')+';border-radius:12px;padding:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:52px;height:52px;position:relative;'+(unlocked?'':'filter:grayscale(1);opacity:.7');
     b.onclick = ()=>{
-      if(!unlocked){ toast('🔒 '+sp.name+' belum kebuka! '+sp.desc); return; }
+      if(!unlocked){ toast('🔒 Avatar Misterius belum kebuka! Selesaikan kategorinya sampai 100%'); return; }
       changeAvatar(sp.file); closeAvatarPicker();
     };
     grid.appendChild(b);
@@ -2417,7 +2417,7 @@ function closeAvatarPicker(){ el('avatarPickerModal').style.display = 'none'; }
 async function changeAvatar(a){
   // Cek di HP dulu, biar cepet. Cek beneran-nya ada di server.
   let sp = SPECIAL_AVATARS.find(x=>x.file===a);
-  if(sp && !isSpecialUnlocked(sp)){ toast('🔒 Avatar ini belum kebuka! '+sp.desc); return; }
+  if(sp && !isSpecialUnlocked(sp)){ toast('🔒 Avatar Misterius ini belum kebuka!'); return; }
   currentUser.avatar = a; el('profileAvatarBig').innerHTML = avatarHTML(a, 64);
   if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(a, 24) + ' ' + esc(currentUser.display_name) + ' (' + esc(currentUser.id) + ')';
   try{
@@ -4170,7 +4170,7 @@ function openAchModal(){
             <div style="height:100%;width:${pct}%;background:${c.done?'#facc15':'#22c55e'};border-radius:99px;transition:width .3s"></div>
           </div>
           <div style="font-size:11px;color:#94a3b8;margin-top:6px">${c.done?'Bintang udah kebuka!':'Klik buat liat isinya'}</div>
-          <div style="display:flex;align-items:center;gap:8px;margin-top:8px;background:rgba(0,0,0,.3);border-radius:10px;padding:6px 8px">${avatarHTML((SPECIAL_AVATARS.find(x=>x.cat===c.id)||{}).file||'',28)}<span style="font-size:11px;color:${c.done?'#facc15':'#94a3b8'}">${c.done?'🎁 Avatar '+(SPECIAL_AVATARS.find(x=>x.cat===c.id)||{}).name+' UDAH KEBUKA!':'🎁 Hadiah 100%: Avatar '+(SPECIAL_AVATARS.find(x=>x.cat===c.id)||{}).name}</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px;background:rgba(0,0,0,.3);border-radius:10px;padding:6px 8px">${c.done ? avatarHTML((SPECIAL_AVATARS.find(x=>x.cat===c.id)||{}).file||'',28) : '<span style="width:28px;height:28px;border-radius:50%;background:#1e293b;border:1px dashed #64748b;display:inline-flex;align-items:center;justify-content:center;font-size:14px">🔒</span>'}<span style="font-size:11px;color:${c.done?'#facc15':'#94a3b8'}">${c.done ? '🎁 Avatar '+(SPECIAL_AVATARS.find(x=>x.cat===c.id)||{}).name+' UDAH KEBUKA!' : '🎁 Hadiah 100%: Avatar Misterius 🔒'}</span></div>
         </div>
         <div id="achArrow-${c.id}" style="font-size:16px;margin-left:10px;color:#94a3b8">▼</div>
       </div>
