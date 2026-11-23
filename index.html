@@ -1909,9 +1909,9 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   <div class="topLogo"><div class="crown">👑🀄👑</div><h1>MAHJONG<br>CHICKEN HAND</h1><p></p></div>
   <div class="homeTabs">
     <button class="homeTabBtn active" data-tab="lobby" onclick="switchHomeTab('lobby')">🀄 LOBBY</button>
+    <button class="homeTabBtn" data-tab="friends" onclick="switchHomeTab('friends')">👥 TEMEN <span id="friendBadge" style="display:none;background:#dc2626;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px">0</span></button>
     <button class="homeTabBtn" data-tab="leaderboard" onclick="switchHomeTab('leaderboard')">🏆 LEADERBOARD</button>
     <button class="homeTabBtn" data-tab="howto" onclick="switchHomeTab('howto')">❓ CARA MAIN</button>
-    <button class="homeTabBtn" data-tab="friends" onclick="switchHomeTab('friends')">👥 TEMEN <span id="friendBadge" style="display:none;background:#dc2626;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px">0</span></button>
   </div>
   <div id="tab-lobby" class="homeTabPanel">
     <div class="card">
@@ -2726,7 +2726,7 @@ function showMeldPopup(by, meld){
   else if(act==='chow'){ el('meldAction').innerText = '🃏 CHOW!'; el('meldAction').style.color = '#60a5fa'; }
   else if(act==='kong'){ el('meldAction').innerText = '🀄 KONG!'; el('meldAction').style.color = '#facc15'; }
   else { el('meldAction').innerText = act.toUpperCase()+'!'; }
-  el('meldTiles').innerHTML = (meld.tiles||[]).map(t=>tileHTML(t)).join('');
+  el('meldTiles').innerHTML = [...(meld.tiles||[])].sort((a,b)=>(a.num||0)-(b.num||0)).map(t=>tileHTML(t)).join('');
   p.style.display = 'block';
   if(meldPopupTimer) clearTimeout(meldPopupTimer);
   meldPopupTimer = setTimeout(()=>{ p.style.display = 'none'; }, 5000);
@@ -3666,7 +3666,7 @@ applyTileColor(currentTileColor);
     let slot = slots[pos];
     let isTurn = p.name===turn;
        slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span><small>• ${p.handCount} tile${p.flowers.length?` • 🌸 ${p.flowers.length} bunga`:''}</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill(backTileHTML()).join('')}</div>`;
-    let meldHtml = p.melds.map(m=>`<div class="meld">${m.tiles.map(t=>tileMini(t)).join('')}</div>`).join('');
+    let meldHtml = p.melds.map(m=>`<div class="meld">${[...m.tiles].sort((a,b)=>(a.num||0)-(b.num||0)).map(t=>tileMini(t)).join('')}</div>`).join('');
     if(meldHtml && meldSlots[pos]) meldSlots[pos].innerHTML = meldHtml;
   });
   let me = players.find(p=>p.name===myName); if(me){ myMelds=me.melds; myFlowers=me.flowers; renderMyHand(); }
@@ -3801,7 +3801,7 @@ function renderMyHand(){
   handEl.querySelectorAll('.t').forEach(div=>{ div.onclick=()=>{ if(!isMyTurn) return toast('Bukan giliran kamu! Tunggu dulu...'); let id=div.dataset.id; if(selectedTile===id){ lastDrawnTileId=null; clearHint(); playMjSound('discard'); socket.emit('discard',{code:myCode, tileId:id}); selectedTile=null; renderMyHand(); } else { selectedTile=id; renderMyHand(); } }; });
   el('myCount').innerText = myHand.length+' tile'; el('myMeldCount').innerText = myMelds.length+' set';
   updateHintButton();
-  el('myMelds').innerHTML = [0,1,2,3].map(i=>{ let m=myMelds[i]; return `<div class="meld">${m?m.tiles.map(t=>tileHTML(t)).join(''):''}</div>`; }).join('');
+  el('myMelds').innerHTML = [0,1,2,3].map(i=>{ let m=myMelds[i]; return `<div class="meld">${m?[...m.tiles].sort((a,b)=>(a.num||0)-(b.num||0)).map(t=>tileHTML(t)).join(''):''}</div>`; }).join('');
   el('myFlowers').innerHTML = '';
 el('myFlowerCount').innerText = myFlowers.length ? ` • 🌸 ${myFlowers.length} bunga` : '';
 }
