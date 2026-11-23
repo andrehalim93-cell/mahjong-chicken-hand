@@ -2906,6 +2906,7 @@ function renderOnlineUsers(list){
 }
 function renderPending(list){
   pendingListData = list||[];
+  renderInvitePending();
   let box = el('friendPendingList'); if(!box) return;
   let badge = el('friendBadge');
   if(badge){ badge.style.display = list.length ? 'inline-block' : 'none'; badge.innerText = list.length; }
@@ -2959,6 +2960,7 @@ function openFriendChatList(){
   if(el('inviteFriendsTitle')) el('inviteFriendsTitle').innerText = '👥 TEMEN - CHAT';
   el('inviteFriendsModal').style.display = 'flex';
   setTimeout(()=>{
+    renderInvitePending();
     let fb = el('inviteFriendsList');
     if(fb){
       let friends = friendListData || [];
@@ -2970,7 +2972,17 @@ function openFriendChatList(){
   }, 400);
 }
 function closeInviteFriends(){ el('inviteFriendsModal').style.display = 'none'; }
+function renderInvitePending(){
+  let box = el('invitePendingList');
+  let lbl = el('invitePendingLabel');
+  if(!box) return;
+  let pend = pendingListData||[];
+  if(lbl) lbl.style.display = pend.length ? 'block' : 'none';
+  if(!pend.length){ box.innerHTML = ''; return; }
+  box.innerHTML = pend.map(u=>`<div style="display:flex;align-items:center;gap:8px;background:#451a03;border:1px solid #f59e0b;border-radius:12px;padding:8px">${avatarHTML(u.avatar,32)}<div style="flex:1;text-align:left"><b>${esc(u.display_name)}</b><br><span style="font-size:11px;color:#a7f3d0">@${esc(u.from_id)} mau jadi temen lu</span></div><button class="btn btn-gold" style="width:auto;padding:8px 10px;font-size:12px" onclick="respondFriend('${esc(u.from_id)}',true)">✅ TERIMA</button><button class="btn btn-dark" style="width:auto;padding:8px 10px;font-size:12px" onclick="respondFriend('${esc(u.from_id)}',false)">❌ TOLAK</button></div>`).join('');
+}
 function renderInviteFriendsList(){
+  renderInvitePending();
   let myId = myUserId();
   let inRoom = (currentPlayers||[]).map(p=>String(p.name||'').toLowerCase());
   let friends = (friendListData||[]).filter(u=>!inRoom.includes(String(u.display_name||'').toLowerCase()));
@@ -4437,6 +4449,8 @@ updateAchLabel();
   <div class="card" style="max-width:420px;width:100%;margin:20px 0;max-height:88vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center"><b id="inviteFriendsTitle">👥 UNDANG KE MEJA</b><span id="inviteFriendsCode"></span><button onclick="closeInviteFriends()" style="background:none;border:none;color:#fff;font-size:20px">✕</button></div>
     <div style="font-size:12px;color:#a7f3d0;margin-top:6px">Yang diundang bakal dapet popup <b>✅ IKUT MEJA</b>, langsung masuk ke meja ini. Kalo dia lagi di meja lain, dia harus keluar dulu.</div>
+    <div class="lbl" id="invitePendingLabel" style="display:none">👥 PERMINTAAN MASUK</div>
+    <div id="invitePendingList" style="display:flex;flex-direction:column;gap:8px"></div>
     <div class="lbl">👥 TEMEN KAMU</div>
     <div id="inviteFriendsList" style="display:flex;flex-direction:column;gap:8px"></div>
     <div class="lbl">🟢 ONLINE TAPI BELUM DI MEJA INI</div>
