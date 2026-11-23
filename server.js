@@ -220,7 +220,7 @@ app.post('/api/me', async (req, res)=>{
 });
 app.get('/api/leaderboard', async (req,res)=>{
   try{
-    let { data, error } = await supabase.from('users').select('id, display_name, avatar, hu').order('hu', { ascending:false }).limit(1000);
+    let { data, error } = await supabase.from('users').select('id, display_name, avatar, hu').order('hu', { ascending:false }).limit(100);
     if(error) throw error;
     let users = (data||[]).map(u=>({ id:u.id, display_name:u.display_name, avatar:u.avatar||'🧑', hu:u.hu||0 }));
     res.json({ ok:true, users });
