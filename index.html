@@ -2510,8 +2510,8 @@ function exitBotGame(){
   // backToHome() udah kirim leaveRoom ke server + balik ke Home / daftar meja (lobby)
   backToHome();
 }
-  function backToHome(skipLeave){
-  releaseBackTrap();
+  function backToHome(skipLeave, skipRelease){
+  if(!skipRelease) releaseBackTrap();
   // 1. Kasih tau server kita keluar meja, KECUALI kalau ini dipanggil pas rejoin gagal.
   // Kalau rejoin gagal, JANGAN kirim leaveRoom, nanti kursi kita kehapus sendiri.
   try{ if(myCode && !skipLeave) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
@@ -3182,10 +3182,10 @@ socket.on('rejoinFailed', m=>{
     // Nanti pas socket nyambung lagi, socket.on('connect') yang bakal ngirim rejoinRoom lagi.
   }, 2000);
 });
-socket.on('roomCreated', d=>{ myCode=d.code; try{ sessionStorage.setItem('mahjong_room', JSON.stringify({code:d.code, name:myName})); }catch(e){} el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
+socket.on('roomCreated', d=>{ myCode=d.code; try{ sessionStorage.setItem('mahjong_room', JSON.stringify({code:d.code, name:myName})); }catch(e){} el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); trapBackInGame(); });
 socket.on('roomList', d=>{ renderPublicRooms(d); });
 socket.on('roomListUpdated', ()=>{ refreshRooms(); });
-socket.on('joinedRoom', d=>{ myCode=d.code; sessionStorage.setItem('mahjong_room', JSON.stringify({code: myCode, name: myName})); el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); });
+socket.on('joinedRoom', d=>{ myCode=d.code; sessionStorage.setItem('mahjong_room', JSON.stringify({code: myCode, name: myName})); el('homeScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); el('chatFab').classList.add('showInLobby'); trapBackInGame(); });
 socket.on('updateLobby', room=>{
   myCode=room.code; currentPlayers=room.players;
   sessionStorage.setItem('mahjong_room', JSON.stringify({code: myCode, name: myName}));
@@ -3258,6 +3258,7 @@ socket.on('skinUpdated', d=>{ applySkin(d.skin); toast('🎨 Skin meja diganti!'
 function removeBot(name){ if(confirm('Hapus '+name+'?')) socket.emit('removeBot',{code:myCode, botName:name}); }
 socket.on('errorMsg', m=>{ showErr(m); toast(m); });
 socket.on('gameStarted', d=>{
+  trapBackInGame();
   el('lobbyScreen').classList.add('hidden'); el('gameScreen').classList.remove('hidden');
   el('winModal').classList.remove('show');
   el('winModal').style.display = 'none';
@@ -3819,46 +3820,54 @@ document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.activeE
 let inGameBackTrap = false;
 let _handlingBack = false;
 function trapBackInGame(){
-  if(inGameBackTrap) return; // jangan push dobel, ini yang bikin numpuk
+  if(inGameBackTrap) return;
   try{ history.pushState({inGame:true}, ''); }catch(e){}
   inGameBackTrap = true;
 }
 function releaseBackTrap(){
   if(!inGameBackTrap) return;
   inGameBackTrap = false;
-  // Buang 1 history yang tadi kita push, biar gak numpuk
-  // _handlingBack = true biar popstate di bawah gak ke-trigger lagi
-  if(!_handlingBack){ _handlingBack=true; try{ history.back(); }catch(e){} setTimeout(()=>{ _handlingBack=false; },100); }
+  // Cuma buat jalur tombol KELUAR, bukan jalur Back HP
+  if(!_handlingBack){ _handlingBack=true; try{ history.back(); }catch(e){} setTimeout(()=>{ _handlingBack=false; },150); }
 }
 window.addEventListener('popstate', function(e){
   if(_handlingBack) return;
   if(!inGameBackTrap) return;
-  // Balikin trap-nya dulu, biar tetep di game kalo user batal
+  // User pencet Back: kita udah mundur 1 history (itu yang bikin event ini).
+  // Push lagi dulu biar kita tetep di halaman ini, nanti kalo user OK baru kita buang manual.
   _handlingBack=true;
   try{ history.pushState({inGame:true}, ''); }catch(e){}
-  setTimeout(()=>{ _handlingBack=false; },100);
-  // 1. Kalo ada popup / modal yang kebuka, Back = tutup modal dulu, bukan keluar game
+  // 1. Kalo ada popup kebuka, Back = tutup popup dulu
   let openModal = document.querySelector('#claimPopup.show, #discardModal.open, #privateChatModal[style*="flex"], #achModal[style*="flex"]');
   if(openModal){
     if(openModal.id==='claimPopup') doClaim('pass');
     if(openModal.id==='discardModal') closeDiscards();
     if(openModal.id==='privateChatModal') closePrivateChat();
     if(openModal.id==='achModal') closeAchModal();
+    setTimeout(()=>{ _handlingBack=false; },150);
     return;
   }
-  // 2. Kalo lagi di game, Back = konfirm keluar ke Home
   let inGame = el('gameScreen') && !el('gameScreen').classList.contains('hidden');
   let inLobby = el('lobbyScreen') && !el('lobbyScreen').classList.contains('hidden');
+  // 2. Di game -> tanya, kalo OK balik ke Home + buang trap yang barusan kita push
   if(inGame){
     if(confirm('Keluar dari game ini?')){
-      _handlingBack=true; inGameBackTrap=false;
-      backToHome();
-      setTimeout(()=>{ _handlingBack=false; },100);
+      inGameBackTrap=false;
+      backToHome(false, true); // skipRelease=true, biar gak dobel history.back()
+      try{ history.back(); }catch(e){} // buang trap yang barusan kita push
     }
+    setTimeout(()=>{ _handlingBack=false; },150);
     return;
   }
-  // 3. Kalo lagi di lobby, Back = balik ke Home, bukan keluar browser
-  if(inLobby){ backToHome(); return; }
+  // 3. Di lobby -> langsung balik ke Home + buang trap
+  if(inLobby){
+    inGameBackTrap=false;
+    backToHome(false, true);
+    try{ history.back(); }catch(e){}
+    setTimeout(()=>{ _handlingBack=false; },150);
+    return;
+  }
+  setTimeout(()=>{ _handlingBack=false; },150);
 });
 // ===== ACHIEVEMENT SYSTEM =====
 const ACH_LIST=[
