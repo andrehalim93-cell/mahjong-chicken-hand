@@ -2186,13 +2186,13 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <div id="privateChatNotif" onclick="openPrivateChatFromNotif()" style="display:none;position:fixed;left:50%;top:110px;transform:translateX(-50%);background:#111827;border:2px solid #facc15;color:#fff;padding:10px 14px;border-radius:14px;font-size:13px;font-weight:700;z-index:999;max-width:92%;text-align:left;box-shadow:0 10px 30px rgba(0,0,0,.6);cursor:pointer">
   <div id="privateChatNotifText" style="line-height:1.4"></div>
   <!-- NOTIF ADD TEMEN - banner, gak nge-block game kayak confirm() -->
-<div id="friendRequestNotif" style="display:none;position:fixed;left:50%;top:110px;transform:translateX(-50%);background:#451a03;border:2px solid #f59e0b;color:#fff;padding:12px 14px;border-radius:14px;font-size:13px;font-weight:700;z-index:1000;max-width:92%;width:360px;text-align:left;box-shadow:0 10px 30px rgba(0,0,0,.6)">
-  <div id="friendRequestNotifText" style="line-height:1.4;margin-bottom:10px"></div>
+<div id="friendRequestNotif" style="display:none;position:fixed;position:relative;left:50%;top:110px;transform:translateX(-50%);background:#451a03;border:2px solid #f59e0b;color:#fff;padding:12px 14px;border-radius:14px;font-size:13px;font-weight:700;z-index:1000;max-width:92%;width:360px;text-align:left;box-shadow:0 10px 30px rgba(0,0,0,.6)">
+  <div id="friendRequestNotifText" style="line-height:1.4;margin-bottom:10px;padding-right:24px"></div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-gold" style="flex:1;padding:10px;font-size:13px" onclick="acceptPendingFriendRequest()">✅ TERIMA</button>
     <button class="btn btn-dark" style="flex:1;padding:10px;font-size:13px" onclick="declinePendingFriendRequest()">❌ TOLAK</button>
   </div>
-  <button onclick="closeFriendRequestNotif()" style="position:absolute;top:6px;right:10px;background:none;border:none;color:#fff;font-size:16px;font-weight:900;cursor:pointer">✕</button>
+  <button onclick="closeFriendRequestNotif()" style="position:absolute;top:6px;right:10px;z-index:1;background:none;border:none;color:#fff;font-size:16px;font-weight:900;cursor:pointer">✕</button>
 </div>
   <div style="font-size:11px;color:#a7f3d0;margin-top:2px">👆 Klik buat buka chat</div>
 </div>
