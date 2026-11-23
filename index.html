@@ -2037,7 +2037,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
       <div class="lobbyMode" id="roomModeLabel">🎮 LATIHAN</div>
     </div>
        <div class="seats" id="seatsWrap"></div>
-    <button id="lobbyChatFab" onclick="openFriendChatList()" title="Chat Temen">💬<span id="lobbyChatBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center;padding:0 4px">0</span></button>
+    <button id="lobbyChatFab" onclick="toggleChat()" title="Chat Meja">💬<span id="lobbyChatBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center;padding:0 4px">0</span></button>
   </div>
 
  <!-- BOT + WAKTU TETEP ADA, DI BAWAH MEJA -->
@@ -2958,7 +2958,6 @@ function onFriendFabClick(){
   else openFriendChatList();
 }
 function openFriendChatList(){
-  let lb = el('lobbyChatBadge'); if(lb) lb.style.display = 'none';
   refreshFriends();
   if(el('inviteFriendsCode')) el('inviteFriendsCode').innerText = '(CHAT)';
   if(el('inviteFriendsTitle')) el('inviteFriendsTitle').innerText = '👥 TEMEN - CHAT';
@@ -3110,8 +3109,6 @@ socket.on('privateChatIncoming', m=>{
   lastPrivateFromName = m.from_name || ('@'+m.from_id);
   let dot = el('friendBadgeDot');
   if(dot){ dot.innerText = privateUnread; dot.style.display = 'block'; }
-  let lb = el('lobbyChatBadge');
-  if(lb){ lb.innerText = privateUnread; lb.style.display = 'block'; }
   // Badge di tab TEMEN di Home juga
   let fb = el('friendBadge');
   if(fb){ fb.style.display = 'inline-block'; fb.innerText = privateUnread; }
@@ -3969,7 +3966,7 @@ function toggleChat(){
   chatOpen=!chatOpen;
   el('chatPanel').classList.toggle('show', chatOpen);
   if(chatOpen){ emoteOpen=false; el('emotePanel').classList.remove('show'); }
-  if(chatOpen){ chatUnread=0; el('chatBadge').style.display='none'; el('chatFabDot').style.display='none'; setTimeout(()=>el('chatInput').focus(),100); }
+  if(chatOpen){ chatUnread=0; el('chatBadge').style.display='none'; el('chatFabDot').style.display='none'; let lb = el('lobbyChatBadge'); if(lb) lb.style.display = 'none'; setTimeout(()=>el('chatInput').focus(),100); }
 }
 function sendChat(){ let inp = el('chatInput'); let m = inp.value.trim(); if(!m) return; socket.emit('tableChat', {code:myCode, msg:m}); inp.value=''; inp.focus(); window._achGame.chatInGame++; let ch=addAchStat('chat',1); if(ch>=100) unlockAch('chat100'); if(ch>=500) unlockAch('chat500'); }
 function quickChat(m){ socket.emit('tableChat', {code:myCode, msg:m}); window._achGame.chatInGame++; let ch=addAchStat('chat',1); if(ch>=100) unlockAch('chat100'); if(ch>=500) unlockAch('chat500'); }
@@ -3996,10 +3993,11 @@ socket.on('tableChatMsg', d=>{
   if(!isMe && d.msg && [...d.msg].length<=2 && !d.msg.includes(' ')) showFloatingEmote(d.msg);
   list.innerHTML += `<div style="margin-bottom:4px"><b style="color:${isMe?'#facc15':'#a7f3d0'}">${isMe?'Kamu':esc(d.name)}</b> <span style="color:#94a3b8;font-size:10px">${d.time}</span><br>${esc(d.msg)}</div>`;
   list.scrollTop = list.scrollHeight;
-  if(!chatOpen && !isMe){
+   if(!chatOpen && !isMe){
     chatUnread++;
     let b=el('chatBadge'); b.innerText=chatUnread; b.style.display='block';
     el('chatFabDot').style.display='block';
+    let lb = el('lobbyChatBadge'); if(lb){ lb.innerText = chatUnread; lb.style.display = 'block'; }
     // INI YANG BARU, 2 BARIS INI DOANG:
     toast('💬 ' + d.name + ': ' + String(d.msg||'').slice(0,40));
     playMjSound('turn');
