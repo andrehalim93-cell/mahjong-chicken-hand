@@ -2185,6 +2185,15 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <div id="toast"></div>
 <div id="privateChatNotif" onclick="openPrivateChatFromNotif()" style="display:none;position:fixed;left:50%;top:110px;transform:translateX(-50%);background:#111827;border:2px solid #facc15;color:#fff;padding:10px 14px;border-radius:14px;font-size:13px;font-weight:700;z-index:999;max-width:92%;text-align:left;box-shadow:0 10px 30px rgba(0,0,0,.6);cursor:pointer">
   <div id="privateChatNotifText" style="line-height:1.4"></div>
+  <!-- NOTIF ADD TEMEN - banner, gak nge-block game kayak confirm() -->
+<div id="friendRequestNotif" style="display:none;position:fixed;left:50%;top:110px;transform:translateX(-50%);background:#451a03;border:2px solid #f59e0b;color:#fff;padding:12px 14px;border-radius:14px;font-size:13px;font-weight:700;z-index:1000;max-width:92%;width:360px;text-align:left;box-shadow:0 10px 30px rgba(0,0,0,.6)">
+  <div id="friendRequestNotifText" style="line-height:1.4;margin-bottom:10px"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-gold" style="flex:1;padding:10px;font-size:13px" onclick="acceptPendingFriendRequest()">✅ TERIMA</button>
+    <button class="btn btn-dark" style="flex:1;padding:10px;font-size:13px" onclick="declinePendingFriendRequest()">❌ TOLAK</button>
+  </div>
+  <button onclick="closeFriendRequestNotif()" style="position:absolute;top:6px;right:10px;background:none;border:none;color:#fff;font-size:16px;font-weight:900;cursor:pointer">✕</button>
+</div>
   <div style="font-size:11px;color:#a7f3d0;margin-top:2px">👆 Klik buat buka chat</div>
 </div>
 <div id="turnPopup"><div style="font-size:28px">🎯</div><div style="font-size:11px;letter-spacing:2px;color:#fde68a;font-weight:800">GILIRAN SEKARANG</div><div class="tpName" id="turnPopupName">-</div><div class="tpSub" id="turnPopupSub">Siap-siap buang tile!</div></div>
@@ -3023,13 +3032,53 @@ socket.on('searchUserResult', renderSearchResult);
 socket.on('onlineUsersUpdated', renderOnlineUsers);
 socket.on('friendList', renderFriendList);
 socket.on('friendPending', renderPending);
-socket.on('friendOk', m=>toast(m));
+socket.on('friendOk', m=>{
+  toast(m);
+  // Kalo ini notif "diterima", kasih bunyi + getar juga, biar kerasa kayak dapet notif, bukan cuma toast
+  if(String(m||'').toLowerCase().includes('diterima')){
+    playMjSound('turn');
+    try{ if(navigator.vibrate) navigator.vibrate([120,60,120]); }catch(e){}
+  }
+});
 socket.on('friendError', m=>{ showErr(m); toast(m); });
+let pendingFriendRequest = null;
+function showFriendRequestNotif(d){
+  pendingFriendRequest = d;
+  let n = el('friendRequestNotif');
+  if(n){
+    el('friendRequestNotifText').innerHTML = '👥 <b style="color:#fde68a">' + esc(d.display_name||d.from_id) + '</b> (@' + esc(d.from_id) + ')<br><span style="color:#a7f3d0;font-weight:400">mau jadi temen lu. Terima?</span>';
+    n.style.display = 'block';
+  }
+  // Badge di tab TEMEN + dot di tombol 👥, biar keliatan walau banner ke-close
+  let fb = el('friendBadge');
+  if(fb){ fb.style.display = 'inline-block'; fb.innerText = (pendingListData||[]).length ? pendingListData.length : 1; }
+  let dot = el('friendBadgeDot');
+  if(dot){ dot.innerText = (pendingListData||[]).length ? pendingListData.length : 1; dot.style.display = 'block'; }
+  playMjSound('turn');
+  try{ if(navigator.vibrate) navigator.vibrate([120,60,120]); }catch(e){}
+}
+function acceptPendingFriendRequest(){
+  if(!pendingFriendRequest) return;
+  let f = pendingFriendRequest; pendingFriendRequest = null;
+  closeFriendRequestNotif();
+  respondFriend(f.from_id, true);
+  toast('✅ ' + f.display_name + ' udah jadi temen lu!');
+}
+function declinePendingFriendRequest(){
+  if(!pendingFriendRequest) return;
+  let f = pendingFriendRequest; pendingFriendRequest = null;
+  closeFriendRequestNotif();
+  respondFriend(f.from_id, false);
+  toast('❌ Request dari ' + f.display_name + ' ditolak.');
+}
+function closeFriendRequestNotif(){
+  let n = el('friendRequestNotif');
+  if(n) n.style.display = 'none';
+  // Ditutup doang, BUKAN ditolak. Request-nya tetep ada di tab TEMEN > PERMINTAAN MASUK, bisa diterima nanti.
+}
 socket.on('friendRequestIncoming', d=>{
-  toast('📩 '+d.display_name+' mau jadi temen lu!');
   refreshFriends();
-  if(confirm(d.display_name+' (@'+d.from_id+') mau jadi temen lu. Terima?')) respondFriend(d.from_id, true);
-  else respondFriend(d.from_id, false);
+  showFriendRequestNotif(d);
 });
 socket.on('friendInvite', d=>{
   pendingInviteCode = d.code;
@@ -4391,6 +4440,3 @@ updateAchLabel();
 </div>
 </body>
 </html>
-
-
-
