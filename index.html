@@ -1796,6 +1796,18 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   gap:1px !important;
   margin:0 !important;
 }
+/* HOME: tab naik mentok + semua transparan, background tile/bunga tetep keliatan */
+#homeScreen{background:transparent!important}
+#homeScreen .homeTop{background:transparent!important;margin-bottom:0!important;padding-bottom:0!important}
+#homeScreen .homeProfile{background:rgba(7,31,16,.65)!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#homeScreen .topLogo{display:block!important;background:transparent!important;opacity:.9!important;margin:2px 0 0!important}
+#homeScreen .topLogo .crown{font-size:18px!important}
+#homeScreen .topLogo h1{font-size:18px!important;line-height:1!important}
+#homeScreen .topLogo p{display:none!important}
+#homeScreen .homeTabs{margin-top:8px!important;background:transparent!important;position:sticky;top:0;z-index:20;padding:6px 0}
+#homeScreen .homeTabBtn{background:rgba(0,0,0,.45)!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.25)!important}
+#homeScreen .homeTabBtn.active{background:rgba(253,224,71,.9)!important}
+#homeScreen .homeTabPanel .card{margin-top:8px!important;background:rgba(10,30,18,.65)!important;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 </style>
 </head>
 <body>
