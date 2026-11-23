@@ -2855,12 +2855,13 @@ function registerOnlineFriend(){
 socket.emit('registerOnline', { id: myUserId(), display_name: currentUser.display_name, avatar: currentUser.avatar, authToken:_tok });
 }
 function refreshFriends(){
-  setInterval(()=>{ if(currentUser && !document.hidden) refreshFriends(); }, 15000);
   if(!currentUser) return;
   socket.emit('getFriends', { myId: myUserId() });
   socket.emit('getFriendPending', { myId: myUserId() });
   socket.emit('getOnlineUsers', {});
 }
+// Polling online 1x aja, di luar refreshFriends, biar gak meledak jadi ratusan interval
+setInterval(()=>{ if(currentUser && !document.hidden) refreshFriends(); }, 15000);
 setInterval(()=>{ let c = el('chatFab'); let f = el('friendFab'); if(c && f){ if(c.classList.contains('showInLobby')) f.classList.add('showInLobby'); if(c.classList.contains('showInGame')) f.classList.add('showInGame'); if(!c.classList.contains('showInLobby') && !c.classList.contains('showInGame')){ f.classList.remove('showInLobby'); f.classList.remove('showInGame'); } } }, 1000);
 function searchFriend(){
   let q = el('friendSearchInput').value.trim();
@@ -3227,10 +3228,10 @@ let wasInRoom = false;
 
 let rejoinInFlight = false;
 socket.on('connect', ()=>{
-  if(currentUser) { registerOnlineFriend(); refreshFriends(); }
   if(!currentUser){
     try{ let s = safeParse(sessionStorage.getItem('mahjong_user'), null); if(s && s.user) currentUser = s.user; }catch(e){}
   }
+  if(currentUser) { registerOnlineFriend(); refreshFriends(); }
   if(!myCode){
     try{ let r = safeParse(sessionStorage.getItem('mahjong_room'), null); if(r && r.code){ myCode = r.code; myName = r.name; } }catch(e){}
   }
@@ -4390,4 +4391,5 @@ updateAchLabel();
 </div>
 </body>
 </html>
+
 
