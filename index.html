@@ -2304,8 +2304,8 @@ async function doRegister(){
   let j = await r.json();
   if(!j.ok) return showAuthErr(j.error||'Gagal daftar!');
   if(el('saveLogin')) el('saveLogin').checked = true;
-  loginSuccess(j.user, password, true);
-  toast('Daftar berhasil! Selamat datang!');
+loginSuccess(j.user, password, true, j.authToken);
+toast('Daftar berhasil! Selamat datang!');
 }
 async function doLogin(){
   try{
@@ -2317,13 +2317,14 @@ async function doLogin(){
     let j;
     try{ j = JSON.parse(txt); }catch(e){ return showAuthErr('Server error! Cek Render Logs. Respon server: ' + txt.slice(0,100)); }
     if(!j.ok) return showAuthErr(j.error||'Gagal login! (kode ' + r.status + ')');
-    loginSuccess(j.user, password, true);
+    loginSuccess(j.user, password, true, j.authToken);
   }catch(e){
     console.log('LOGIN GAGAL:', e);
     showAuthErr('Gak bisa nyambung ke server! Cek internet / Render lagi tidur. Coba refresh 1x lagi. (' + e.message + ')');
   }
 }
-function loginSuccess(user, passwordForSave, showProfile){
+function loginSuccess(user, passwordForSave, showProfile, authToken){
+  if(authToken){ try{ sessionStorage.setItem('mahjong_auth_token', authToken); }catch(e){} }
   currentUser = user;
   let save = el('saveLogin') ? el('saveLogin').checked : false;
   // Simpen di sessionStorage aja: refresh tetep login, close browser auto logout
@@ -2346,7 +2347,7 @@ function loginSuccess(user, passwordForSave, showProfile){
   refreshRooms();
   registerOnlineFriend();
   try{
-    let savedRoom = JSON.parse(sessionStorage.getItem('mahjong_room'));
+    let savedRoom = safeParse(sessionStorage.getItem('mahjong_room'), null);
     if(savedRoom && savedRoom.code && socket && socket.connected){
       setTimeout(()=>{
         toast('🔄 Nyambung lagi, masuk meja lagi...');
@@ -2651,7 +2652,7 @@ function showLoginScreen(){
   try{
     let saved = localStorage.getItem('mahjong_saved_login');
     if(saved){
-      let c=JSON.parse(saved);
+      let c=safeParse(saved, null)||{};
       if(el('loginId')) el('loginId').value=c.id;
       if(el('loginPass')) el('loginPass').value=c.password;
       if(el('saveLogin')) el('saveLogin').checked=true;
@@ -2664,6 +2665,7 @@ setTimeout(()=>{ renderAvatarPick(); pickGender('male'); checkSavedLogin(); }, 3
 function showErr(m){ let e=el('homeErr'); e.style.display='block'; e.innerText=m; setTimeout(()=>e.style.display='none',3000); }
 function toast(m){ let t=el('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 function esc(s){ let d=document.createElement('div'); d.innerText=String(s||''); return d.innerHTML; }
+function safeParse(s,fb){ try{ return JSON.parse(s||''); }catch(e){ return fb; } }
 function toggleSound(){
   soundOn = !soundOn;
   try{ localStorage.setItem('mj_sound', soundOn ? '1' : '0'); }catch(e){}
@@ -2823,7 +2825,8 @@ let friendListData = [], onlineListData = [], pendingListData = [], currentPriva
 function myUserId(){ return currentUser ? String(currentUser.id||'').toLowerCase() : ''; }
 function registerOnlineFriend(){
   if(!currentUser || !socket) return;
-  socket.emit('registerOnline', { id: myUserId(), display_name: currentUser.display_name, avatar: currentUser.avatar });
+  let _tok=''; try{ _tok=sessionStorage.getItem('mahjong_auth_token')||''; }catch(e){}
+socket.emit('registerOnline', { id: myUserId(), display_name: currentUser.display_name, avatar: currentUser.avatar, authToken:_tok });
 }
 function refreshFriends(){
   if(!currentUser) return;
@@ -3198,7 +3201,7 @@ let wasInRoom = false;
 let rejoinInFlight = false;
 socket.on('connect', ()=>{
   if(!currentUser){
-    try{ let s = JSON.parse(sessionStorage.getItem('mahjong_user')); if(s && s.user) currentUser = s.user; }catch(e){}
+    try{ let s = safeParse(sessionStorage.getItem('mahjong_user'), null); if(s && s.user) currentUser = s.user; }catch(e){}
   }
   if(!myCode){
     try{ let r = JSON.parse(sessionStorage.getItem('mahjong_room')); if(r && r.code){ myCode = r.code; myName = r.name; } }catch(e){}
@@ -4198,7 +4201,7 @@ function toggleAchCat(catId, forceOpen){
 }
 function closeAchModal(){ document.getElementById('achModal').style.display='none'; }
 // ===== WIB - DIPAKSA Asia/Jakarta, BIAR GAK NGIKUTIN JAM HP / UTC =====
-function wibHour(){ return Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Jakarta',hour:'numeric',hour12:false})); }
+function wibHour(){ return Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Jakarta',hour:'numeric',hourCycle:'h23'})); }
 function wibDateStr(){ return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Jakarta'}); } // hasil: 2026-11-23
 // state per-game
 window._achGame={kong:0,myMeldTaken:0,chatInGame:0,myPongChow:0,discards:0,wasBehind:0,lastLoser:null,firstGameAfterOpen:true};
