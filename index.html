@@ -2621,7 +2621,7 @@ function exitBotGame(){
   // Auto-isi lagi kalau tadi dicentang
   try{
     let s = localStorage.getItem('mahjong_saved_login');
-    if(s){ let c=safeParse(s, null)||{}; if(el('loginId')) el('loginId').value=c.id||''; if(el('loginPass')) el('loginPass').value=''; if(el('saveLogin')) el('saveLogin').checked=true; }
+    if(s){ let c=safeParse(s, null)||{}; if(el('loginId')) el('loginId').value=c.id||''; if(el('loginPass')) el('loginPass').value=''; if(el('saveLogin')) el('saveLogin').checked=false; }
     else { if(el('loginId')) el('loginId').value=''; if(el('loginPass')) el('loginPass').value=''; if(el('saveLogin')) el('saveLogin').checked=false; }
   }catch(e){}
   toast('Udah logout!');
@@ -3447,7 +3447,6 @@ socket.on('turnChanged', d=>{
 } });
 socket.on('meldMade', d=>{ if(d.by===myName) lastDrawnTileId=null; currentPlayers=d.players; showMeldPopup(d.by, d.meld); achOnMeld(d.meld, d.by); if(d.meld.type==='pong') playMjSound('pong'); else if(d.meld.type==='kong') playMjSound(d.meld.kongType==='an' ? 'anKong' : 'kong'); else playMjSound('chow'); addLog(`✨ ${d.by} ${d.meld.type==='pong'?'PONG!':'CHOW!'} ${d.meld.tiles.length} tile`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); if(d.by===myName && isMyTurn && canHuLocal()){ renderActionBar([{type:'selfHu'}]); } });
 function groupHuTiles(tiles){
-  function key(t){ return t.type+'|'+(t.suit??'')+'|'+(t.num??''); }
   function order(t){ return t.type==='suit'?0:(t.type==='wind'?1:(t.type==='dragon'?2:3)); }
   let a=[...tiles].sort((x,y)=>{
     if(order(x)!==order(y)) return order(x)-order(y);
