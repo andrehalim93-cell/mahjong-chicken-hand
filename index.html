@@ -4055,12 +4055,12 @@ const ACH_LIST=[
  {id:'bot10',icon:'🤖',name:'Pembasmi Bot',desc:'Menang 10x lawan bot'},
  {id:'bot20',icon:'🤖',name:'Raja Bot',desc:'Menang 20x lawan bot'},
  {id:'bot50',icon:'🤖',name:'Mimpi Buruk Bot',desc:'Menang 50x lawan bot'},
- {id:'bot_streak10',icon:'🤖',name:'Bot Pun Menyerah',desc:'Menang 10x berturut-turut lawan bot'},
+ {id:'bot_streak10',icon:'🤖',name:'Bot Pun Menyerah',desc:'Menang 5x berturut-turut lawan bot'},
  {id:'bot_fast',icon:'🤖',name:'Tanpa Ampun',desc:'HU cepat lawan bot (di bawah 20 buangan)'},
  {id:'fast_hu',icon:'⚡',name:'Kilat',desc:'HU dalam 15 giliran pertama'},
  {id:'clean_win',icon:'🛡️',name:'Tembok Besar',desc:'Menang tanpa tile buangan lu diambil lawan'},
  {id:'hu_from_discard',icon:'👀',name:'Mata Elang',desc:'Menang 5x dari buangan lawan'},
- {id:'streak3',icon:'🧠',name:'Jago Baca',desc:'Menang 3x berturut-turut'},
+ {id:'streak3',icon:'🧠',name:'Jago Baca',desc:'Menang 2x berturut-turut'},
  {id:'perfect_hu',icon:'💎',name:'HU Sempurna',desc:'HU dengan 4 meld + 1 pasang'},
  {id:'comeback',icon:'🎭',name:'Comeback King',desc:'Menang padahal ketinggalan 2 meld'},
  {id:'last_tile_hu',icon:'🍀',name:'Hoki Seumur Hidup',desc:'HU dari tile terakhir di tembok'},
@@ -4091,14 +4091,17 @@ const ACH_LIST=[
   {id:'meld100',icon:'🧩',name:'Tukang Set',desc:'Bikin 100 set total (Pong/Chow/Kong)'},
   // --- BARU: GAYA MENANG ---
   {id:'self_hu5',icon:'✋',name:'Tangan Sendiri',desc:'HU 5x dari tile yang lu ambil sendiri, bukan dari buangan lawan'},
-  {id:'streak5',icon:'🔥',name:'On Fire',desc:'Menang 5x berturut-turut'},
-  {id:'streak10',icon:'🔥',name:'Tak Terkalahkan',desc:'Menang 10x berturut-turut'},
+  {id:'streak5',icon:'🔥',name:'On Fire',desc:'Menang 4x berturut-turut'},
+  {id:'streak10',icon:'🔥',name:'Tak Terkalahkan',desc:'Menang 6x berturut-turut'},
   {id:'combo_meld',icon:'🎭',name:'Komplit',desc:'Dalam 1 game, berhasil PONG + CHOW + KONG'},
-  {id:'flower8',icon:'🌸',name:'Taman Bunga',desc:'Dapet 8 bunga total dalam 1 game'},
   // --- BARU: SOSIAL ---
   {id:'chat500',icon:'💬',name:'Radio Rusak',desc:'Kirim 500 chat di meja'},
   {id:'emote200',icon:'😂',name:'Raja Emote',desc:'Kirim 200 emote'},
-  {id:'best_friend',icon:'🤝',name:'Sahabat Sejati',desc:'Main 100x sama temen (bukan bot)'},
+  {id:'friend5',icon:'👯',name:'Bareng Temen 5x',desc:'Main 5x sama temen (bukan bot)'},
+  {id:'friend10',icon:'👯',name:'Bareng Temen 10x',desc:'Main 10x sama temen (bukan bot)'},
+  {id:'friend20',icon:'👯',name:'Bareng Temen 20x',desc:'Main 20x sama temen (bukan bot)'},
+  {id:'friend30',icon:'👯',name:'Bareng Temen 30x',desc:'Main 30x sama temen (bukan bot)'},
+  {id:'best_friend',icon:'🤝',name:'Sahabat Sejati',desc:'Main 50x sama temen (bukan bot)'},
   // --- BARU: TERSEMBUNYI ---
   {id:'lose10',icon:'💀',name:'Sial Bertubi-tubi',desc:'Kalah 10x berturut-turut',hidden:true},
   {id:'perfect_defense',icon:'🛡️',name:'Tembok Raksasa',desc:'Menang + lawan gak pernah ngambil buangan lu + lu gak pernah chat',hidden:true},
@@ -4123,9 +4126,9 @@ const ACH_LIST=[
 // ===== 5 KATEGORI ACHIEVEMENT = 5 BINTANG =====
 const ACH_CATS=[
   {id:'teknik', icon:'🀄', name:'Teknik', ids:['first_pong','first_chow','first_kong','pong10','pong20','pong35','pong50','pong100','chow10','chow20','chow35','chow50','chow100','kong10','kong2','meld100','combo_meld']},
-  {id:'menang', icon:'🏆', name:'Menang & Setia', ids:['first_game','first_hu','hu10','hu25','hu50','hu100','fast_hu','clean_win','hu_from_discard','streak3','streak5','streak10','perfect_hu','comeback','last_tile_hu','flower4','flower8','unlucky_to_lucky','self_hu5','login7','login30','games10','games100','games500']},
+   {id:'menang', icon:'🏆', name:'Menang & Setia', ids:['first_game','first_hu','hu10','hu25','hu50','hu100','fast_hu','clean_win','hu_from_discard','streak3','streak5','streak10','perfect_hu','comeback','last_tile_hu','flower4','unlucky_to_lucky','self_hu5','login7','login30','games10','games100','games500']},
   {id:'bot', icon:'🤖', name:'Bot', ids:['bot1','bot10','bot20','bot50','bot_streak10','bot_fast']},
-  {id:'sosial', icon:'👯', name:'Sosial', ids:['play_friend','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend']},
+  {id:'sosial', icon:'👯', name:'Sosial', ids:['play_friend','friend5','friend10','friend20','friend30','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend']},
   {id:'rahasia', icon:'❓', name:'Rahasia', ids:['ninja','owl','revenge','midnight_hu','silent_killer','first_try','lose10','perfect_defense','maraton5','maraton10','tukang_intip','no_flower_win','kembar','kalah_tipis','bangkit3']},
 ];
 // ===== AVATAR SPESIAL - 1 kategori 100% = 1 avatar kebuka =====
@@ -4153,14 +4156,14 @@ const ACH_PROGRESS={
   first_game:['games',1], games10:['games',10], games100:['games',100], games500:['games',500],
   first_hu:['hu_total',1], hu10:['hu_total',10], hu25:['hu_total',25], hu50:['hu_total',50], hu100:['hu_total',100],
   hu_from_discard:['hu_discard',5], self_hu5:['self_hu',5],
-  streak3:['win_streak',3], streak5:['win_streak',5], streak10:['win_streak',10],
+  streak3:['win_streak',2], streak5:['win_streak',4], streak10:['win_streak',6],
   login7:['loginStreak',7], login30:['loginStreak',30],
   silent_killer:['silent_wins',5], lose10:['lose_streak',10],
-  bot1:['bot_win',1], bot10:['bot_win',10], bot20:['bot_win',20], bot50:['bot_win',50], bot_streak10:['bot_streak',10],
+  bot1:['bot_win',1], bot10:['bot_win',10], bot20:['bot_win',20], bot50:['bot_win',50], bot_streak10:['bot_streak',5],
   invite10:['invite',10], invite50:['invite',50],
   chat100:['chat',100], chat500:['chat',500],
   emote50:['emote',50], emote200:['emote',200],
-  loyal_friend:['friend_games',20], best_friend:['friend_games',100],
+  loyal_friend:['friend_games',20], best_friend:['friend_games',50], friend5:['friend_games',5], friend10:['friend_games',10], friend20:['friend_games',20], friend30:['friend_games',30],
   maraton5:['maraton_session',5], maraton10:['maraton_session',10],
 };
 function achProgress(id){
@@ -4320,7 +4323,7 @@ function achOnGameStart(players){
   let g=addAchStat('games',1); if(g>=10) unlockAch('games10'); if(g>=100) unlockAch('games100'); if(g>=500) unlockAch('games500');
   if(window._achGame) { window._achGame.pongInGame=0; window._achGame.chowInGame=0; window._achGame.kongInGame=0; }
   let hasBot=(players||[]).some(p=>p.isBot);
-  if(!hasBot) { unlockAch('play_friend'); addAchStat('friend_games',1); if(addAchStat('friend_games',0)>=20) unlockAch('loyal_friend'); if(addAchStat('friend_games',0)>=100) unlockAch('best_friend'); }
+  if(!hasBot) { unlockAch('play_friend'); let fg=addAchStat('friend_games',1); if(fg>=5) unlockAch('friend5'); if(fg>=10) unlockAch('friend10'); if(fg>=20){ unlockAch('friend20'); unlockAch('loyal_friend'); } if(fg>=30) unlockAch('friend30'); if(fg>=50) unlockAch('best_friend'); }
   window._achGame.hasBot=hasBot; window._achGame.players=players;
   // login streak
   let today=wibDateStr(); let d=getAchData();
@@ -4358,9 +4361,8 @@ function achOnWin(d){
   let hu=addAchStat('hu_total',1); if(hu>=10) unlockAch('hu10'); if(hu>=25) unlockAch('hu25'); if(hu>=50) unlockAch('hu50'); if(hu>=100) unlockAch('hu100');
   if(!window._achLastHuFromDiscard){ if(addAchStat('self_hu',1)>=5) unlockAch('self_hu5'); }
   if(window._achGame.pongInGame && window._achGame.chowInGame && window._achGame.kongInGame) unlockAch('combo_meld');
-  if(myFlowers && myFlowers.length>=8) unlockAch('flower8');
   let ws=addAchStat('win_streak',1); addAchStat('lose_streak',-addAchStat('lose_streak',0)); // reset kalah
-  if(ws>=3) unlockAch('streak3'); if(ws>=5) unlockAch('streak5'); if(ws>=10) unlockAch('streak10');
+  if(ws>=2) unlockAch('streak3'); if(ws>=4) unlockAch('streak5'); if(ws>=6) unlockAch('streak10');
   if(window._achGame.myMeldTaken===0 && window._achGame.chatInGame===0) unlockAch('perfect_defense');
   if(window._achGame.chatInGame===0) unlockAch('ninja');
   let h=wibHour(); if(h>=0&&h<3) unlockAch('owl'); if(h===0) unlockAch('midnight_hu');
@@ -4371,7 +4373,7 @@ function achOnWin(d){
   if(window._achGame.myMeldTaken===0) unlockAch('clean_win');
   if(window._achGame.discards<=15) unlockAch('fast_hu');
   // lawan bot?
-  if(window._achGame.hasBot){ let b=addAchStat('bot_win',1); if(b>=1) unlockAch('bot1'); if(b>=10) unlockAch('bot10'); if(b>=20) unlockAch('bot20'); if(b>=50) unlockAch('bot50'); let bs=addAchStat('bot_streak',1); if(bs>=10) unlockAch('bot_streak10'); if(window._achGame.discards<20) unlockAch('bot_fast'); }
+  if(window._achGame.hasBot){ let b=addAchStat('bot_win',1); if(b>=1) unlockAch('bot1'); if(b>=10) unlockAch('bot10'); if(b>=20) unlockAch('bot20'); if(b>=50) unlockAch('bot50'); let bs=addAchStat('bot_streak',1); if(bs>=5) unlockAch('bot_streak10'); if(window._achGame.discards<20) unlockAch('bot_fast'); }
   else addAchStat('bot_streak',-addAchStat('bot_streak',0));
     if(d && (d.wallLeft===0 || Number(el('wallLeft') ? el('wallLeft').innerText : NaN)===0)) unlockAch('last_tile_hu');
   // balas dendam: kalah sebelumnya dari pemenang sebelumnya? disederhanakan: kalo lastLoser ada
