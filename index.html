@@ -3560,17 +3560,32 @@ socket.on('gameOver', d=>{
   }, 2200);
 });
 function showWinModal(d){
+  // FIX STUCK ABIS HU: modal harus muncul dulu, isi tangan belakangan. Kalo isi tangan error, modal tetep muncul.
+  try{ closeAchUnlockPopup(); }catch(e){}
+  try{ let rm=document.getElementById('rankUpModal'); if(rm) rm.style.display='none'; }catch(e){}
   el('winModal').style.display = '';
-  let wp = (currentPlayers||[]).find(x=>x.name===d.winner);
-  if(el('winAvatar')) el('winAvatar').innerHTML = avatarHTML(wp && wp.avatar ? wp.avatar : '🧑', 64);
-  playMjSound('hu');
-  el('winTitle').innerText = d.winner ? (d.winner===myName ? '🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!';
-  el('winMsg').innerText = d.message;
-  let wh=el('winHand'); let wl=el('winMeldLabel');
-  if(d.hand && d.hand.length){ wh.innerHTML = groupHuTiles(d.hand).map(function(g){ return '<div class="huGroup">'+g.map(function(tt){ return tileHTML(tt); }).join('')+'</div>'; }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = ''; }
-  else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; }
   el('winModal').classList.add('show');
-  addLog('🏁 '+d.message);
+  try{
+    let wp = (currentPlayers||[]).find(x=>x.name===d.winner);
+    if(el('winAvatar')) el('winAvatar').innerHTML = avatarHTML(wp && wp.avatar ? wp.avatar : '🧑', 64);
+    playMjSound('hu');
+    el('winTitle').innerText = d.winner ? (d.winner===myName ? '🎉 KAMU HU! CHICKEN HAND!' : `🐔 ${d.winner} HU!`) : '😐 SERI!';
+    el('winMsg').innerText = d.message || (d.winner ? d.winner+' HU!' : 'SERI!');
+    let wh=el('winHand'); let wl=el('winMeldLabel');
+    if(d.hand && d.hand.length){ wh.innerHTML = groupHuTiles(d.hand).map(function(g){ return '<div class="huGroup">'+g.map(function(tt){ return tileHTML(tt); }).join('')+'</div>'; }).join(''); wh.querySelectorAll('.t').forEach(function(e2){ e2.style.width='36px'; e2.style.height='50px'; e2.style.cursor='default'; }); if(wl) wl.innerText = ''; }
+    else { if(wh) wh.innerHTML=''; if(wl) wl.innerText=''; }
+  }catch(e){ console.log('showWinModal isi gagal, tapi modal tetep muncul', e); }
+  // FIX BOT: kalo lawan bot, tombol Rematch jangan nungguin bot. Ganti jadi balik ke lobby, tinggal Start lagi.
+  try{
+    let hasBot = (currentPlayers||[]).some(p=>p && p.isBot) || (window._achGame && window._achGame.hasBot);
+    let rb = document.getElementById('rematchBtn');
+    if(rb && hasBot){
+      rb.innerText = '🔁 MAIN LAGI LAWAN BOT';
+      rb.style.opacity = '1';
+      rb.onclick = function(){ el('winModal').classList.remove('show'); el('winModal').style.display='none'; try{ socket.emit('cancelRematch',{code:myCode}); }catch(e){} backToHome(true); };
+    }
+  }catch(e){}
+  addLog('🏁 '+(d.message||'HU!'));
 }
 let lastShowdown = null;
 function openShowdown(){
@@ -4164,7 +4179,7 @@ function unlockAch(id){
   document.getElementById('achUnlockName').innerText=a.name;
   document.getElementById('achUnlockPopup').style.display='flex';
   if(typeof playMjSound==='function') playMjSound('win');
-  clearTimeout(window._achPopupTimer); window._achPopupTimer=setTimeout(closeAchUnlockPopup,4000);
+  clearTimeout(window._achPopupTimer); window._achPopupTimer=setTimeout(closeAchUnlockPopup,2500);
 }
 function closeAchUnlockPopup(){ let p=document.getElementById('achUnlockPopup'); if(p) p.style.display='none'; }
 function addAchStat(k,v){ let d=getAchData(); d.stats[k]=(d.stats[k]||0)+(v||1); saveAchData(d); return d.stats[k]; }
@@ -4356,7 +4371,7 @@ updateAchLabel();
   </div>
 </div>
 <!-- POPUP ACHIEVEMENT TERBUKA - INFOIN APA YANG KEBUKA -->
-<div id="achUnlockPopup" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:16px">
+<div id="achUnlockPopup" style="display:none;position:fixed;inset:0;z-index:340;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) closeAchUnlockPopup()">
   <div style="width:100%;max-width:340px;background:linear-gradient(180deg,#fef3c7,#fde68a);border-radius:24px;padding:20px;text-align:center;border:3px solid #f59e0b">
     <div style="font-size:12px;font-weight:900;letter-spacing:2px;color:#92400e">🏆 ACHIEVEMENT TERBUKA!</div>
     <div id="achUnlockIcon" style="font-size:64px;margin:10px 0">🏆</div>
