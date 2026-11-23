@@ -2347,6 +2347,7 @@ function closeProfile(){ clearTimeout(window._profileTimer); let m = el('profile
 function openAvatarPicker(){
   let grid = el('avatarPickerGrid');
   grid.innerHTML = '';
+  // 1. Avatar biasa - yang lama, 15 biji, tetep bisa dipake semua
   profileAvatars.forEach(a=>{
     let b = document.createElement('button');
     b.innerHTML = avatarHTML(a, 40);
@@ -2354,16 +2355,44 @@ function openAvatarPicker(){
     b.onclick = ()=>{ changeAvatar(a); closeAvatarPicker(); };
     grid.appendChild(b);
   });
+  // 2. Garis pemisah
+  let sep = document.createElement('div');
+  sep.style.cssText='width:100%;text-align:center;color:#facc15;font-size:12px;font-weight:900;margin:6px 0 2px';
+  sep.innerText='🏆 AVATAR SPESIAL - BUKA LEWAT ACHIEVEMENT';
+  grid.appendChild(sep);
+  // 3. Avatar spesial - ke-lock / kebuka
+  SPECIAL_AVATARS.forEach(sp=>{
+    let unlocked = isSpecialUnlocked(sp);
+    let b = document.createElement('button');
+    b.innerHTML = unlocked ? avatarHTML(sp.file, 40) : '<span style="font-size:28px">🔒</span>';
+    b.title = unlocked ? sp.name : '🔒 '+sp.name+' - '+sp.desc;
+    b.style.cssText = 'background:'+(sp.file===currentUser.avatar?'#facc15':(unlocked?'#14532d':'#0f172a'))+';border:1px solid '+(unlocked?'#22c55e':'#334155')+';border-radius:12px;padding:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:52px;height:52px;position:relative;'+(unlocked?'':'filter:grayscale(1);opacity:.7');
+    b.onclick = ()=>{
+      if(!unlocked){ toast('🔒 '+sp.name+' belum kebuka! '+sp.desc); return; }
+      changeAvatar(sp.file); closeAvatarPicker();
+    };
+    grid.appendChild(b);
+  });
+  // 4. Keterangan di bawah
+  let note = document.createElement('div');
+  note.style.cssText='width:100%;text-align:center;color:#94a3b8;font-size:11px;margin-top:6px';
+  note.innerText='Avatar 🔒 akan kebuka otomatis kalo kategorinya udah 100%';
+  grid.appendChild(note);
   el('avatarPickerModal').style.display = 'flex';
 }
 function closeAvatarPicker(){ el('avatarPickerModal').style.display = 'none'; }
 async function changeAvatar(a){
+  // Cek di HP dulu, biar cepet. Cek beneran-nya ada di server.
+  let sp = SPECIAL_AVATARS.find(x=>x.file===a);
+  if(sp && !isSpecialUnlocked(sp)){ toast('🔒 Avatar ini belum kebuka! '+sp.desc); return; }
   currentUser.avatar = a; el('profileAvatarBig').innerHTML = avatarHTML(a, 64);
   if(el('homeUserLabel')) el('homeUserLabel').innerHTML = avatarHTML(a, 24) + ' ' + esc(currentUser.display_name) + ' (' + esc(currentUser.id) + ')';
   try{
     let saved = {};
     try{ saved = JSON.parse(sessionStorage.getItem('mahjong_user')||'{}'); }catch(e){}
-    await fetch('/api/change-avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, avatar: a, password: saved.password||''})});
+    let r = await fetch('/api/change-avatar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, avatar: a, password: saved.password||''})});
+    let j = await r.json();
+    if(!j.ok) toast('❌ '+ (j.error||'Avatar spesial belum kebuka!'));
   }catch(e){}
   openProfile();
 }
@@ -3960,6 +3989,22 @@ const ACH_CATS=[
   {id:'sosial', icon:'👯', name:'Sosial', ids:['play_friend','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend']},
   {id:'rahasia', icon:'❓', name:'Rahasia', ids:['ninja','owl','revenge','midnight_hu','silent_killer','first_try','lose10','perfect_defense','maraton5','maraton10','tukang_intip','no_flower_win','kembar','kalah_tipis','bangkit3']},
 ];
+// ===== AVATAR SPESIAL - 1 kategori 100% = 1 avatar kebuka =====
+const SPECIAL_AVATARS=[
+  {cat:'teknik',  file:'/avatars/special-teknik.png',  name:'Master Teknik',  desc:'Teknik 17/17'},
+  {cat:'menang',  file:'/avatars/special-menang.png',  name:'Raja Menang',    desc:'Menang & Setia 23/23'},
+  {cat:'bot',     file:'/avatars/special-bot.png',     name:'Pembasmi Bot',   desc:'Bot 6/6'},
+  {cat:'sosial',  file:'/avatars/special-sosial.png',  name:'Soulmate Meja',  desc:'Sosial 9/9'},
+  {cat:'rahasia', file:'/avatars/special-rahasia.png', name:'Master Rahasia', desc:'Rahasia 15/15'},
+  {cat:'legend',  file:'/avatars/special-legend.png',  name:'CHICKEN HAND LEGEND', desc:'Semua 5 kategori 100%'},
+];
+function isSpecialUnlocked(sp){
+  let stars=getAchStars();
+  if(sp.cat==='legend') return stars.every(c=>c.done);
+  let c=stars.find(x=>x.id===sp.cat);
+  return !!(c && c.done);
+}
+function unlockedSpecials(){ return SPECIAL_AVATARS.filter(isSpecialUnlocked); }
 // ===== PROGRESS BERANTAI: id -> [nama stat di mj_ach, target] =====
 const ACH_PROGRESS={
   first_pong:['pong_total',1], pong10:['pong_total',10], pong20:['pong_total',20], pong35:['pong_total',35], pong50:['pong_total',50], pong100:['pong_total',100],
@@ -4033,8 +4078,13 @@ function unlockAch(id){
     // Cek apa kategori ini baru aja lengkap -> dapet bintang
   let cat=achCatOf(id);
   let wasDone = cat.ids.filter(x=>x!==id).every(x=>d.unlocked.includes(x));
-  if(wasDone){
-    document.getElementById('achUnlockDesc').innerText = a.desc + ' — ⭐ Kategori '+cat.name+' LENGKAP! Bintang baru kebuka!';
+    if(wasDone){
+    let sp = SPECIAL_AVATARS.find(x=>x.cat===cat.id);
+    let allDone = getAchStars().every(c=>c.done);
+    let extra = ' — ⭐ Kategori '+cat.name+' LENGKAP! Bintang baru kebuka!';
+    if(sp) extra += ' 🎁 Avatar "'+sp.name+'" KEBUKA! Cek di Profil > Ganti Avatar.';
+    if(allDone) extra += ' ✨✨ SEMUA KATEGORI LENGKAP! Avatar LEGEND KEBUKA!';
+    document.getElementById('achUnlockDesc').innerText = a.desc + extra;
   } else {
     document.getElementById('achUnlockDesc').innerText = a.desc;
   }
@@ -4076,6 +4126,7 @@ function openAchModal(){
             <div style="height:100%;width:${pct}%;background:${c.done?'#facc15':'#22c55e'};border-radius:99px;transition:width .3s"></div>
           </div>
           <div style="font-size:11px;color:#94a3b8;margin-top:6px">${c.done?'Bintang udah kebuka!':'Klik buat liat isinya'}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px;background:rgba(0,0,0,.3);border-radius:10px;padding:6px 8px">${avatarHTML((SPECIAL_AVATARS.find(x=>x.cat===c.id)||{}).file||'',28)}<span style="font-size:11px;color:${c.done?'#facc15':'#94a3b8'}">${c.done?'🎁 Avatar '+(SPECIAL_AVATARS.find(x=>x.cat===c.id)||{}).name+' UDAH KEBUKA!':'🎁 Hadiah 100%: Avatar '+(SPECIAL_AVATARS.find(x=>x.cat===c.id)||{}).name}</span></div>
         </div>
         <div id="achArrow-${c.id}" style="font-size:16px;margin-left:10px;color:#94a3b8">▼</div>
       </div>
