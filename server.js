@@ -13,6 +13,14 @@ app.use(express.static(path.join(__dirname)));
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET","POST"] }, pingTimeout: 60000, pingInterval: 25000 });
 const PORT = process.env.PORT || 3000;
+function formatWIB(tanggal){
+  if(!tanggal) return '-';
+  return new Date(tanggal).toLocaleString('id-ID', {
+    timeZone: 'Asia/Jakarta',
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  }) + ' WIB';
+}
 // ============ TAMBAHAN BARU: AUTH + SUPABASE + HASH - JANGAN UBAH YANG LAIN ============
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -111,7 +119,7 @@ app.post('/api/register', async (req, res) => {
       console.log('REGISTER ERROR:', error);
       return res.status(500).json({ ok:false, error:'Gagal daftar: ' + error.message });
     }
-    return res.json({ ok:true, user: data });
+    return res.json({ ok:true, user: { ...data, created_at_wib: formatWIB(data.created_at) } });
   }catch(e){
     console.log('REGISTER EX:', e);
     return res.status(500).json({ ok:false, error:'Server error saat daftar!' });
@@ -135,7 +143,7 @@ app.post('/api/login', async (req, res) => {
        // JANGAN kirim hash ke client! Ini yang paling penting.
     delete user.password_hash;
     delete user.answer_hash;
-    return res.json({ ok:true, user });
+    return res.json({ ok:true, user: { ...user, created_at_wib: formatWIB(user.created_at) } });
   }catch(e){
     console.log('LOGIN EX:', e);
     return res.status(500).json({ ok:false, error:'Server error saat login!' });
@@ -1174,7 +1182,7 @@ socket.on('jiaKong', ({ code, tileId })=>{
     if(!room) return;
     let p = room.players.find(x=>x.id===socket.id);
     let sender = p ? p.name : 'Player';
-    let payload = { sender, name:sender, msg, time: new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) };
+    let payload = { sender, name:sender, msg, time: new Date().toLocaleTimeString('id-ID',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit'}) };
     emitToRoom(room, 'chatMsg', payload);
     emitToRoom(room, 'tableChatMsg', payload);
   });
