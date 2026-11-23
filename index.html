@@ -3491,7 +3491,7 @@ socket.on('yourHand', d=>{
 });
 socket.on('turnChanged', d=>{
   if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); }updateExitBotBtn(); });
-  socket.on('discarded', d=>{ playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div><div style="margin-top:4px;font-size:10px;color:#fde68a">👆 Klik buat liat semua buangan</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); console.log('DEBUG CHOW dari server:', d.from, 'ke saya:', myClaim, 'semua claims:', d.claims);
+  socket.on('discarded', d=>{ if(d.from===myName && window._achGame) window._achGame.discards=(window._achGame.discards||0)+1; playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div><div style="margin-top:4px;font-size:10px;color:#fde68a">👆 Klik buat liat semua buangan</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); console.log('DEBUG CHOW dari server:', d.from, 'ke saya:', myClaim, 'semua claims:', d.claims);
   if(myClaim){
   if(myClaim.canHu || myClaim.pong || (myClaim.chow||[]).length){
     renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]);
@@ -4327,7 +4327,17 @@ function achOnGameStart(players){
 let last=d.stats.lastLoginDay||''; if(last!==today){ let streak=(d.stats.loginStreak||0); let y=new Date(Date.now()-86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Jakarta'}); streak=(last===y)?streak+1:1; d.stats.loginStreak=streak; d.stats.lastLoginDay=today; saveAchData(d); if(streak>=7) unlockAch('login7'); if(streak>=30) unlockAch('login30'); }
 }
 function achOnMeld(meld,by){
-  if(by!==myName) { if(meld.type==='pong'||meld.type==='chow') window._achGame.myMeldTaken++; return; }
+  if(by!==myName) {
+    if(meld.type==='pong'||meld.type==='chow') window._achGame.myMeldTaken++;
+    // FIX COMEBACK: kalo lawan udah 2 meld lebih banyak dari lu, tandain ketinggalan
+    try{
+      let opp = (currentPlayers||[]).find(p=>p.name===by);
+      let oppMelds = opp ? (opp.melds||[]).length : 0;
+      let myM = (myMelds||[]).length;
+      if(oppMelds - myM >= 2) window._achGame.wasBehind = 1;
+    }catch(e){}
+    return;
+  }
   if(meld.type==='pong'){ unlockAch('first_pong'); window._achGame.myPongChow++; window._achGame.pongInGame=1; let p=addAchStat('pong_total',1); if(p>=10) unlockAch('pong10'); if(p>=20) unlockAch('pong20'); if(p>=35) unlockAch('pong35'); if(p>=50) unlockAch('pong50'); if(p>=100) unlockAch('pong100'); }
   if(meld.type==='chow'){ unlockAch('first_chow'); window._achGame.myPongChow++; window._achGame.chowInGame=1; let c=addAchStat('chow_total',1); if(c>=10) unlockAch('chow10'); if(c>=20) unlockAch('chow20'); if(c>=35) unlockAch('chow35'); if(c>=50) unlockAch('chow50'); if(c>=100) unlockAch('chow100'); }
   if(meld.type==='kong'){ unlockAch('first_kong'); window._achGame.kong++; window._achGame.kongInGame=1; if(window._achGame.kong>=2) unlockAch('kong2'); if(addAchStat('kong_total',1)>=10) unlockAch('kong10'); }
@@ -4355,7 +4365,7 @@ function achOnWin(d){
   if(window._achGame.chatInGame===0) unlockAch('ninja');
   let h=wibHour(); if(h>=0&&h<3) unlockAch('owl'); if(h===0) unlockAch('midnight_hu');
   if(window._achGame.firstGameAfterOpen) unlockAch('first_try');
-  if(myMelds && myMelds.length>=4) unlockAch('perfect_hu');
+    if(myMelds && (myMelds.length>=4 || myMelds.length + Math.floor(Math.max(0,(myHand||[]).length-2)/3) >= 4)) unlockAch('perfect_hu');
   if(window._achGame.wasBehind) unlockAch('comeback');
   if(window._achGame.myPongChow===0){ if(addAchStat('silent_wins',1)>=5) unlockAch('silent_killer'); }
   if(window._achGame.myMeldTaken===0) unlockAch('clean_win');
@@ -4363,11 +4373,11 @@ function achOnWin(d){
   // lawan bot?
   if(window._achGame.hasBot){ let b=addAchStat('bot_win',1); if(b>=1) unlockAch('bot1'); if(b>=10) unlockAch('bot10'); if(b>=20) unlockAch('bot20'); if(b>=50) unlockAch('bot50'); let bs=addAchStat('bot_streak',1); if(bs>=10) unlockAch('bot_streak10'); if(window._achGame.discards<20) unlockAch('bot_fast'); }
   else addAchStat('bot_streak',-addAchStat('bot_streak',0));
-  if(d && d.wallLeft===0) unlockAch('last_tile_hu');
+    if(d && (d.wallLeft===0 || Number(el('wallLeft') ? el('wallLeft').innerText : NaN)===0)) unlockAch('last_tile_hu');
   // balas dendam: kalah sebelumnya dari pemenang sebelumnya? disederhanakan: kalo lastLoser ada
   if(window._achGame.lastLoser) unlockAch('revenge');
   // sial tapi hoki: kalah 5x lalu menang
-  let ls=getAchData().stats.lose_streak||0; if(ls>=5) unlockAch('unlucky_to_lucky');
+  if(loseBefore>=5) unlockAch('unlucky_to_lucky');
   window._achGame.firstGameAfterOpen=false;
 }
 function achOnLose(winnerName){
