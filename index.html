@@ -2077,6 +2077,16 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 <div class="meldZone meldLeftBottom" id="meldLeft"></div>
 <div class="meldZone meldRightBottom" id="meldRight"></div>
   </div>
+<!-- ===== POPUP BACK HP: KELUAR GAME? ===== -->
+<div id="backConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:99999;align-items:center;justify-content:center;padding:16px">
+  <div style="width:100%;max-width:340px;background:#1e293b;border:2px solid #facc15;border-radius:20px;padding:20px;text-align:center">
+    <div style="font-size:44px">🚪</div>
+    <b style="font-size:18px;color:#fff">Keluar dari game ini?</b>
+    <div style="font-size:13px;color:#a7f3d0;margin:8px 0 16px">Kalo keluar, kursi lu bakal kosong, temen lu nungguin.</div>
+    <button class="btn btn-gold" style="width:100%" onclick="confirmBackYes()">✅ YA, KELUAR</button>
+    <button class="btn btn-dark" style="width:100%;margin-top:8px" onclick="confirmBackNo()">❌ BATAL, LANJUT MAIN</button>
+  </div>
+</div>
 <!-- ===== POPUP CLAIM PONG/CHOW/KONG/HU ===== -->
 <div id="claimPopup" onclick="if(event.target===this) doClaim('pass')">
   <div id="claimCard">
@@ -2510,8 +2520,8 @@ function exitBotGame(){
   // backToHome() udah kirim leaveRoom ke server + balik ke Home / daftar meja (lobby)
   backToHome();
 }
-  function backToHome(skipLeave, skipRelease){
-  if(!skipRelease) releaseBackTrap();
+  function backToHome(skipLeave){
+  releaseBackTrap();
   // 1. Kasih tau server kita keluar meja, KECUALI kalau ini dipanggil pas rejoin gagal.
   // Kalau rejoin gagal, JANGAN kirim leaveRoom, nanti kursi kita kehapus sendiri.
   try{ if(myCode && !skipLeave) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
@@ -3816,58 +3826,50 @@ socket.on('tableChatMsg', d=>{
 });
 socket.on('gameLog', d=>addLog(d.msg));
 document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.activeElement && document.activeElement.id==='chatInput'){ sendChat(); } });
-// ===== BACK HP: BALIK DI GAME, BUKAN KELUAR BROWSER =====
+// ===== BACK HP: BALIK DI GAME, BUKAN KELUAR BROWSER - VERSI HP =====
 let inGameBackTrap = false;
-let _handlingBack = false;
 function trapBackInGame(){
   if(inGameBackTrap) return;
-  try{ history.pushState({inGame:true}, ''); }catch(e){}
+  try{ history.pushState({mj:'trap'}, ''); }catch(e){}
   inGameBackTrap = true;
 }
 function releaseBackTrap(){
-  if(!inGameBackTrap) return;
+  // JANGAN history.back() di sini, itu yang bikin loncat 2x di HP
+  // Biarin history-nya, nanti Back di Home yang bakal keluar browser, itu yang bener
   inGameBackTrap = false;
-  // Cuma buat jalur tombol KELUAR, bukan jalur Back HP
-  if(!_handlingBack){ _handlingBack=true; try{ history.back(); }catch(e){} setTimeout(()=>{ _handlingBack=false; },150); }
+}
+function confirmBackYes(){
+  document.getElementById('backConfirmModal').style.display='none';
+  releaseBackTrap();
+  backToHome(true, true); // skipLeave=true biar gak dobel, skipRelease=true biar gak history.back()
+  // Pasang trap baru buat Home, biar Back berikutnya dari Home itu keluar browser, bukan nyangkut
+  try{ history.pushState({mj:'home'}, ''); }catch(e){}
+}
+function confirmBackNo(){
+  document.getElementById('backConfirmModal').style.display='none';
+  // Balikin trap-nya, biar Back berikutnya tetep ketahan lagi
+  try{ history.pushState({mj:'trap'}, ''); }catch(e){}
 }
 window.addEventListener('popstate', function(e){
-  if(_handlingBack) return;
-  if(!inGameBackTrap) return;
-  // User pencet Back: kita udah mundur 1 history (itu yang bikin event ini).
-  // Push lagi dulu biar kita tetep di halaman ini, nanti kalo user OK baru kita buang manual.
-  _handlingBack=true;
-  try{ history.pushState({inGame:true}, ''); }catch(e){}
-  // 1. Kalo ada popup kebuka, Back = tutup popup dulu
-  let openModal = document.querySelector('#claimPopup.show, #discardModal.open, #privateChatModal[style*="flex"], #achModal[style*="flex"]');
-  if(openModal){
-    if(openModal.id==='claimPopup') doClaim('pass');
-    if(openModal.id==='discardModal') closeDiscards();
-    if(openModal.id==='privateChatModal') closePrivateChat();
-    if(openModal.id==='achModal') closeAchModal();
-    setTimeout(()=>{ _handlingBack=false; },150);
-    return;
-  }
-  let inGame = el('gameScreen') && !el('gameScreen').classList.contains('hidden');
-  let inLobby = el('lobbyScreen') && !el('lobbyScreen').classList.contains('hidden');
-  // 2. Di game -> tanya, kalo OK balik ke Home + buang trap yang barusan kita push
-  if(inGame){
-    if(confirm('Keluar dari game ini?')){
-      inGameBackTrap=false;
-      backToHome(false, true); // skipRelease=true, biar gak dobel history.back()
-      try{ history.back(); }catch(e){} // buang trap yang barusan kita push
-    }
-    setTimeout(()=>{ _handlingBack=false; },150);
-    return;
-  }
-  // 3. Di lobby -> langsung balik ke Home + buang trap
-  if(inLobby){
-    inGameBackTrap=false;
-    backToHome(false, true);
-    try{ history.back(); }catch(e){}
-    setTimeout(()=>{ _handlingBack=false; },150);
-    return;
-  }
-  setTimeout(()=>{ _handlingBack=false; },150);
+  if(!inGameBackTrap) return; // di Home / Login, biarin browser yang urus, boleh keluar
+  // Di Lobby / Game: tahan, jangan keluar. Push lagi biar kita tetep di halaman ini
+  try{ history.pushState({mj:'trap'}, ''); }catch(e){}
+  // Kalo ada popup lain kebuka, Back = tutup popup itu dulu
+  let claim = document.getElementById('claimPopup');
+  if(claim && claim.classList.contains('show')){ closeSelfHuPopup(); return; }
+  let disc = document.getElementById('discardModal');
+  if(disc && disc.classList.contains('open')){ closeDiscards(); return; }
+  let ach = document.getElementById('achModal');
+  if(ach && ach.style.display==='flex'){ closeAchModal(); return; }
+  // Kalo gak ada popup, baru tanya mau keluar apa nggak, pake popup sendiri, bukan confirm()
+  document.getElementById('backConfirmModal').style.display='flex';
+});
+// Pasang trap dari awal, biar kalo user refresh pas lagi di Lobby/Game, Back-nya langsung ketahan
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    if(document.getElementById('lobbyScreen') && !document.getElementById('lobbyScreen').classList.contains('hidden')) trapBackInGame();
+    if(document.getElementById('gameScreen') && !document.getElementById('gameScreen').classList.contains('hidden')) trapBackInGame();
+  }, 500);
 });
 // ===== ACHIEVEMENT SYSTEM =====
 const ACH_LIST=[
