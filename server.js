@@ -803,7 +803,8 @@ io.on('connection', (socket)=>{
   // ----- TEMEN: DAFTAR ONLINE -----
   socket.on('registerOnline', async ({ id, display_name, avatar, authToken })=>{
   id = normId(id); if(!id) return;
-  if(authToken){ let at = authTokens.get(authToken); if(!at || at.exp<Date.now() || at.userId!==id){ socket.emit('friendError','Sesi login kadaluarsa, login ulang!'); return; } socket.authToken=authToken; }
+  // FIX OFFLINE: status online jangan ditolak cuma karena token basi / server abis restart (authTokens di memori kehapus). Daftar online aja, token cuma buat validasi aksi sensitif.
+  if(authToken){ let at = authTokens.get(authToken); if(at && at.exp>Date.now() && at.userId===id) socket.authToken=authToken; }
   socket.myUserId = id;
     onlineUsers.set(id, { socketId: socket.id, id, display_name: display_name||id, avatar: avatar||'🧑', roomCode: socket.myRoomCode||'' });
     broadcastOnline();
@@ -1342,3 +1343,4 @@ setInterval(()=>{
   if(changed) io.emit('roomListUpdated');
 }, 10000);
 server.listen(PORT, ()=>{ console.log(`🀄 MAHJONG ONLINE + BOT di port ${PORT}`); });
+
