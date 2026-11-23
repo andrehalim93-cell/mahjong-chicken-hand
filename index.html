@@ -2993,7 +2993,7 @@ function openPrivateChat(friendId, displayName){
   // Reset notif pas dibuka
   privateUnread = 0;
   let dot = el('friendBadgeDot'); if(dot) dot.style.display = 'none';
-  let fb = el('friendBadge'); if(fb) fb.style.display = 'none';
+  let fb = el('friendBadge'); if(fb && !(pendingListData||[]).length) fb.style.display = 'none';
   let n = el('privateChatNotif'); if(n) n.style.display = 'none';
   currentPrivateFriend = friendId;
   el('privateChatTitle').innerText = '💬 Chat - ' + displayName + ' (@'+friendId+')';
@@ -3049,11 +3049,6 @@ function showFriendRequestNotif(d){
     el('friendRequestNotifText').innerHTML = '👥 <b style="color:#fde68a">' + esc(d.display_name||d.from_id) + '</b> (@' + esc(d.from_id) + ')<br><span style="color:#a7f3d0;font-weight:400">mau jadi temen lu. Terima?</span>';
     n.style.display = 'block';
   }
-  // Badge di tab TEMEN + dot di tombol 👥, biar keliatan walau banner ke-close
-  let fb = el('friendBadge');
-  if(fb){ fb.style.display = 'inline-block'; fb.innerText = (pendingListData||[]).length ? pendingListData.length : 1; }
-  let dot = el('friendBadgeDot');
-  if(dot){ dot.innerText = (pendingListData||[]).length ? pendingListData.length : 1; dot.style.display = 'block'; }
   playMjSound('turn');
   try{ if(navigator.vibrate) navigator.vibrate([120,60,120]); }catch(e){}
 }
@@ -4357,7 +4352,7 @@ let last=d.stats.lastLoginDay||''; if(last!==today){ let streak=(d.stats.loginSt
 }
 function achOnMeld(meld,by){
   if(by!==myName) {
-    if(meld.type==='pong'||meld.type==='chow') window._achGame.myMeldTaken++;
+    if(meld.type==='pong'||meld.type==='chow'||meld.type==='kong') window._achGame.myMeldTaken++;
     // FIX COMEBACK: kalo lawan udah 2 meld lebih banyak dari lu, tandain ketinggalan
     try{
       let opp = (currentPlayers||[]).find(p=>p.name===by);
@@ -4393,7 +4388,7 @@ function achOnWin(d){
   if(window._achGame.chatInGame===0) unlockAch('ninja');
   let h=wibHour(); if(h>=0&&h<3) unlockAch('owl'); if(h===0) unlockAch('midnight_hu');
   if(window._achGame.firstGameAfterOpen) unlockAch('first_try');
-    if(myMelds && (myMelds.length>=4 || myMelds.length + Math.floor(Math.max(0,(myHand||[]).length-2)/3) >= 4)) unlockAch('perfect_hu');
+  if(myMelds && (myMelds.length>=4 || myMelds.length + Math.floor(Math.max(0,((myHand||[]).length + (window._achLastHuFromDiscard?1:0) -2))/3) >= 4)) unlockAch('perfect_hu');
   if(window._achGame.wasBehind) unlockAch('comeback');
   if(window._achGame.myPongChow===0){ if(addAchStat('silent_wins',1)>=5) unlockAch('silent_killer'); }
   if(window._achGame.myMeldTaken===0) unlockAch('clean_win');
