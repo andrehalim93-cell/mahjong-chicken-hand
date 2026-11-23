@@ -1796,6 +1796,39 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   gap:1px !important;
   margin:0 !important;
 }
+/* ===== EFEK KHUSUS LEGEND DI LEADERBOARD - CUMA YANG UDAH TAMAT 5 KATEGORI ===== */
+@keyframes legendShine{
+  0%{ box-shadow:0 0 6px #facc15, 0 0 12px rgba(250,204,21,.6); }
+  50%{ box-shadow:0 0 18px #facc15, 0 0 32px rgba(250,204,21,.9), 0 0 48px rgba(251,191,36,.5); }
+  100%{ box-shadow:0 0 6px #facc15, 0 0 12px rgba(250,204,21,.6); }
+}
+@keyframes legendFloat{
+  0%,100%{ transform:translateY(0) rotate(-3deg); }
+  50%{ transform:translateY(-3px) rotate(3deg); }
+}
+.legend-row{
+  background:linear-gradient(90deg, rgba(250,204,21,.28), rgba(250,204,21,.08), rgba(250,204,21,.28)) !important;
+  border:1px solid #facc15 !important;
+}
+.legend-avatar-wrap{ position:relative; display:inline-block; }
+.legend-avatar-wrap img{
+  border:2px solid #facc15 !important;
+  animation:legendShine 1.8s ease-in-out infinite !important;
+}
+.legend-crown{
+  position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+  font-size:16px; animation:legendFloat 1.5s ease-in-out infinite;
+  filter:drop-shadow(0 0 6px #facc15); pointer-events:none;
+}
+.legend-name{
+  color:#fde68a !important; font-weight:900;
+  text-shadow:0 0 10px rgba(250,204,21,.8);
+}
+.legend-badge{
+  display:inline-block; background:linear-gradient(180deg,#fde68a,#f59e0b);
+  color:#451a03; font-size:10px; font-weight:900; padding:2px 7px; border-radius:99px;
+  margin-left:6px; vertical-align:middle; letter-spacing:.5px;
+}
 </style>
 </head>
 <body>
@@ -3035,6 +3068,17 @@ function switchHomeTab(tab){
   if(tab==='howto'){ tutIdx=0; renderTut(); }
 }
 function openLeaderboard(){ switchHomeTab('leaderboard'); }
+// Cek Legend: cuma avatar special-legend yang lolos validasi server
+function isLegendAvatar(a){ return !!(a && String(a).includes('special-legend.png')); }
+function leaderboardAvatarHTML(u, size){
+  if(!isLegendAvatar(u.avatar)) return avatarHTML(u.avatar, size);
+  return '<span class="legend-avatar-wrap">'+avatarHTML(u.avatar, size)+'<span class="legend-crown">👑</span></span>';
+}
+function leaderboardNameHTML(u){
+  if(!isLegendAvatar(u.avatar)) return esc(u.display_name||u.id);
+  return '<span class="legend-name">'+esc(u.display_name||u.id)+'</span><span class="legend-badge">✨ LEGEND</span>';
+}
+function loadLeaderboardTab(){
 function loadLeaderboardTab(){
   el('leaderboardList').innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">Memuat...</td></tr>';
   el('leaderboardMyRank').innerHTML = '';
@@ -3058,9 +3102,10 @@ function loadLeaderboardTab(){
       let rowBg = rank===1 ? 'linear-gradient(90deg,#facc15,#f59e0b)' : rank===2 ? 'linear-gradient(90deg,#e2e8f0,#94a3b8)' : rank===3 ? 'linear-gradient(90deg,#d97706,#92400e)' : (isMe ? 'rgba(250,204,21,.18)' : 'transparent');
 let rowColor = (rank<=3) ? '#422006' : '#fff';
       let medal = rank===1 ? '🥇 ' : rank===2 ? '🥈 ' : rank===3 ? '🥉 ' : '';
-      return '<tr style="background:'+rowBg+';color:'+rowColor+';border-top:1px solid rgba(255,255,255,.12)">'
-        + '<td style="padding:8px 6px;text-align:center">' + avatarHTML(u.avatar, 32) + '</td>'
-        + '<td style="padding:8px;text-align:left"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">' + medal + esc(u.display_name||u.id) + '</b><span style="font-size:11px;opacity:.75">@' + esc(u.id) + '</span></td>'
+            let isLegend = isLegendAvatar(u.avatar);
+      return '<tr class="'+(isLegend?'legend-row':'')+'" style="background:'+(isLegend?'':rowBg)+';color:'+rowColor+';border-top:1px solid rgba(255,255,255,.12)">'
+        + '<td style="padding:8px 6px;text-align:center">' + leaderboardAvatarHTML(u, 32) + '</td>'
+        + '<td style="padding:8px;text-align:left"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px">' + medal + leaderboardNameHTML(u) + '</b><span style="font-size:11px;opacity:.75">@' + esc(u.id) + '</span></td>'
         + '<td style="padding:8px;text-align:center"><span class="rankBadge">' + gelarLabel(u.hu||0) + '</span></td>'
         + '<td style="padding:8px;text-align:center"><b>🏆 ' + (u.hu||0) + '</b></td>'
         + '</tr>';
