@@ -3914,7 +3914,7 @@ function releaseBackTrap(){
 function confirmBackYes(){
   document.getElementById('backConfirmModal').style.display='none';
   releaseBackTrap();
-  backToHome(true, true); // skipLeave=true biar gak dobel, skipRelease=true biar gak history.back()
+  backToHome(false, true); // HARUS kirim leaveRoom, kalo enggak meja jadi hantu 1/4 selamanya
   // Pasang trap baru buat Home, biar Back berikutnya dari Home itu keluar browser, bukan nyangkut
   try{ history.pushState({mj:'home'}, ''); }catch(e){}
 }
