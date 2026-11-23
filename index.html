@@ -1208,6 +1208,8 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 .claimMiniTiles .t.isDiscard{outline:3px solid #facc15;outline-offset:2px}
 #claimPassBtn{margin-top:12px;width:100%;border:none;background:#e5e7eb;border-radius:12px;padding:10px;font-weight:800;cursor:pointer}
 /* ===== LOBBY MEJA MELINGKAR ===== */
+#lobbyChatFab{position:absolute;right:12px;bottom:12px;width:52px;height:52px;border-radius:50%;background:linear-gradient(180deg,#fde047,#f59e0b);border:2px solid #fff7cc;box-shadow:0 6px 16px rgba(0,0,0,.5);font-size:24px;cursor:pointer;z-index:10}
+#lobbyChatFab:active{transform:scale(.92)}
 .lobbyTable{position:relative;max-width:560px;height:430px;margin:10px auto;background:radial-gradient(ellipse at center,#1e6b34 0%,#14532d 60%,#0b3a1e 100%);border:6px solid #5b3a1a;border-radius:28px;box-shadow:inset 0 0 0 3px #8b5a2b,0 20px 40px rgba(0,0,0,.5);overflow:hidden}
 .lobbyTable.skin-merah{ background:radial-gradient(ellipse at center,#b91c1c 0%,#7f1d1d 60%,#450a0a 100%); border-color:#facc15; }
 .lobbyTable.skin-biru{ background:radial-gradient(ellipse at center,#1e40af 0%,#0c1a4d 60%,#020617 100%); border-color:#22d3ee; }
@@ -2034,7 +2036,8 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
       <div class="lobbySub" id="lobbyPlayerCount">Menunggu pemain...</div>
       <div class="lobbyMode" id="roomModeLabel">🎮 LATIHAN</div>
     </div>
-    <div class="seats" id="seatsWrap"></div>
+       <div class="seats" id="seatsWrap"></div>
+    <button id="lobbyChatFab" onclick="openFriendChatList()" title="Chat Temen">💬<span id="lobbyChatBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:18px;height:18px;line-height:18px;border-radius:999px;text-align:center;padding:0 4px">0</span></button>
   </div>
 
  <!-- BOT + WAKTU TETEP ADA, DI BAWAH MEJA -->
@@ -2955,6 +2958,7 @@ function onFriendFabClick(){
   else openFriendChatList();
 }
 function openFriendChatList(){
+  let lb = el('lobbyChatBadge'); if(lb) lb.style.display = 'none';
   refreshFriends();
   if(el('inviteFriendsCode')) el('inviteFriendsCode').innerText = '(CHAT)';
   if(el('inviteFriendsTitle')) el('inviteFriendsTitle').innerText = '👥 TEMEN - CHAT';
@@ -3106,6 +3110,8 @@ socket.on('privateChatIncoming', m=>{
   lastPrivateFromName = m.from_name || ('@'+m.from_id);
   let dot = el('friendBadgeDot');
   if(dot){ dot.innerText = privateUnread; dot.style.display = 'block'; }
+  let lb = el('lobbyChatBadge');
+  if(lb){ lb.innerText = privateUnread; lb.style.display = 'block'; }
   // Badge di tab TEMEN di Home juga
   let fb = el('friendBadge');
   if(fb){ fb.style.display = 'inline-block'; fb.innerText = privateUnread; }
