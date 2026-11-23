@@ -975,7 +975,7 @@ socket.on('fillBots', ({ code, level })=>{
     code:r.code,
     roomName:r.roomName,
     hostName:r.hostName,
-    players:r.players.length,
+    players:r.players.filter(p=>!p.isBot && !p.disconnected).length,
     isPrivate:!!r.isPrivate,
     mode:r.mode||'latihan'
   }));
