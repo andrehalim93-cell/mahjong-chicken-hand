@@ -361,18 +361,19 @@ function startTurnTimer(room){
     if(!room || room.phase!=='playing') return;
     let cur = room.players[room.turnIdx];
     if(!cur) return;
-    if(room.waitingClaim) return;
+    if(room.waitingClaim){ room.turnTimer = setTimeout(()=>{ startTurnTimer(room); }, 2000); return; }
 
     // FIX PUTUS: Kalau yang giliran lagi putus, JANGAN auto-buang kartunya.
     // Tunggu dia balik. Cek lagi tiap 5 detik.
     // Kalau udah putus lebih dari 120 detik, baru boleh auto-buang biar game gak macet selamanya.
-    if(cur.disconnected){
+       if(cur.disconnected){
       let putusBerapaLama = Date.now() - (cur.disconnectedAt || Date.now());
-      if(putusBerapaLama < 120000){
+      // FIX: jangan nunggu 120 detik, kelamaan, game keliatan stuck. 15 detik cukup buat balik, abis itu auto-buang biar jalan terus. Kursi tetep disimpen, dia bisa rejoin kapanpun.
+      if(putusBerapaLama < 15000){
         room.turnTimer = setTimeout(()=>{ startTurnTimer(room); }, 5000);
         return;
       }
-      // Udah 120 detik gak balik, baru lanjut ke auto-buang di bawah
+      // Udah 15 detik gak balik, baru lanjut ke auto-buang di bawah
     }
 
     // Waktu habis -> auto buang 1 tile random (biar game gak macet)
@@ -1255,7 +1256,15 @@ socket.on('jiaKong', ({ code, tileId })=>{
     p.disconnected = false;
     p.disconnectedAt = null;
     if(avatar) p.avatar = avatar;
-    socket.join(code);
+        socket.join(code);
+    // FIX OFFLINE PAS MAIN: rejoin harus daftarin online lagi, jangan cuma balikin kursi. Kalo gak, dia main tapi di daftar temen tetep Offline.
+    if(socket.myUserId){
+      let u = onlineUsers.get(socket.myUserId);
+      if(u){ u.socketId = socket.id; u.roomCode = code; onlineUsers.set(socket.myUserId, u); }
+      else { onlineUsers.set(socket.myUserId, { socketId: socket.id, id: socket.myUserId, display_name: cleanName, avatar: avatar||'🧑', roomCode: code }); }
+      socket.myRoomCode = code;
+      broadcastOnline();
+    }
     socket.emit('rejoinedRoom', { code, phase: room.phase, players: publicPlayers(room) });
     emitLobby(room);
     // Kalau lagi main, kirim lagi tangan dia + kasih tau lagi giliran siapa
@@ -1343,4 +1352,5 @@ setInterval(()=>{
   if(changed) io.emit('roomListUpdated');
 }, 10000);
 server.listen(PORT, ()=>{ console.log(`🀄 MAHJONG ONLINE + BOT di port ${PORT}`); });
+
 
