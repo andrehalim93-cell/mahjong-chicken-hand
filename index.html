@@ -2969,7 +2969,7 @@ function sendPrivateChat(){
 function renderPrivateHistory(messages){
   let box = el('privateChatMessages'); if(!box) return;
   if(!messages || !messages.length){ box.innerHTML = '<div style="color:#94a3b8;font-size:12px;text-align:center">Belum ada chat. Say hi dulu!</div>'; return; }
-  box.innerHTML = messages.map(m=>{ let mine = m.from_id===myUserId(); return `<div style="align-self:${mine?'flex-end':'flex-start'};background:${mine?'#facc15':'#334155'};color:${mine?'#422006':'#fff'};padding:8px 10px;border-radius:12px;max-width:80%;font-size:13px">${esc(m.msg)}<br><span style="font-size:10px;opacity:.7">${new Date(m.created_at).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</span></div>`; }).join('');
+  box.innerHTML = messages.map(m=>{ let mine = m.from_id===myUserId(); return `<div style="align-self:${mine?'flex-end':'flex-start'};background:${mine?'#facc15':'#334155'};color:${mine?'#422006':'#fff'};padding:8px 10px;border-radius:12px;max-width:80%;font-size:13px">${esc(m.msg)}<br><span style="font-size:10px;opacity:.7">${new Date(m.created_at).toLocaleTimeString('id-ID',{timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit'})}</span></div>`; }).join('');
   box.scrollTop = box.scrollHeight;
 }
 function appendPrivateMsg(m){
@@ -4197,6 +4197,9 @@ function toggleAchCat(catId, forceOpen){
   }
 }
 function closeAchModal(){ document.getElementById('achModal').style.display='none'; }
+// ===== WIB - DIPAKSA Asia/Jakarta, BIAR GAK NGIKUTIN JAM HP / UTC =====
+function wibHour(){ return Number(new Date().toLocaleString('en-US',{timeZone:'Asia/Jakarta',hour:'numeric',hour12:false})); }
+function wibDateStr(){ return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Jakarta'}); } // hasil: 2026-11-23
 // state per-game
 window._achGame={kong:0,myMeldTaken:0,chatInGame:0,myPongChow:0,discards:0,wasBehind:0,lastLoser:null,firstGameAfterOpen:true};
 function achOnGameStart(players){
@@ -4228,8 +4231,8 @@ function achOnGameStart(players){
   if(!hasBot) { unlockAch('play_friend'); addAchStat('friend_games',1); if(addAchStat('friend_games',0)>=20) unlockAch('loyal_friend'); if(addAchStat('friend_games',0)>=100) unlockAch('best_friend'); }
   window._achGame.hasBot=hasBot; window._achGame.players=players;
   // login streak
-  let today=new Date().toDateString(); let d=getAchData();
-  let last=d.stats.lastLoginDay||''; if(last!==today){ let streak=(d.stats.loginStreak||0); let y=new Date(Date.now()-86400000).toDateString(); streak=(last===y)?streak+1:1; d.stats.loginStreak=streak; d.stats.lastLoginDay=today; saveAchData(d); if(streak>=7) unlockAch('login7'); if(streak>=30) unlockAch('login30'); }
+  let today=wibDateStr(); let d=getAchData();
+let last=d.stats.lastLoginDay||''; if(last!==today){ let streak=(d.stats.loginStreak||0); let y=new Date(Date.now()-86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Jakarta'}); streak=(last===y)?streak+1:1; d.stats.loginStreak=streak; d.stats.lastLoginDay=today; saveAchData(d); if(streak>=7) unlockAch('login7'); if(streak>=30) unlockAch('login30'); }
 }
 function achOnMeld(meld,by){
   if(by!==myName) { if(meld.type==='pong'||meld.type==='chow') window._achGame.myMeldTaken++; return; }
@@ -4258,7 +4261,7 @@ function achOnWin(d){
   if(ws>=3) unlockAch('streak3'); if(ws>=5) unlockAch('streak5'); if(ws>=10) unlockAch('streak10');
   if(window._achGame.myMeldTaken===0 && window._achGame.chatInGame===0) unlockAch('perfect_defense');
   if(window._achGame.chatInGame===0) unlockAch('ninja');
-  let h=new Date().getHours(); if(h>=0&&h<3) unlockAch('owl'); if(h===0) unlockAch('midnight_hu');
+  let h=wibHour(); if(h>=0&&h<3) unlockAch('owl'); if(h===0) unlockAch('midnight_hu');
   if(window._achGame.firstGameAfterOpen) unlockAch('first_try');
   if(myMelds && myMelds.length>=4) unlockAch('perfect_hu');
   if(window._achGame.wasBehind) unlockAch('comeback');
