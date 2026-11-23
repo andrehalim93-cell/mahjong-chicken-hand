@@ -4071,7 +4071,7 @@ const ACH_LIST=[
  {id:'invite10',icon:'👥',name:'Tukang Undang',desc:'Undang 10 temen ke meja'},
  {id:'chat100',icon:'💬',name:'Cerewet',desc:'Kirim 100 chat di meja'},
  {id:'emote50',icon:'😂',name:'Tukang Emote',desc:'Kirim 50 emote'},
- {id:'loyal_friend',icon:'🤝',name:'Setia Kawan',desc:'Main 20x sama orang yang sama'},
+ {id:'loyal_friend',icon:'🤝',name:'Setia Kawan',desc:'Main 20x sama 1 orang yang sama persis'},
  {id:'ninja',icon:'🥷',name:'Ninja',desc:'Menang tanpa CHAT sama sekali',hidden:true},
  {id:'owl',icon:'🦉',name:'Begadang',desc:'Main jam 00.00 - 03.00 dan menang',hidden:true},
  {id:'revenge',icon:'😤',name:'Balas Dendam',desc:'Kalah dari orang yang sama lalu menang lagi',hidden:true},
@@ -4163,7 +4163,7 @@ const ACH_PROGRESS={
   invite10:['invite',10], invite50:['invite',50],
   chat100:['chat',100], chat500:['chat',500],
   emote50:['emote',50], emote200:['emote',200],
-  loyal_friend:['friend_games',20], best_friend:['friend_games',50], friend5:['friend_games',5], friend10:['friend_games',10], friend20:['friend_games',20], friend30:['friend_games',30],
+  loyal_friend:['loyal_max',20], best_friend:['friend_games',50], friend5:['friend_games',5], friend10:['friend_games',10], friend20:['friend_games',20], friend30:['friend_games',30],
   maraton5:['maraton_session',5], maraton10:['maraton_session',10],
 };
 function achProgress(id){
@@ -4323,7 +4323,33 @@ function achOnGameStart(players){
   let g=addAchStat('games',1); if(g>=10) unlockAch('games10'); if(g>=100) unlockAch('games100'); if(g>=500) unlockAch('games500');
   if(window._achGame) { window._achGame.pongInGame=0; window._achGame.chowInGame=0; window._achGame.kongInGame=0; }
   let hasBot=(players||[]).some(p=>p.isBot);
-  if(!hasBot) { unlockAch('play_friend'); let fg=addAchStat('friend_games',1); if(fg>=5) unlockAch('friend5'); if(fg>=10) unlockAch('friend10'); if(fg>=20){ unlockAch('friend20'); unlockAch('loyal_friend'); } if(fg>=30) unlockAch('friend30'); if(fg>=50) unlockAch('best_friend'); }
+    if(!hasBot) {
+    unlockAch('play_friend');
+    // TOTAL: buat friend5 / 10 / 20 / 30 / best_friend - siapa aja boleh, yang penting bukan bot
+    let fg = addAchStat('friend_games',1);
+    if(fg>=5) unlockAch('friend5');
+    if(fg>=10) unlockAch('friend10');
+    if(fg>=20) unlockAch('friend20');
+    if(fg>=30) unlockAch('friend30');
+    if(fg>=50) unlockAch('best_friend');
+    // LOYAL: per orang, harus 1 orang yang sama persis 20x - JANGAN digabung sama fg di atas
+    try{
+      let d2 = getAchData();
+      d2.stats.friend_counts = d2.stats.friend_counts || {};
+      let maxL = d2.stats.loyal_max || 0;
+      (players||[]).forEach(p=>{
+        if(!p || p.isBot) return;
+        if(String(p.name||'').toLowerCase()===String(myName||'').toLowerCase()) return; // jangan hitung diri sendiri
+        let key = String(p.name||'').trim().toLowerCase();
+        if(!key) return;
+        d2.stats.friend_counts[key] = (d2.stats.friend_counts[key]||0) + 1;
+        if(d2.stats.friend_counts[key] > maxL) maxL = d2.stats.friend_counts[key];
+      });
+      d2.stats.loyal_max = maxL;
+      saveAchData(d2);
+      if(maxL>=20) unlockAch('loyal_friend');
+    }catch(e){}
+  }
   window._achGame.hasBot=hasBot; window._achGame.players=players;
   // login streak
   let today=wibDateStr(); let d=getAchData();
