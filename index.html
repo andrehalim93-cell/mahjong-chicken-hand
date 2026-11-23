@@ -3095,7 +3095,7 @@ function confirmStartAnyway(){
 
 function closeStartConfirm(){
   document.getElementById('startConfirmModal').style.display = 'none';
-  // Balik ke lobby, gak jadi start
+  releaseBackTrap(); // batal start = batal trap, biar Back di lobby normal lagi
 }
 let rematchClicked = false;
 function doRematch(){
@@ -3275,7 +3275,7 @@ socket.on('gameStarted', d=>{
   updateExitBotBtn();
   achOnGameStart(d.players);
 });
-socket.on('youDrew', d=>{ playMjSound('draw'); if(d.tile){ lastDrawnTileId=d.tile.id; if(!myHand.some(x=>x.id===d.tile.id)){ myHand.push(d.tile); } } renderMyHand(); });
+socket.on('youDrew', d=>{ playMjSound('draw'); if(d.tile){ lastDrawnTileId=d.tile.id; if(!myHand.some(x=>x.id===d.tile.id)){ myHand.push(d.tile); } } renderMyHand(); if(isMyTurn && canHuLocal()) openSelfHuPopup(); });
 function canHuLocal(){
   let tiles=[...myHand];
   let needSets=4-myMelds.length; // kamu butuh 1 set lagi dari tangan
@@ -3678,7 +3678,7 @@ el('myFlowerCount').innerText = myFlowers.length ? ` • 🌸 ${myFlowers.length
 function renderActionBar(actions){
   let bar=el('actionBar'); bar.innerHTML=''; if(!actions || actions.length===0) return;
   actions.forEach(a=>{
-    if(a.type==='selfHu'){ bar.innerHTML+=`<button class="aSelfHu" onclick="selfHu()">🐔 HU! SAYA MENANG!</button>`; }
+    if(a.type==='selfHu'){ openSelfHuPopup(); }
     if(a.type==='anKong'){ bar.innerHTML+=`<button class="aPong" onclick="doAnKong('${a.key}')">🀄 KONG TERTUTUP!</button>`; }
     if(a.type==='jiaKong'){ bar.innerHTML+=`<button class="aPong" onclick="doJiaKong('${a.tile.id}')">🀄 KONG TAMBAHAN!</button>`; }
     // CLAIM LAWAN BUANG -> JADI POPUP, BUKAN TOMBOL KECIL LAGI
@@ -3744,7 +3744,28 @@ function openClaimPopup(c, discardTile){
 function doClaim(action){ if(action==='hu') window._achLastHuFromDiscard = true; closeClaimPopup(); if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
 function doClaimChow(chowNums){ closeClaimPopup(); if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action:'chow', chowNums}); el('actionBar').innerHTML=''; }
 function doClaimChowByIdx(idx){ let chowNums = (window._lastChows||[])[idx]; console.log('KLIK CHOW idx:', idx, 'isi:', chowNums); doClaimChow(chowNums); }
-function selfHu(){ window._achLastHuFromDiscard = false; console.log('KLIK HU, hand:', myHand, 'melds:', myMelds); playMjSound('anKong'); socket.emit('selfHu',{code:myCode}); }
+function selfHu(){ window._achLastHuFromDiscard = false; closeSelfHuPopup(); playMjSound('hu'); socket.emit('selfHu',{code:myCode}); }
+function openSelfHuPopup(){
+  // Pake popup claim yang sama, biar gede kayak Pong/Chow, bukan tombol kecil
+  el('claimTitle').innerText = '🐔 BISA HU!';
+  el('claimSub').innerHTML = 'Tile yang lu ambil ini bikin tangan lu lengkap! HU sekarang?';
+  let fill = el('claimTimerFill'); if(fill) fill.style.width='0%';
+  let box = el('claimBtns'); box.innerHTML='';
+  // Tampilin tangan lu + meld lu, biar keliatan kenapa bisa HU
+  box.innerHTML += `<div style="background:#fff;border-radius:12px;padding:8px;margin-bottom:4px"><div style="font-size:11px;color:#92400e;font-weight:900;margin-bottom:4px">TANGAN LU</div><div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center">${myHand.map(t=>tileHTML(t)).join('')}</div></div>`;
+  box.innerHTML += `<button class="claimBig hu" onclick="selfHu()">🐔 HU! SAYA MENANG!</button>`;
+  let passBtn = document.getElementById('claimPassBtn');
+  if(passBtn){ passBtn.innerText='⏭️ GAK DULU, MAU BUANG TILE'; passBtn.onclick=closeSelfHuPopup; }
+  el('claimPopup').classList.add('show');
+  playMjSound('hu');
+}
+function closeSelfHuPopup(){
+  let p=el('claimPopup'); if(p) p.classList.remove('show');
+  let passBtn = document.getElementById('claimPassBtn');
+  if(passBtn){ passBtn.innerText='⏭️ PASS / LEWAT'; passBtn.onclick=function(){ doClaim('pass'); }; }
+  // Balikin onclick luar popup ke default claim, biar gak nyangkut
+  if(p) p.onclick=function(e){ if(e.target===p) closeSelfHuPopup(); };
+}
 function doJiaKong(tileId){ let bar=document.getElementById('actionBar'); if(bar) bar.innerHTML=''; playMjSound('kong'); socket.emit('jiaKong',{code:myCode, tileId}); }
 function doAnKong(key){ let bar=document.getElementById('actionBar'); if(bar) bar.innerHTML=''; socket.emit('anKong',{code:myCode, tileKey:key}); }
 function openDiscards(){ if(window._achGame) window._achGame.discardOpens=(window._achGame.discardOpens||0)+1; let pool=document.querySelector('.poolAllBottom'); let body=document.getElementById('discardModalBody'); if(pool && body){ body.innerHTML=pool.innerHTML; body.querySelectorAll('.mTile').forEach(function(el2){ el2.style.width='32px'; el2.style.height='44px'; }); } document.getElementById('discardModal').classList.add('open'); }
@@ -3796,20 +3817,48 @@ socket.on('gameLog', d=>addLog(d.msg));
 document.addEventListener('keydown', e=>{ if(e.key==='Enter' && document.activeElement && document.activeElement.id==='chatInput'){ sendChat(); } });
 // ===== BACK HP: BALIK DI GAME, BUKAN KELUAR BROWSER =====
 let inGameBackTrap = false;
+let _handlingBack = false;
 function trapBackInGame(){
-  history.pushState({inGame:true}, '');
+  if(inGameBackTrap) return; // jangan push dobel, ini yang bikin numpuk
+  try{ history.pushState({inGame:true}, ''); }catch(e){}
   inGameBackTrap = true;
 }
 function releaseBackTrap(){
+  if(!inGameBackTrap) return;
   inGameBackTrap = false;
+  // Buang 1 history yang tadi kita push, biar gak numpuk
+  // _handlingBack = true biar popstate di bawah gak ke-trigger lagi
+  if(!_handlingBack){ _handlingBack=true; try{ history.back(); }catch(e){} setTimeout(()=>{ _handlingBack=false; },100); }
 }
 window.addEventListener('popstate', function(e){
+  if(_handlingBack) return;
   if(!inGameBackTrap) return;
-  history.pushState({inGame:true}, '');
-  if(confirm('Keluar dari game ini?')){
-    releaseBackTrap();
-    backToHome();
+  // Balikin trap-nya dulu, biar tetep di game kalo user batal
+  _handlingBack=true;
+  try{ history.pushState({inGame:true}, ''); }catch(e){}
+  setTimeout(()=>{ _handlingBack=false; },100);
+  // 1. Kalo ada popup / modal yang kebuka, Back = tutup modal dulu, bukan keluar game
+  let openModal = document.querySelector('#claimPopup.show, #discardModal.open, #privateChatModal[style*="flex"], #achModal[style*="flex"]');
+  if(openModal){
+    if(openModal.id==='claimPopup') doClaim('pass');
+    if(openModal.id==='discardModal') closeDiscards();
+    if(openModal.id==='privateChatModal') closePrivateChat();
+    if(openModal.id==='achModal') closeAchModal();
+    return;
   }
+  // 2. Kalo lagi di game, Back = konfirm keluar ke Home
+  let inGame = el('gameScreen') && !el('gameScreen').classList.contains('hidden');
+  let inLobby = el('lobbyScreen') && !el('lobbyScreen').classList.contains('hidden');
+  if(inGame){
+    if(confirm('Keluar dari game ini?')){
+      _handlingBack=true; inGameBackTrap=false;
+      backToHome();
+      setTimeout(()=>{ _handlingBack=false; },100);
+    }
+    return;
+  }
+  // 3. Kalo lagi di lobby, Back = balik ke Home, bukan keluar browser
+  if(inLobby){ backToHome(); return; }
 });
 // ===== ACHIEVEMENT SYSTEM =====
 const ACH_LIST=[
