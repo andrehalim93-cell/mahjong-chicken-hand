@@ -47,6 +47,9 @@ input{font-family:inherit}
 .lobbyMode{flex:none;background:#facc15;color:#422006;font-size:11px;font-weight:900;padding:7px 10px;border-radius:999px;white-space:nowrap}
 .lobbyMode.tanding{background:#f97316;color:#fff}
 .lobbyMode.pro{background:#dc2626;color:#fff}
+#lastTileEl.proClaimable{ outline:3px solid #facc15; outline-offset:2px; box-shadow:0 0 0 4px rgba(250,204,21,.4), 0 0 24px 8px rgba(250,204,21,.55); animation:proClaimPulse .7s infinite; cursor:pointer; }
+@keyframes proClaimPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.04); } }
+#lastTileEl.proClaimable .t{ outline:3px solid #facc15; outline-offset:2px; }
 .lobbyProgress{height:8px;background:rgba(0,0,0,.4);border-radius:999px;overflow:hidden;margin-top:14px}
 .lobbyProgress div{height:100%;background:linear-gradient(90deg,#facc15,#f97316);border-radius:999px;transition:width .3s}
 .lobbyHint{font-size:11px;color:#cbd5e1;margin-top:10px;line-height:1.5}
@@ -2123,7 +2126,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   <div class="turnArrowTxt">🔄 Giliran: berlawanan jarum jam</div>
 </div>
    <div class="centerBox" id="centerBox">
-  <div class="poolCenter" id="lastTileEl" onclick="openDiscards()" title="Klik buat liat semua buangan" style="cursor:pointer">👆 Klik buat liat buangan</div>
+  <div class="poolCenter" id="lastTileEl" onclick="onLastDiscardClick()" title="Klik tile buangan" style="cursor:pointer">👆 Klik buat liat buangan</div>
 </div>
 <div class="poolAllBottom" id="poolAll">
   <div style="font-size:10px;color:#fde68a;font-weight:800;letter-spacing:1px;margin-bottom:4px">🃏 BUANGAN</div>
@@ -3548,8 +3551,27 @@ socket.on('yourHand', d=>{
   if(acts.length) renderActionBar(acts);
 });
 socket.on('turnChanged', d=>{
-  if(d.turn!==myName) lastDrawnTileId=null; el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); }updateExitBotBtn(); });
-  socket.on('discarded', d=>{ if(d.from===myName && window._achGame) window._achGame.discards=(window._achGame.discards||0)+1; playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players; el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div><div style="margin-top:4px;font-size:10px;color:#fde68a">👆 Klik buat liat semua buangan</div>`; addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); console.log('DEBUG CHOW dari server:', d.from, 'ke saya:', myClaim, 'semua claims:', d.claims);
+  if(d.turn!==myName) lastDrawnTileId=null;
+  if(lobbyMode==='pro'){ let le = el('lastTileEl'); if(le) le.classList.remove('proClaimable'); window._proLastTile = null; }
+  el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); }updateExitBotBtn(); });
+  socket.on('discarded', d=>{ if(d.from===myName && window._achGame) window._achGame.discards=(window._achGame.discards||0)+1; playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players;
+  // ===== MODE PRO: tile buangan bisa diklik buat claim, jangan auto popup =====
+  if(lobbyMode==='pro'){
+    window._proLastTile = d.tile;
+    window._proLastFrom = d.from;
+    let lastEl = el('lastTileEl');
+    if(lastEl){
+      lastEl.classList.add('proClaimable');
+      lastEl.innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div><div style="margin-top:4px;font-size:11px;color:#facc15;font-weight:900">👆 KLIK TILE INI BUAT CLAIM • 7 DETIK</div><div style="margin-top:4px"><button onclick="event.stopPropagation(); openDiscards()" style="background:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:4px 10px;font-size:10px;font-weight:900;cursor:pointer">🧺 LIHAT SEMUA BUANGAN</button></div>`;
+    }
+    addLog(`🃏 ${d.from} buang ${d.tileName} - KLIK tile-nya kalo mau claim!`);
+    renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players);
+    return; // <-- PENTING: berhenti di sini, jangan lanjut ke renderActionBar, jangan auto popup
+  }
+  // ===== LATIHAN / TANDING: cara lama, jangan diubah =====
+  el('lastTileEl').classList.remove('proClaimable');
+  el('lastTileEl').innerHTML = `<div style="display:flex;justify-content:center">${tileHTML(d.tile)}</div><div style="margin-top:6px;font-size:11px">Dari: <b>${esc(d.from)}</b><br>${esc(d.tileName)}</div><div style="margin-top:4px;font-size:10px;color:#fde68a">👆 Klik buat liat semua buangan</div>`;
+  addLog(`🃏 ${d.from} buang ${d.tileName}`); renderSeats(d.players, el('turnName').innerText); renderCentralPool(d.players); let myClaim = d.claims.find(c=>c.name===myName); console.log('DEBUG CHOW dari server:', d.from, 'ke saya:', myClaim, 'semua claims:', d.claims);
   if(myClaim){
   if(myClaim.canHu || myClaim.pong || (myClaim.chow||[]).length){
     renderActionBar([{type:'claim', claim:myClaim, tile:d.tile}]);
@@ -3970,13 +3992,14 @@ function openClaimPopup(c, discardTile){
     box.innerHTML += `<button class="chowCard" onclick="doClaimChowByIdx(${idx})">${rowHTML(tiles)}<b>🃏 CHOW ${ch.join('-')}</b></button>`;
   });
 
-  el('claimPopup').classList.add('show');
-  // Timer visual + auto PASS, pake turnTimeSec yang udah ada
+   el('claimPopup').classList.add('show');
+  // Timer visual + auto PASS. PRO = 7 detik, LATIHAN / TANDING = turnTimeSec kayak dulu.
   if(claimTimeoutInt) clearTimeout(claimTimeoutInt);
   let fill = el('claimTimerFill'); if(fill) fill.style.width='100%';
-  if(turnTimeSec && turnTimeSec>0){
+  let claimSec = (lobbyMode==='pro' ? 7 : turnTimeSec);
+  if(claimSec && claimSec>0){
     setTimeout(()=>{ if(fill) fill.style.width='0%'; }, 50);
-    claimTimeoutInt=setTimeout(()=>{ closeClaimPopup(); socket.emit('claim',{code:myCode, action:'pass'}); }, turnTimeSec*1000);
+    claimTimeoutInt=setTimeout(()=>{ closeClaimPopup(); socket.emit('claim',{code:myCode, action:'pass'}); }, claimSec*1000);
   }
 }
 function doClaim(action){ if(action==='hu') window._achLastHuFromDiscard = true; closeClaimPopup(); if(claimTimeoutInt) clearTimeout(claimTimeoutInt); socket.emit('claim',{code:myCode, action}); el('actionBar').innerHTML=''; }
@@ -4008,6 +4031,37 @@ function doJiaKong(tileId){ let bar=document.getElementById('actionBar'); if(bar
 function doAnKong(key){ let bar=document.getElementById('actionBar'); if(bar) bar.innerHTML=''; socket.emit('anKong',{code:myCode, tileKey:key}); }
 function openDiscards(){ if(window._achGame) window._achGame.discardOpens=(window._achGame.discardOpens||0)+1; let pool=document.querySelector('.poolAllBottom'); let body=document.getElementById('discardModalBody'); if(pool && body){ body.innerHTML=pool.innerHTML; body.querySelectorAll('.mTile').forEach(function(el2){ el2.style.width='32px'; el2.style.height='44px'; }); } document.getElementById('discardModal').classList.add('open'); }
 function closeDiscards(){ document.getElementById('discardModal').classList.remove('open'); }
+// ===== MODE PRO TAHAP 2: klik tile buangan terakhir =====
+function onLastDiscardClick(){
+  if(lobbyMode==='pro'){
+    if(!window._proLastTile) return toast('Belum ada buangan, tunggu lawan buang dulu!');
+    socket.emit('proCheckClaim', { code: myCode });
+    return;
+  }
+  openDiscards();
+}
+socket.on('proClaimOptions', d=>{
+  // Server bilang BISA claim, baru buka popup. Isinya cuma yang beneran bisa.
+  window._lastChows = d.claim.chow || [];
+  el('claimTitle').innerText = '🔥 PRO - Bisa diambil!';
+  el('claimSub').innerHTML = 'Lu klik tile buangan ' + esc(d.from) + ', ternyata bisa diambil! Mau ambil? <br><b style="color:#dc2626">Sisa waktu 7 detik dari server!</b>';
+  openClaimPopup(d.claim, d.tile);
+});
+socket.on('proClaimDenied', d=>{
+  toast(d.msg || '❌ Tile ini gak bisa diambil!');
+  if(d.cut) addLog('⚠️ Spam klik buangan: giliran berikutnya -' + d.cut + ' detik! Total potongan: ' + d.totalCut + ' detik');
+});
+socket.on('proClaimExpired', d=>{
+  // 7 detik habis, tutup popup kalo lagi kebuka, matiin glow-nya
+  closeClaimPopup();
+  let lastEl = el('lastTileEl');
+  if(lastEl) lastEl.classList.remove('proClaimable');
+  window._proLastTile = null;
+  addLog('⏰ Claim hangus, udah lewat 7 detik!');
+});
+socket.on('proPenaltyApplied', d=>{
+  toast('⚠️ Giliran ini cuma ' + d.turnSec + ' detik! (dipotong ' + d.cut + ' detik karena spam klik)');
+});
 let claimTimeoutInt=null;
 let lastDrawnTileId=null;
 let chatOpen=false, chatUnread=0;
