@@ -3278,11 +3278,13 @@ let lobbyPlayerCount = 0;
 
 function startGame(){
   trapBackInGame();
-  // Kalau TANDING tapi belum full 4 orang asli -> tampilkan konfirmasi dulu, JANGAN langsung start
+  // Kalau PRO tapi belum full 4 orang -> tolak langsung, gak pake modal
   if(lobbyMode==='pro' && lobbyPlayerCount < 4){
-  toast('🔥 Mode PRO wajib 4 pemain! Nunggu ' + (4-lobbyPlayerCount) + ' orang lagi...');
-  return;
-}
+    toast('🔥 Mode PRO wajib 4 pemain! Nunggu ' + (4-lobbyPlayerCount) + ' orang lagi...');
+    return;
+  }
+  // Kalau TANDING tapi belum full 4 orang asli -> tampilkan konfirmasi dulu, JANGAN langsung start
+  if(lobbyMode==='tanding' && lobbyPlayerCount < 4){
     document.getElementById('startConfirmText').innerText =
       'Mode TANDING, tapi baru ' + lobbyPlayerCount + ' orang yang join.\n\nHU di game ini TIDAK AKAN DIHITUNG ke leaderboard.\nHarus full 4 orang baru HU dihitung.\n\nTetap lanjut main?';
     let m = document.getElementById('startConfirmModal');
