@@ -46,6 +46,7 @@ input{font-family:inherit}
 .lobbySub{font-size:12px;color:#a7f3d0;margin-top:4px;font-weight:700}
 .lobbyMode{flex:none;background:#facc15;color:#422006;font-size:11px;font-weight:900;padding:7px 10px;border-radius:999px;white-space:nowrap}
 .lobbyMode.tanding{background:#f97316;color:#fff}
+.lobbyMode.pro{background:#dc2626;color:#fff}
 .lobbyProgress{height:8px;background:rgba(0,0,0,.4);border-radius:999px;overflow:hidden;margin-top:14px}
 .lobbyProgress div{height:100%;background:linear-gradient(90deg,#facc15,#f97316);border-radius:999px;transition:width .3s}
 .lobbyHint{font-size:11px;color:#cbd5e1;margin-top:10px;line-height:1.5}
@@ -2014,6 +2015,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <button id="modeLatihan" class="btn btn-gold" style="flex:1" onclick="pickMode('latihan')">🎮 LATIHAN<br><span style="font-size:11px;font-weight:400">Bebas, Bisa BOT</span></button>
       <button id="modeTanding" class="btn btn-dark" style="flex:1" onclick="pickMode('tanding')">🏆 TANDING<br><span style="font-size:11px;font-weight:400">No BOT, Hitung HU</span></button>
+      <button id="modePro" class="btn btn-dark" style="flex:1" onclick="pickMode('pro')">🔥 PRO<br><span style="font-size:11px;font-weight:400">Wajib 4, No Bantuan</span></button>
     </div>
     <div class="lbl">MEJA PRIVATE?</div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
@@ -2093,6 +2095,25 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     <p id="startConfirmText" style="margin-top:8px;font-size:14px;line-height:1.5"></p>
     <button class="btn btn-gold" style="margin-top:14px" onclick="confirmStartAnyway()">✅ YA, TETAP MAIN</button>
     <button class="btn btn-dark" onclick="closeStartConfirm()">❌ BATAL, TUNGGU FULL 4 ORANG</button>
+  </div>
+</div>
+<div id="proRulesModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:130;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fef3c7;color:#422006;border-radius:22px;padding:20px;max-width:460px;width:100%;max-height:88vh;overflow-y:auto;text-align:left">
+    <div style="text-align:center;font-size:40px">🔥</div>
+    <h2 style="text-align:center;font-size:20px">MODE PRO - ATURAN MEJA PRO</h2>
+    <div style="font-size:13px;line-height:1.6;margin-top:12px">
+      <p><b>1. TANPA BANTUAN</b><br>Gak ada popup otomatis PONG / CHOW / KONG / HU. Gak ada HINT. Gak ada BOT. Lu harus liat sendiri buangan lawan.</p>
+      <p style="margin-top:8px"><b>2. CARA AMBIL BUANGAN LAWAN</b><br>KLIK tile buangan terakhir yang lagi nyala. Kalo bener lu bisa ambil, baru muncul pilihan PONG / CHOW / KONG / HU. Kalo gak bisa, gak muncul apa-apa.</p>
+      <p style="margin-top:8px"><b>3. BATAS CLAIM 7 DETIK</b><br>Dihitung dari lawan buang tile. Abis 7 detik, buangan itu HANGUS. Gak bisa diambil lagi, gak bisa protes. Pemain berikutnya langsung ambil tile dari tembok.</p>
+      <p style="margin-top:8px"><b>4. TOMBOL HU UDAH ADA DARI AWAL</b><br>Lu bisa pencet HU kapan aja kalo yakin tangan lu HU. Gak usah nunggu popup.</p>
+      <p style="margin-top:8px"><b>5. HUKUMAN HU PALSU - LANGSUNG KENA</b><br>Kalo lu pencet HU tapi ternyata BUKAN HU: Giliran lu yang SEKARANG dikurangi 3 DETIK. Kalo sisa giliran lu tinggal 3 detik / kurang, giliran lu langsung HABIS.</p>
+      <p style="margin-top:8px"><b>6. HUKUMAN SPAM KLIK BUANGAN - LANGSUNG KENA</b><br>Kalo lu klik tile buangan tapi ternyata GAK BISA diambil: Giliran lu BERIKUTNYA dikurangi 2 DETIK. Klik gagal 2x = giliran berikutnya -4 detik. Jangan asal klik. Liat dulu tangan lu.</p>
+      <p style="margin-top:8px"><b>7. WAKTU GILIRAN DIKUNCI 15 DETIK</b><br>Gak bisa diubah. Gak bisa di-setting. Dihitung di SERVER, bukan di HP lu. Jadi sinyal lemot tetep adil buat semua.</p>
+      <p style="margin-top:8px"><b>8. LIAT SEMUA BUANGAN</b><br>Pencet icon 🧺 LIHAT BUANGAN. Itu cuma buat LIAT, gak bisa claim dari situ. Claim cuma bisa dari klik tile buangan terakhir.</p>
+      <p style="margin-top:8px"><b>9. MODE SERIUS</b><br>HU di Mode PRO dihitung ke leaderboard, kayak Mode TANDING. Main sungguh-sungguh, jangan asal pencet.</p>
+      <p style="margin-top:8px"><b>10. WAJIB 4 PEMAIN</b><br>Mode PRO baru bisa mulai kalo udah 4 orang. Gak bisa mulai kalo cuma 2 atau 3 orang.</p>
+    </div>
+    <button class="btn btn-gold" style="margin-top:16px" onclick="closeProRules()">✅ NGERTI, MAIN PRO</button>
   </div>
 </div>
 <div id="gameScreen" class="hidden">
@@ -2605,6 +2626,7 @@ function exitBotGame(){
   // 1. Kasih tau server kita keluar meja, KECUALI kalau ini dipanggil pas rejoin gagal.
   // Kalau rejoin gagal, JANGAN kirim leaveRoom, nanti kursi kita kehapus sendiri.
   try{ if(myCode && !skipLeave) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
+  proRulesShownFor = '';
   myCode = '';
   sessionStorage.removeItem('mahjong_room');
   // 2. Tutup semua layar game / lobby / popup menang
@@ -2862,7 +2884,7 @@ function tileMini(t){ return '<div class="mTile">'+tileFace(t)+'</div>'; }
 let selectedMode='latihan'; let selectedPrivate=false;
 function openCreateModal(){ if(!currentUser) return showErr('Login dulu!'); el('inputRoomName').value='Meja '+currentUser.display_name; el('createRoomModal').style.display='flex'; }
 function closeCreateModal(){ el('createRoomModal').style.display='none'; }
-function pickMode(m){ selectedMode=m; el('modeLatihan').className=m==='latihan'?'btn btn-gold':'btn btn-dark'; el('modeTanding').className=m==='tanding'?'btn btn-gold':'btn btn-dark'; }
+function pickMode(m){ selectedMode=m; el('modeLatihan').className=m==='latihan'?'btn btn-gold':'btn btn-dark'; el('modeTanding').className=m==='tanding'?'btn btn-gold':'btn btn-dark'; el('modePro').className=m==='pro'?'btn btn-gold':'btn btn-dark'; }
 function pickPrivate(v){ selectedPrivate=v; el('privNo').className=!v?'btn btn-gold':'btn btn-dark'; el('privYes').className=v?'btn btn-gold':'btn btn-dark'; el('passBox').style.display=v?'block':'none'; }
 function submitCreateRoom(){ if(!currentUser) return showErr('Login dulu!'); myName=currentUser.display_name; let roomName=el('inputRoomName').value.trim()||('Meja '+myName); let password=selectedPrivate?el('inputRoomPass').value.trim():''; if(selectedPrivate && !password) return showErr('Isi password meja!'); closeCreateModal(); socket.emit('createRoom',{name:myName, roomName, mode:selectedMode, isPrivate:selectedPrivate, password, avatar: currentUser ? currentUser.avatar : '🧑'}); }
 // ===== MEJA PUBLIK + LEADERBOARD =====
@@ -3254,7 +3276,10 @@ let lobbyPlayerCount = 0;
 function startGame(){
   trapBackInGame();
   // Kalau TANDING tapi belum full 4 orang asli -> tampilkan konfirmasi dulu, JANGAN langsung start
-  if(lobbyMode==='tanding' && lobbyPlayerCount < 4){
+  if(lobbyMode==='pro' && lobbyPlayerCount < 4){
+  toast('🔥 Mode PRO wajib 4 pemain! Nunggu ' + (4-lobbyPlayerCount) + ' orang lagi...');
+  return;
+}
     document.getElementById('startConfirmText').innerText =
       'Mode TANDING, tapi baru ' + lobbyPlayerCount + ' orang yang join.\n\nHU di game ini TIDAK AKAN DIHITUNG ke leaderboard.\nHarus full 4 orang baru HU dihitung.\n\nTetap lanjut main?';
     let m = document.getElementById('startConfirmModal');
@@ -3278,6 +3303,17 @@ function confirmStartAnyway(){
 function closeStartConfirm(){
   document.getElementById('startConfirmModal').style.display = 'none';
   releaseBackTrap(); // batal start = batal trap, biar Back di lobby normal lagi
+}
+let proRulesShownFor = '';
+function showProRules(code){
+  if(proRulesShownFor===code) return;
+  proRulesShownFor = code;
+  let m = document.getElementById('proRulesModal');
+  if(m) m.style.display = 'flex';
+}
+function closeProRules(){
+  let m = document.getElementById('proRulesModal');
+  if(m) m.style.display = 'none';
 }
 let rematchClicked = false;
 function doRematch(){
@@ -3381,27 +3417,28 @@ socket.on('updateLobby', room=>{
     document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec));
   }
   isHost = room.players.some(p=>p.name===myName && !p.isBot && p.isHost);
-  if(el('timeBox')) el('timeBox').style.display = isHost ? 'block' : 'none';
+  if(el('timeBox')) el('timeBox').style.display = (isHost && !isPro) ? 'block' : 'none';
       applySkin(room.skin || 'hijau');
   if(el('skinBox')) el('skinBox').style.display = isHost ? 'block' : 'none';
   let isTanding = room.mode==='tanding';
   // BOT: cuma Latihan + Host. Tanding = SELALU HILANG, gak pake kedip.
-  el('botBox').style.display = (isHost && !isTanding) ? 'block' : 'none';
+  let isPro = room.mode==='pro';
+el('botBox').style.display = (isHost && !isTanding && !isPro) ? 'block' : 'none';
     // HINT: cuma Latihan. Tanding = centangan + tulisan di lobby ilang total.
   let hb = el('hintBox');
-  if(hb) hb.style.display = isTanding ? 'none' : 'block';
+  if(hb) hb.style.display = (isTanding || isPro) ? 'none' : 'block';
 
   // Header modern baru
   let modeEl = el('roomModeLabel');
-  if(modeEl){ modeEl.innerText = isTanding ? '🏆 TANDING' : '🎮 LATIHAN'; modeEl.className = 'lobbyMode' + (isTanding ? ' tanding' : ''); }
+  if(modeEl){ modeEl.innerText = isPro ? '🔥 PRO' : (isTanding ? '🏆 TANDING' : '🎮 LATIHAN'); modeEl.className = 'lobbyMode' + (isPro ? ' pro' : (isTanding ? ' tanding' : '')); }
   let nameEl = el('lobbyRoomName');
   if(nameEl) nameEl.innerText = '🀄 ' + (room.name || room.roomName || 'Meja Mahjong');
   let countEl = el('lobbyPlayerCount');
-  if(countEl) countEl.innerText = room.players.length + ' / 4 pemain • ' + (room.players.length>=2 ? 'Siap mulai!' : 'Butuh min 2 pemain');
+  if(countEl) countEl.innerText = room.players.length + ' / 4 pemain • ' + (isPro ? (room.players.length>=4 ? 'Siap mulai! Wajib 4 orang.' : 'Mode PRO wajib 4 pemain, nunggu ' + (4-room.players.length) + ' orang lagi...') : (room.players.length>=2 ? 'Siap mulai!' : 'Butuh min 2 pemain'));
   let bar = el('lobbyProgressBar');
   if(bar) bar.style.width = (room.players.length/4*100) + '%';
   let hint = el('lobbyHint');
-  if(hint) hint.innerText = isTanding ? 'Mode TANDING: Tanpa BOT, HU dihitung ke leaderboard.' : 'Mode LATIHAN: Host bisa tambah BOT kalau kurang orang.';
+  if(hint) hint.innerText = isPro ? 'Mode PRO: Wajib 4 pemain, tanpa BOT, tanpa HINT, waktu dikunci 15 detik, HU dihitung.' : (isTanding ? 'Mode TANDING: Tanpa BOT, HU dihitung ke leaderboard.' : 'Mode LATIHAN: Host bisa tambah BOT kalau kurang orang.');
 
   let wrap=el('seatsWrap'); wrap.innerHTML='';
   room.players.forEach(p=>{
@@ -3413,9 +3450,11 @@ socket.on('updateLobby', room=>{
          wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''} ${p.isBot?botLevelClass(p):''}" style="${p.isBot?botSeatStyle(p):''}"><div class="ava">${p.isBot?'🤖':avatarHTML(av, 56)}</div><div class="nm">${p.isBot?botDisplayName(p):esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?(botLevelLabel(p)+(isHost?' • Klik buat hapus':'')):(p.id===room.hostId?'👑 HOST':'Pemain')}</div>${p.isBot && isHost?`<button class="kickBtn" onclick="removeBot('${esc(p.name)}')">✕</button>`:''}</div>`;
   });
   for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty" data-invite="1" style="cursor:pointer">💺 Kursi Kosong<br><small>Menunggu pemain...</small><button data-invite="1" style="margin-top:6px;background:#facc15;color:#422006;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">👥 UNDANG TEMEN</button></div>`;
-  el('startBtn').disabled = room.players.length<2;
-  el('startBtn').innerText = room.players.length<2 ? `⏳ BUTUH MIN 2 PEMAIN (${room.players.length}/4)` : `🚀 MULAI GAME (${room.players.length} PEMAIN)`;
+let needPro = isPro && room.players.length<4;
+el('startBtn').disabled = room.players.length<2 || needPro;
+el('startBtn').innerText = needPro ? `⏳ MODE PRO WAJIB 4 PEMAIN (${room.players.length}/4)` : (room.players.length<2 ? `⏳ BUTUH MIN 2 PEMAIN (${room.players.length}/4)` : `🚀 MULAI GAME (${room.players.length} PEMAIN)`);
   updateExitBotBtn();
+if(isPro) showProRules(room.code);
 });
 socket.on('turnTimeUpdated', d=>{ turnTimeSec=d.seconds; el('turnTimer').innerText = turnTimeSec===0?'♾️':turnTimeSec+'s'; el('timeInfo').innerText = turnTimeSec===0?'Saat ini: Tanpa batas':'Saat ini: '+turnTimeSec+' detik per giliran'; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec)); toast('⏱️ Waktu giliran diganti jadi '+(turnTimeSec===0?'Tanpa Batas':turnTimeSec+' detik')); });
 let currentSkin = 'hijau';
@@ -3596,6 +3635,7 @@ socket.on('youHu', async d=>{
   }catch(e){}
   if(currentUser) currentUser.hu = newHu;
   if(d.mode === 'tanding') toast('🏆 HU TANDING dicatat!');
+if(d.mode === 'pro') toast('🔥 HU PRO dicatat!');
   // Kalau gelar naik, munculin popup animasi, jangan langsung ke gameOver
   if(getGelar(newHu).name !== oldGelar){
     setTimeout(() => showRankUp(newHu), 800);
