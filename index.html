@@ -3422,12 +3422,12 @@ socket.on('updateLobby', room=>{
     document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.toggle('active', Number(b.dataset.sec)===turnTimeSec));
   }
   isHost = room.players.some(p=>p.name===myName && !p.isBot && p.isHost);
+  let isTanding = room.mode==='tanding';
+  let isPro = room.mode==='pro';
   if(el('timeBox')) el('timeBox').style.display = (isHost && !isPro) ? 'block' : 'none';
       applySkin(room.skin || 'hijau');
   if(el('skinBox')) el('skinBox').style.display = isHost ? 'block' : 'none';
-  let isTanding = room.mode==='tanding';
   // BOT: cuma Latihan + Host. Tanding = SELALU HILANG, gak pake kedip.
-  let isPro = room.mode==='pro';
 el('botBox').style.display = (isHost && !isTanding && !isPro) ? 'block' : 'none';
     // HINT: cuma Latihan. Tanding = centangan + tulisan di lobby ilang total.
   let hb = el('hintBox');
