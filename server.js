@@ -195,7 +195,14 @@ if(tok.ownerId && normId(id) !== tok.ownerId) return res.json({ok:false, counted
 let { data:u } = await supabase.from('users').select('hu').eq('id', normId(id)).maybeSingle();
 let oldHu = u?.hu||0; let newHu = oldHu + 1;
 let { data:upd, error:updErr } = await supabase.from('users').update({hu: newHu}).eq('id', normId(id)).eq('hu', oldHu).select('hu').maybeSingle();
-if(updErr || !upd){ let { data:u2 } = await supabase.from('users').select('hu').eq('id', normId(id)).maybeSingle(); return res.json({ok:true, counted:true, hu: u2?.hu||oldHu}); }
+if(updErr || !upd){
+  // Gagal nulis pertama, karena HU-nya udah berubah duluan. Ambil HU terbaru, baru +1 lagi.
+  let { data:u2 } = await supabase.from('users').select('hu').eq('id', normId(id)).maybeSingle();
+  let h2 = u2?.hu || 0;
+  let { data:upd2 } = await supabase.from('users').update({hu: h2 + 1}).eq('id', normId(id)).eq('hu', h2).select('hu').maybeSingle();
+  if(!upd2) return res.json({ok:false, counted:false, reason:'db-retry-failed'});
+  return res.json({ok:true, counted:true, hu: upd2.hu});
+}
 return res.json({ok:true, counted:true, hu: upd.hu});
   }catch(e){
     console.log('ADD-HU EX:', e);
@@ -800,14 +807,21 @@ function doClaim(room, claimer, action, chowNums, tile, discarder){
   clearClaimTimer(room);
   if(action==='hu'){
     if(!canHuWithTileAndMelds(claimer.hand, claimer.melds, tile)){
-      if(room.mode==='pro' && room.players[room.turnIdx] && room.players[room.turnIdx].name===claimer.name){
-        // HU dari buangan tapi palsu, dan lagi giliran dia -> potong giliran sekarang
-        applyProFakeHuPenalty(room, claimer);
-      } else if(room.mode==='pro'){
-        // HU dari buangan tapi palsu, bukan gilirannya -> potong giliran berikutnya aja, kayak spam klik
+           if(room.mode==='pro'){
+        // HU palsu dari buangan = anggap PASS, jangan bikin game macet
+        // Hukuman -3 detik tetep dicatat buat giliran berikutnya
         room.proPenaltyNext = room.proPenaltyNext || {};
         room.proPenaltyNext[claimer.name] = (room.proPenaltyNext[claimer.name] || 0) + 3;
         io.to(claimer.id).emit('proHuPenalty', { cut: 3, sisa: 0, remaining: 0, ended: false, nextTurn: true });
+        // Lanjutin flow claim kayak orang PASS, biar gak stuck di waitingClaim
+        room.passCount = (room.passCount || 0) + 1;
+        if(room.passCount >= room.passNeeded){
+          resolveClaimTimeout(room, discarder, tile);
+        } else {
+          // Masih ada yang belum PASS, idupin lagi timer claim 7 detik
+          clearClaimTimer(room);
+          room.claimTimer = setTimeout(()=>{ resolveClaimTimeout(room, discarder, tile); }, 7000);
+        }
       }
       return;
     }
