@@ -355,7 +355,8 @@ function publicPlayers(room){
 function clearTurnTimer(room){ if(room.turnTimer){ clearTimeout(room.turnTimer); room.turnTimer=null; } }
 function startTurnTimer(room){
   clearTurnTimer(room);
-  if(!room.turnTimeSec || room.turnTimeSec===0) return; // 0 = tanpa batas
+  let sec = (room.mode==='pro' ? (room.proTurnSec || 15) : room.turnTimeSec);
+  if(!sec || sec===0) return; // 0 = tanpa batas
   if(room.phase!=='playing') return;
   room.turnTimer = setTimeout(()=>{
     if(!room || room.phase!=='playing') return;
@@ -390,7 +391,7 @@ function startTurnTimer(room){
       addLog(room, `⏰ ${cur.name} kehabisan waktu, auto buang ${tileName(tile)}!`);
       handleAfterDiscard(room, cur, tile);
     }
-  }, room.turnTimeSec*1000);
+  }, sec*1000);
 }
 function sendHand(room, p){
   if(!p.isBot){
@@ -637,9 +638,12 @@ function getClaimsFor(room, tile, fromName){
 // ============ GAME FLOW ============
 function startGame(room, turnTimeSec){
   if(turnTimeSec!==undefined && turnTimeSec!==null) room.turnTimeSec = turnTimeSec;
+  if(room.mode==='pro') room.turnTimeSec = 15;
   let tiles = shuffle(createTiles());
   room.wall = tiles;
   room.phase='playing'; room.lastDiscard=null; room.waitingClaim=false; room.currentClaim=null; room.passCount=0; room.passNeeded=0; room.passedNames=[]; clearClaimTimer(room);
+  room.proPenaltyNext = {}; // <-- TAMBAHIN INI. Isinya: { 'NamaPemain': 2, 'NamaLain': 4 } = total detik yang dipotong di giliran berikutnya
+  room.proTurnSec = 15; // <-- TAMBAHIN INI. Waktu giliran yang lagi jalan, bisa berubah kalo kena hukuman
   // FITUR 2: LEMPAR DADU - tentukan dealer dari dadu
   let d1 = 1+Math.floor(Math.random()*6);
   let d2 = 1+Math.floor(Math.random()*6);
@@ -673,6 +677,13 @@ function resolveClaimTimeout(room, discarder, tile){
   if(!room || room.phase!=='playing') return;
   if(!room.waitingClaim) return;
   clearClaimTimer(room);
+  // ===== MODE PRO: gak ada BOT yang claim otomatis. Kalo 7 detik habis, langsung lanjut. =====
+  if(room.mode==='pro'){
+    room.waitingClaim=false; room.lastDiscard=null; room.currentClaim=null;
+    emitToRoom(room, 'proClaimExpired', { from: discarder.name, tile: tile });
+    advanceTurn(room, discarder);
+    return;
+  }
   let discarderIdx = room.players.findIndex(p=>p.name===discarder.name);
   // 1. Bot HU dulu (paling prioritas)
   for(let i=0;i<room.players.length;i++){
@@ -719,8 +730,21 @@ function handleAfterDiscard(room, discarder, tile){
   room.passCount = 0;
   room.passNeeded = humanClaims.length;
   room.passedNames = [];
-  emitToRoom(room, 'claimAvailable', { tile, from:discarder.name, claims: humanClaims, claimTimeSec: room.turnTimeSec||0 });
-  // Cek BOT bisa claim atau tidak
+  emitToRoom(room, 'claimAvailable', { tile, from:discarder.name, claims: humanClaims, claimTimeSec: room.mode==='pro' ? 7 : (room.turnTimeSec||0) });
+  // ===== MODE PRO: gak ada BOT, gak ada jalur cepet BOT, tunggu klik manual 7 detik =====
+  if(room.mode==='pro'){
+    // Kalo gak ada yang bisa claim sama sekali, tetep tunggu 7 detik? ENGGAK.
+    // Kalo gak ada yang bisa claim, langsung lanjut aja, biar game gak lemot.
+    // Tapi tetep kasih kesempatan 1 detik biar tile-nya keliatan dulu di tengah.
+    if(humanClaims.length===0){
+      room.claimTimer = setTimeout(()=>{ resolveClaimTimeout(room, discarder, tile); }, 1000);
+      return;
+    }
+    // Ada yang bisa claim -> tunggu klik manual, 7 detik, dihitung di SERVER.
+    room.claimTimer = setTimeout(()=>{ resolveClaimTimeout(room, discarder, tile); }, 7000);
+    return;
+  }
+  // ===== LATIHAN / TANDING: cara lama, jangan diubah =====
   let discarderIdx = room.players.findIndex(p=>p.name===discarder.name);
   let botCanClaim = false;
   for(let i=0;i<room.players.length;i++){
@@ -729,18 +753,15 @@ function handleAfterDiscard(room, discarder, tile){
     let isNext = ((discarderIdx+1)%room.players.length)===i;
     if(botDecideClaim(b, tile, isNext)){ botCanClaim = true; break; }
   }
-  // JALUR CEPET 1: gak ada manusia bisa claim + gak ada BOT bisa claim -> LANGSUNG next, gak usah nunggu timer giliran
   if(humanClaims.length===0 && !botCanClaim){
     room.waitingClaim=false; room.lastDiscard=null; room.currentClaim=null;
     advanceTurn(room, discarder);
     return;
   }
-  // JALUR CEPET 2: gak ada manusia bisa claim, cuma BOT yang bisa -> BOT langsung claim, gak usah nunggu timer giliran
   if(humanClaims.length==0 && botCanClaim){
     resolveClaimTimeout(room, discarder, tile);
     return;
   }
-  // PONG / CHOW / HU ngikutin waktu giliran. Kalau habis / semua udah PASS, langsung next.
   room.claimTimer = setTimeout(()=>{ resolveClaimTimeout(room, discarder, tile); }, (room.turnTimeSec||15)*1000);
 }
 function doClaim(room, claimer, action, chowNums, tile, discarder){
@@ -814,6 +835,19 @@ function advanceTurn(room, fromPlayer){
   let nextIdx = (fromIdx+1)%room.players.length;
   room.turnIdx = nextIdx;
   let nextP = room.players[nextIdx];
+  // ===== MODE PRO: cek hukuman spam klik buangan, potong di giliran berikutnya =====
+  if(room.mode==='pro'){
+    room.proPenaltyNext = room.proPenaltyNext || {};
+    let potong = room.proPenaltyNext[nextP.name] || 0;
+    if(potong>0){
+      delete room.proPenaltyNext[nextP.name]; // hukuman udah dipake, jangan dipotong 2x
+      room.proTurnSec = Math.max(3, 15 - potong); // minimal 3 detik, biar gak 0 detik, masih bisa main
+      io.to(nextP.id).emit('proPenaltyApplied', { cut: potong, turnSec: room.proTurnSec });
+      addLog(room, `⚠️ ${nextP.name} kena hukuman spam klik, giliran ini cuma ${room.proTurnSec} detik!`);
+    } else {
+      room.proTurnSec = 15; // gak kena hukuman, balik normal 15 detik
+    }
+  }
   emitToRoom(room, 'turnChanged', { turn:nextP.name, wallLeft:room.wall.length });
   startTurnTimer(room);
   if(nextP.isBot){
@@ -1195,7 +1229,31 @@ if(room.players.length<2){ socket.emit('errorMsg', 'Minimal 2 pemain buat mulai!
     room.players.forEach(x=>sendHand(room,x));
     handleAfterDiscard(room, p, tile);
   });
+  // ===== MODE PRO TAHAP 2: klik tile buangan -> cek bisa claim apa engga =====
+  socket.on('proCheckClaim', ({ code })=>{
+    let room = rooms[(code||'').toUpperCase()];
+    if(!room || room.phase!=='playing') return;
+    if(room.mode!=='pro') return;
+    if(!room.waitingClaim || !room.currentClaim) return socket.emit('proClaimDenied', { reason:'expired', msg:'Buangan udah hangus, udah lewat 7 detik!' });
+    let p = room.players.find(x=>x.id===socket.id);
+    if(!p) return;
+    let { tile, from } = room.currentClaim;
+    if(p.name===from) return socket.emit('proClaimDenied', { reason:'own', msg:'Itu buangan lu sendiri, gak bisa diambil!' });
+    // Cek claim KHUSUS buat pemain ini aja, bukan semua orang
+    let all = getClaimsFor(room, tile, from);
+    let mine = all.find(c=>c.name===p.name);
+    if(!mine){
+      // ===== GAK BISA = LANGSUNG KENA HUKUMAN -2 DETIK GILIRAN BERIKUTNYA, 1x aja =====
+      room.proPenaltyNext = room.proPenaltyNext || {};
+      room.proPenaltyNext[p.name] = (room.proPenaltyNext[p.name] || 0) + 2;
+      socket.emit('proClaimDenied', { reason:'cant', msg:'❌ Tile ini gak bisa diambil! Giliran berikutnya -2 detik!', cut: 2, totalCut: room.proPenaltyNext[p.name] });
+      return;
+    }
+    // Bisa -> kirim pilihan ke pemain ini aja, jangan ke semua orang
+    socket.emit('proClaimOptions', { tile, from, claim: mine });
+  });
 
+  socket.on('claim', ({ code, action, chowNums })=>{
   socket.on('claim', ({ code, action, chowNums })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room || room.phase!=='playing') return;
