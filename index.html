@@ -3680,15 +3680,15 @@ socket.on('youHu', async d=>{
   }catch(e){}
   let oldGelar = getGelar(oldHu).name;
   let newHu = oldHu;
+  let j = null;
   try{
     // FIX: kirim playerCount, kalau enggak server selalu nolak (counted:false)
     let r = await fetch('/api/add-hu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, mode: d.mode, playerCount: d.playerCount, huToken: d.huToken})});
     let j = await r.json();
     if(j.ok && j.counted && typeof j.hu === 'number') newHu = j.hu;
   }catch(e){}
-  if(currentUser) currentUser.hu = newHu;
-  if(d.mode === 'tanding') toast('🏆 HU TANDING dicatat!');
-if(d.mode === 'pro') toast('🔥 HU PRO dicatat!');
+   if(currentUser) currentUser.hu = newHu;
+  if(d.mode === 'tanding' || d.mode === 'pro'){ if(j && j.counted) toast(d.mode === 'pro' ? '🔥 HU PRO dicatat!' : '🏆 HU TANDING dicatat!'); else toast('❌ HU gagal dicatat! Login ulang, lalu HU lagi. (' + (j ? (j.reason||'gagal') : 'gagal') + ')'); }
   // Kalau gelar naik, munculin popup animasi, jangan langsung ke gameOver
   if(getGelar(newHu).name !== oldGelar){
     setTimeout(() => showRankUp(newHu), 800);
@@ -4309,19 +4309,26 @@ const ACH_LIST=[
   {id:'kembar',icon:'👯',name:'Kembar',desc:'Di tangan awal dapet 3 pasang yang sama persis',hidden:true},
   {id:'kalah_tipis',icon:'😖',name:'Kalah Tipis',desc:'Kalah padahal udah punya 3 meld',hidden:true},
   {id:'bangkit3',icon:'🔥',name:'Bangkit 3x',desc:'Kalah 3x berturut-turut lalu HU',hidden:true},
+    {id:'bangkit3',icon:'🔥',name:'Bangkit 3x',desc:'Kalah 3x berturut-turut lalu HU',hidden:true},
+  {id:'pro_hu1',icon:'🔥',name:'PRO Pertama',desc:'HU 1x di Mode PRO'},
+  {id:'pro_hu10',icon:'🔥',name:'PRO Jagoan',desc:'HU 10x di Mode PRO'},
+  {id:'pro_hu25',icon:'🔥',name:'PRO Master',desc:'HU 25x di Mode PRO'},
+  {id:'pro_hu50',icon:'🔥',name:'PRO Legenda',desc:'HU 50x di Mode PRO'},
+  {id:'pro_kong1',icon:'💥',name:'Kong PRO Pertama',desc:'KONG 1x di Mode PRO'},
+  {id:'pro_meld100',icon:'🧩',name:'Tukang Set PRO',desc:'Bikin 100 set total (Pong/Chow/Kong) di Mode PRO'},
 ];
 // ===== 5 KATEGORI ACHIEVEMENT = 5 BINTANG =====
 const ACH_CATS=[
-  {id:'teknik', icon:'🀄', name:'Teknik', ids:['first_pong','first_chow','first_kong','pong10','pong20','pong35','pong50','pong100','chow10','chow20','chow35','chow50','chow100','kong10','kong2','meld100','combo_meld']},
-   {id:'menang', icon:'🏆', name:'Menang & Setia', ids:['first_game','first_hu','hu10','hu25','hu50','hu100','fast_hu','clean_win','hu_from_discard','streak3','streak5','streak10','perfect_hu','comeback','last_tile_hu','flower4','unlucky_to_lucky','self_hu5','login7','login30','games10','games100','games500']},
+    {id:'teknik', icon:'🀄', name:'Teknik', ids:['first_pong','first_chow','first_kong','pong10','pong20','pong35','pong50','pong100','chow10','chow20','chow35','chow50','chow100','kong10','kong2','meld100','combo_meld','pro_kong1','pro_meld100']},
+      {id:'menang', icon:'🏆', name:'Menang & Setia', ids:['first_game','first_hu','hu10','hu25','hu50','hu100','fast_hu','clean_win','hu_from_discard','streak3','streak5','streak10','perfect_hu','comeback','last_tile_hu','flower4','unlucky_to_lucky','self_hu5','login7','login30','games10','games100','games500','pro_hu1','pro_hu10','pro_hu25','pro_hu50']},
   {id:'bot', icon:'🤖', name:'Bot', ids:['bot1','bot10','bot20','bot50','bot_streak10','bot_fast']},
   {id:'sosial', icon:'👯', name:'Sosial', ids:['play_friend','friend5','friend10','friend20','friend30','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend']},
   {id:'rahasia', icon:'❓', name:'Rahasia', ids:['ninja','owl','revenge','midnight_hu','silent_killer','first_try','lose10','perfect_defense','maraton5','maraton10','tukang_intip','no_flower_win','kembar','kalah_tipis','bangkit3']},
 ];
 // ===== AVATAR SPESIAL - 1 kategori 100% = 1 avatar kebuka =====
 const SPECIAL_AVATARS=[
-  {cat:'teknik',  file:'/avatars/special-teknik.png',  name:'Master Teknik',  desc:'Teknik 17/17'},
-  {cat:'menang',  file:'/avatars/special-menang.png',  name:'Raja Menang',    desc:'Menang & Setia 23/23'},
+  {cat:'teknik',  file:'/avatars/special-teknik.png',  name:'Master Teknik',  desc:'Teknik 19/19'},
+  {cat:'menang',  file:'/avatars/special-menang.png',  name:'Raja Menang',    desc:'Menang & Setia 27/27'},
   {cat:'bot',     file:'/avatars/special-bot.png',     name:'Pembasmi Bot',   desc:'Bot 6/6'},
   {cat:'sosial',  file:'/avatars/special-sosial.png',  name:'Soulmate Meja',  desc:'Sosial 13/13'},
   {cat:'rahasia', file:'/avatars/special-rahasia.png', name:'Master Rahasia', desc:'Rahasia 15/15'},
@@ -4342,6 +4349,8 @@ const ACH_PROGRESS={
   meld100:['meld_total',100],
   first_game:['games',1], games10:['games',10], games100:['games',100], games500:['games',500],
   first_hu:['hu_total',1], hu10:['hu_total',10], hu25:['hu_total',25], hu50:['hu_total',50], hu100:['hu_total',100],
+  pro_hu1:['hu_pro_total',1], pro_hu10:['hu_pro_total',10], pro_hu25:['hu_pro_total',25], pro_hu50:['hu_pro_total',50],
+  pro_kong1:['kong_pro_total',1], pro_meld100:['meld_pro_total',100],
   hu_from_discard:['hu_discard',5], self_hu5:['self_hu',5],
   streak3:['win_streak',2], streak5:['win_streak',4], streak10:['win_streak',6],
   login7:['loginStreak',7], login30:['loginStreak',30],
@@ -4589,7 +4598,8 @@ function achOnMeld(meld,by){
   }
   if(meld.type==='pong'){ unlockAch('first_pong'); window._achGame.myPongChow++; window._achGame.pongInGame=1; let p=addAchStat('pong_total',1); if(p>=10) unlockAch('pong10'); if(p>=20) unlockAch('pong20'); if(p>=35) unlockAch('pong35'); if(p>=50) unlockAch('pong50'); if(p>=100) unlockAch('pong100'); }
   if(meld.type==='chow'){ unlockAch('first_chow'); window._achGame.myPongChow++; window._achGame.chowInGame=1; let c=addAchStat('chow_total',1); if(c>=10) unlockAch('chow10'); if(c>=20) unlockAch('chow20'); if(c>=35) unlockAch('chow35'); if(c>=50) unlockAch('chow50'); if(c>=100) unlockAch('chow100'); }
-  if(meld.type==='kong'){ unlockAch('first_kong'); window._achGame.kong++; window._achGame.kongInGame=1; if(window._achGame.kong>=2) unlockAch('kong2'); if(addAchStat('kong_total',1)>=10) unlockAch('kong10'); }
+  if(meld.type==='kong'){ unlockAch('first_kong'); window._achGame.kong++; window._achGame.kongInGame=1; if(window._achGame.kong>=2) unlockAch('kong2'); if(addAchStat('kong_total',1)>=10) unlockAch('kong10'); if(lobbyMode==='pro'){ unlockAch('pro_kong1'); addAchStat('kong_pro_total',1); } }
+  if(lobbyMode==='pro' && (meld.type==='pong'||meld.type==='chow'||meld.type==='kong')){ let mp=addAchStat('meld_pro_total',1); if(mp>=100) unlockAch('pro_meld100'); }
   let mt=addAchStat('meld_total',1); if(mt>=100) unlockAch('meld100');
 }
 function achOnWin(d){
@@ -4605,6 +4615,7 @@ function achOnWin(d){
   // RAJA BUNGA - myFlowers itu isi bunga lu, udah ke-update otomatis
   if(myFlowers && myFlowers.length>=4) unlockAch('flower4');
   let hu=addAchStat('hu_total',1); if(hu>=10) unlockAch('hu10'); if(hu>=25) unlockAch('hu25'); if(hu>=50) unlockAch('hu50'); if(hu>=100) unlockAch('hu100');
+  if(d && (d.mode==='pro' || lobbyMode==='pro')){ let hp=addAchStat('hu_pro_total',1); if(hp>=1) unlockAch('pro_hu1'); if(hp>=10) unlockAch('pro_hu10'); if(hp>=25) unlockAch('pro_hu25'); if(hp>=50) unlockAch('pro_hu50'); }
   if(!window._achLastHuFromDiscard){ if(addAchStat('self_hu',1)>=5) unlockAch('self_hu5'); }
   if(window._achGame.pongInGame && window._achGame.chowInGame && window._achGame.kongInGame) unlockAch('combo_meld');
   let ws=addAchStat('win_streak',1); addAchStat('lose_streak',-addAchStat('lose_streak',0)); // reset kalah
