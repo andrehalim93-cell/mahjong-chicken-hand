@@ -621,12 +621,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   width: auto !important;
   max-width: none !important;
 }
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 6px !important;
-  width: auto !important;
-  max-width: none !important;
-}
 .seatPos.left{
   left: 6px !important;
   transform: translateY(-50%) !important;
@@ -2735,7 +2729,7 @@ document.addEventListener('fullscreenchange', ()=>{
   let p = document.querySelector('.fsPill'); if(p){ let t=p.querySelector('.fsTxt'); if(t) t.innerText = isFull ? 'KELUAR' : 'FULL'; let ic=p.querySelector('.fsIcon'); if(ic) ic.innerText = isFull ? '✕' : '⛶'; }
 });
 // ===== LEVEL BOT: hijau = GAMPANG, kuning = NORMAL, merah = SUSAH =====
-function botLevelOf(p){ let l = String((p&&(p.botLevel||p.level))||'easy').toLowerCase(); if(l==='medium') return 'normal'; if(l==='hard'||l==='normal'||l==='easy') return l; return 'easy'; }
+function botLevelOf(p){ let l = String((p&&(p.botLevel||p.level))||'normal').toLowerCase(); if(l==='medium') return 'normal'; if(l==='hard'||l==='normal'||l==='easy') return l; return 'easy'; }
 function botLevelLabel(p){ let l = botLevelOf(p); if(l==='hard') return '😈 SUSAH'; if(l==='normal') return '😐 NORMAL'; return '😊 GAMPANG'; }
 function botLevelClass(p){ return 'bot-' + botLevelOf(p); }
 function botSeatStyle(p){ let l = botLevelOf(p); if(l==='hard') return 'background:linear-gradient(180deg,#b91c1c,#7f1d1d);border-color:#f87171;'; if(l==='normal') return 'background:linear-gradient(180deg,#a16207,#713f12);border-color:#facc15;'; return 'background:linear-gradient(180deg,#15803d,#14532d);border-color:#4ade80;'; }
@@ -4293,7 +4287,6 @@ function claimAchRewardAvatar(){
   closeAchRewardPopup();
   // changeAvatar() udah ngecek isSpecialUnlocked + manggil /api/change-avatar, jadi aman
   changeAvatar(f);
-  toast('✨ Avatar hadiah udah dipake!');
 }
 function addAchStat(k,v){ let d=getAchData(); d.stats[k]=(d.stats[k]||0)+(v||1); saveAchData(d); return d.stats[k]; }
 function openAchModal(){
