@@ -2385,7 +2385,7 @@ function loginSuccess(user, passwordForSave, showProfile, authToken){
   el('authScreen').classList.add('hidden');
   el('homeScreen').classList.remove('hidden');
     toast('Halo '+user.display_name+'!');
-  if(showProfile){ clearTimeout(window._profileTimer); window._profileTimer = setTimeout(()=>{ openProfile(false); }, 900); }
+  if(showProfile){ clearTimeout(window._profileTimer); window._profileTimer = setTimeout(()=>{ showProInfoModal(false); }, 900); }
   refreshRooms();
   registerOnlineFriend();
   try{
@@ -3319,6 +3319,21 @@ function showProRules(code){
 function closeProRules(){
   let m = document.getElementById('proRulesModal');
   if(m) m.style.display = 'none';
+}
+function showProInfoModal(allowEdit){
+  window._proInfoAllowEdit = allowEdit;
+  try{ if(localStorage.getItem('mahjong_pro_info_seen')==='1'){ showProfileAfterPro(); return; } }catch(e){}
+  let m = document.getElementById('proInfoModal');
+  if(m) m.style.display = 'flex';
+}
+function closeProInfoModal(){
+  // kalo centang "Jangan tampilin lagi", disimpen, login berikutnya langsung profil
+  let m = document.getElementById('proInfoModal');
+  if(m) m.style.display = 'none';
+  showProfileAfterPro();
+}
+function showProfileAfterPro(){
+  openProfile(window._proInfoAllowEdit === undefined ? false : window._proInfoAllowEdit);
 }
 let rematchClicked = false;
 function doRematch(){
