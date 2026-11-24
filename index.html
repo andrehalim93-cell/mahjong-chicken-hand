@@ -3320,20 +3320,35 @@ function closeProRules(){
   let m = document.getElementById('proRulesModal');
   if(m) m.style.display = 'none';
 }
-function showProInfoModal(allowEdit){
-  window._proInfoAllowEdit = allowEdit;
-  try{ if(localStorage.getItem('mahjong_pro_info_seen')==='1'){ showProfileAfterPro(); return; } }catch(e){}
+// ===== POPUP INFO MODE PRO HABIS LOGIN =====
+function showProInfoModal(){
+  // Kalo user udah centang "Jangan tampilin lagi", langsung loncat ke profil, jangan tampilin PRO
+  try{ if(localStorage.getItem('mahjong_pro_info_seen')==='1') return showProfileAfterPro(); }catch(e){}
   let m = document.getElementById('proInfoModal');
   if(m) m.style.display = 'flex';
 }
 function closeProInfoModal(){
-  // kalo centang "Jangan tampilin lagi", disimpen, login berikutnya langsung profil
+  try{
+    let cb = document.getElementById('proInfoDontShow');
+    if(cb && cb.checked) localStorage.setItem('mahjong_pro_info_seen','1');
+  }catch(e){}
   let m = document.getElementById('proInfoModal');
   if(m) m.style.display = 'none';
+  // <-- INI KUNCINYA: habis tutup PRO, baru buka PROFIL
   showProfileAfterPro();
 }
 function showProfileAfterPro(){
-  openProfile(window._proInfoAllowEdit === undefined ? false : window._proInfoAllowEdit);
+  // Ganti baris di bawah ini sama fungsi popup profil lu yang lama
+  // Kalo di kode lu fungsi profilnya namanya beda, ganti aja nama ini.
+  // Contoh yang umum:
+  // - kalo profil lu pake: openProfile()
+  // - kalo pake modal: el('profileModal').style.display='flex'
+  // - kalo pake: showProfile()
+  // Pilih 1 aja yang bener, hapus yang lain.
+  if(typeof openProfile === 'function') return openProfile();
+  if(typeof showProfile === 'function') return showProfile();
+  let pm = document.getElementById('profileModal');
+  if(pm) pm.style.display = 'flex';
 }
 let rematchClicked = false;
 function doRematch(){
@@ -4690,6 +4705,29 @@ updateAchLabel();
     <b style="font-size:16px">🖼️ PILIH AVATAR</b>
     <div id="avatarPickerGrid" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px"></div>
     <button class="btn btn-dark" onclick="closeAvatarPicker()" style="margin-top:14px">⬅️ KEMBALI</button>
+  </div>
+</div>
+<!-- ===== POPUP INFO MODE PRO - MUNCUL HABIS LOGIN, SEBELUM POPUP PROFIL ===== -->
+<div id="proInfoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#07130c;border:2px solid #facc15;border-radius:22px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;text-align:center;position:relative">
+    <button onclick="closeProInfoModal()" style="position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;background:#dc2626;color:#fff;border:none;font-size:16px;font-weight:900;cursor:pointer;z-index:2">✕</button>
+    <img src="pro-mode.jpg" alt="Mode Baru PRO" style="width:100%;display:block;border-radius:20px 20px 0 0">
+    <div style="padding:16px">
+      <div style="color:#fde68a;font-size:13px;line-height:1.6;text-align:left">
+        <b>🔥 Buat yang udah jago, cobain Mode PRO:</b><br>
+        • Wajib 4 pemain, gak bisa mulai kalo kurang<br>
+        • Tanpa BOT, tanpa HINT, tanpa popup otomatis<br>
+        • Claim = klik buangan lawan, cuma 7 detik<br>
+        • Tombol HU ada dari awal<br>
+        • HU palsu -3 detik, spam klik -2 detik<br>
+        • Waktu dikunci 15 detik, HU dihitung leaderboard
+      </div>
+      <button class="btn btn-gold" style="margin-top:14px" onclick="closeProInfoModal()">🔥 COBA MODE PRO</button>
+      <button class="btn btn-dark" style="margin-top:8px" onclick="closeProInfoModal()">❌ TUTUP, NANTI AJA</button>
+      <label style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:12px;font-size:12px;color:#a7f3d0;cursor:pointer">
+        <input type="checkbox" id="proInfoDontShow" style="width:16px;height:16px;accent-color:#facc15"> Jangan tampilin lagi
+      </label>
+    </div>
   </div>
 </div>
 </body>
