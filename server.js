@@ -353,11 +353,41 @@ function publicPlayers(room){
   }));
 }
 function clearTurnTimer(room){ if(room.turnTimer){ clearTimeout(room.turnTimer); room.turnTimer=null; } }
+// ===== MODE PRO TAHAP 3: hukuman HU palsu, potong 3 detik giliran SEKARANG =====
+function applyProFakeHuPenalty(room, p){
+  if(!room || room.mode!=='pro') return;
+  // Hitung sisa giliran dari server, bukan dari HP, biar adil
+  let total = room.turnTotalSec || room.proTurnSec || 15;
+  let elapsed = room.turnStartedAt ? Math.floor((Date.now() - room.turnStartedAt) / 1000) : 0;
+  let sisa = Math.max(0, total - elapsed);
+  let sisaBaru = Math.max(0, sisa - 3);
+  clearTurnTimer(room);
+  if(sisaBaru<=0){
+    // Sisa tinggal 3 detik / kurang -> giliran langsung HABIS
+    io.to(p.id).emit('proHuPenalty', { cut: 3, sisa: sisa, remaining: 0, ended: true });
+    addLog(room, `❌ ${p.name} HU palsu! Sisa ${sisa} detik -> langsung HABIS!`);
+    // Biar game gak macet (tangan masih 14 tile), paksa timer 0.1 detik, nanti timeout yang auto-buang 1 tile kayak biasa
+    room.proTurnSec = 15;
+    room.turnTotalSec = 0;
+    room.turnStartedAt = Date.now();
+    room.turnTimer = setTimeout(()=>{ startTurnTimer(room); }, 100);
+    return;
+  }
+  // Masih sisa -> lanjutin giliran dengan sisa yang udah dipotong
+  room.proTurnSec = sisaBaru;
+  room.turnTotalSec = sisaBaru;
+  room.turnStartedAt = Date.now();
+  io.to(p.id).emit('proHuPenalty', { cut: 3, sisa: sisa, remaining: sisaBaru, ended: false });
+  addLog(room, `❌ ${p.name} HU palsu! Giliran dipotong 3 detik, sisa ${sisaBaru} detik!`);
+  startTurnTimer(room);
+}
 function startTurnTimer(room){
   clearTurnTimer(room);
   let sec = (room.mode==='pro' ? (room.proTurnSec || 15) : room.turnTimeSec);
   if(!sec || sec===0) return; // 0 = tanpa batas
   if(room.phase!=='playing') return;
+  room.turnStartedAt = Date.now(); // <-- TAMBAHIN INI
+  room.turnTotalSec = sec; // <-- TAMBAHIN INI
   room.turnTimer = setTimeout(()=>{
     if(!room || room.phase!=='playing') return;
     let cur = room.players[room.turnIdx];
@@ -768,7 +798,18 @@ function doClaim(room, claimer, action, chowNums, tile, discarder){
   clearTurnTimer(room);
   clearClaimTimer(room);
   if(action==='hu'){
-    if(!canHuWithTileAndMelds(claimer.hand, claimer.melds, tile)) return;
+    if(!canHuWithTileAndMelds(claimer.hand, claimer.melds, tile)){
+      if(room.mode==='pro' && room.players[room.turnIdx] && room.players[room.turnIdx].name===claimer.name){
+        // HU dari buangan tapi palsu, dan lagi giliran dia -> potong giliran sekarang
+        applyProFakeHuPenalty(room, claimer);
+      } else if(room.mode==='pro'){
+        // HU dari buangan tapi palsu, bukan gilirannya -> potong giliran berikutnya aja, kayak spam klik
+        room.proPenaltyNext = room.proPenaltyNext || {};
+        room.proPenaltyNext[claimer.name] = (room.proPenaltyNext[claimer.name] || 0) + 3;
+        io.to(claimer.id).emit('proHuPenalty', { cut: 3, sisa: 0, remaining: 0, ended: false, nextTurn: true });
+      }
+      return;
+    }
     endGameWin(room, claimer.name, `${claimer.name} HU!`, tile);
     return;
   }
@@ -1298,8 +1339,14 @@ if(room.players.length<2){ socket.emit('errorMsg', 'Minimal 2 pemain buat mulai!
   if(!p) return;
   if(room.waitingClaim) return;
   if(room.players[room.turnIdx].name!==p.name) return;
-  if(canHuWithMelds(p.hand, p.melds)){ endGameWin(room, p.name, `${p.name} SELF HU!`, null); }
-  else { socket.emit('errorMsg', 'Server bilang BUKAN HU...'); }
+  if(canHuWithMelds(p.hand, p.melds)){ endGameWin(room, p.name, `${p.name} SELF HU!`, null); return; }
+  // ===== MODE PRO: HU palsu = langsung kena -3 detik giliran sekarang =====
+  if(room.mode==='pro'){
+    applyProFakeHuPenalty(room, p);
+    return;
+  }
+  // ===== LATIHAN / TANDING: cara lama, jangan diubah =====
+  socket.emit('errorMsg', 'Server bilang BUKAN HU...');
 });
   // An Kong: 4 sama di tangan sendiri habis draw
 socket.on('anKong', ({ code, tileKey })=>{
