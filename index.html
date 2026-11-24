@@ -4392,8 +4392,10 @@ async function loadAchFromServer(){
     let local = getAchData();
     // Server menang kalo lebih banyak, biar ganti HP tetep ikut. Kalo lokal lebih banyak (main offline), upload lokal ke server
     if((j.ach.unlocked||[]).length >= (local.unlocked||[]).length){
-      localStorage.setItem('mj_ach', JSON.stringify({unlocked:j.ach.unlocked||[], stats:j.ach.stats||{}}));
-    } else {
+  let mergedStats = {...(j.ach.stats||{}), ...(local.stats||{})};
+  for(let k in (j.ach.stats||{})) mergedStats[k] = Math.max(Number(j.ach.stats[k])||0, Number((local.stats||{})[k])||0);
+  localStorage.setItem('mj_ach', JSON.stringify({unlocked:j.ach.unlocked||[], stats:mergedStats}));
+} else {
       syncAchToServer(local);
     }
     updateAchLabel();
