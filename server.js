@@ -483,28 +483,94 @@ function canHuWithTile(hand, tile){ return checkHu([...hand, tile]); }
 function canHuWithTileAndMelds(hand, melds, tile){ return canHuWithMelds([...hand, tile], melds); }
 
 // ============ BOT AI ============
-function botChooseDiscard(bot){
+// ===== BOT LEVEL: biar GAMPANG / NORMAL / SUSAH beneran kerasa beda =====
+function botLevelOf(bot){ let l = String((bot&&bot.level)||'normal').toLowerCase(); if(l==='medium') return 'normal'; if(l==='hard'||l==='easy'||l==='normal') return l; return 'normal'; }
+function botThinkMs(bot, base){ let l = botLevelOf(bot); if(l==='easy') return Math.round(base*1.6); if(l==='hard') return Math.round(base*0.55); return base; }
+// Seberapa berguna 1 tile di tangan. Makin kecil = makin aman dibuang.
+// Pair = berguna, tetangga deket (bisa jadi CHOW) = berguna, honor pair = berguna.
+function botTileUsefulness(hand, tile){
+  let same = hand.filter(t=>t.key===tile.key).length;
+  let score = (same-1)*3;
+  if(tile.type==='suit'){
+    hand.forEach(t=>{
+      if(t.type==='suit' && t.suit===tile.suit && t.key!==tile.key){
+        let d = Math.abs(t.num - tile.num);
+        if(d===1) score += 1.5;
+        else if(d===2) score += 0.7;
+      }
+    });
+  }
+  if((tile.type==='wind'||tile.type==='dragon') && same>=2) score += 2;
+  return score;
+}
+function botChooseDiscard(bot, room){
   let hand = bot.hand.filter(t=>t.type!=='flower');
   if(hand.length===0) return bot.hand[0];
-  let counts={}; hand.forEach(t=>{ counts[t.key]=(counts[t.key]||0)+1; });
-  let singles = hand.filter(t=>counts[t.key]===1);
-  let honor = singles.filter(t=>t.type==='wind'||t.type==='dragon');
-  if(honor.length>0) return honor[Math.floor(Math.random()*honor.length)];
-  let terminal = singles.filter(t=>t.type==='suit' && (t.num===1||t.num===9));
-  if(terminal.length>0) return terminal[Math.floor(Math.random()*terminal.length)];
-  if(singles.length>0) return singles[Math.floor(Math.random()*singles.length)];
-  return hand[Math.floor(Math.random()*hand.length)];
+  let lvl = botLevelOf(bot);
+  // --- GAMPANG: 60% buang NGASAL, sampe pair pun bisa kebuang. Ini yang bikin dia sering kalah. ---
+  if(lvl==='easy' && Math.random()<0.6) return hand[Math.floor(Math.random()*hand.length)];
+  // --- NORMAL: yang lama, buang single honor > terminal > single acak. ---
+  if(lvl==='normal'){
+    let counts={}; hand.forEach(t=>{ counts[t.key]=(counts[t.key]||0)+1; });
+    let singles = hand.filter(t=>counts[t.key]===1);
+    let honor = singles.filter(t=>t.type==='wind'||t.type==='dragon');
+    if(honor.length>0) return honor[Math.floor(Math.random()*honor.length)];
+    let terminal = singles.filter(t=>t.type==='suit' && (t.num===1||t.num===9));
+    if(terminal.length>0) return terminal[Math.floor(Math.random()*terminal.length)];
+    if(singles.length>0) return singles[Math.floor(Math.random()*singles.length)];
+    return hand[Math.floor(Math.random()*hand.length)];
+  }
+  // --- SUSAH: pilih tile yang PALING GAK BERGUNA. Jaga pair, jaga yang bisa jadi CHOW. ---
+  // Kalo nilainya seri, pilih yang udah paling banyak dibuang orang lain = paling aman dibuang.
+  let seen = {};
+  if(room) room.players.forEach(p=>(p.discards||[]).forEach(t=>{ seen[t.key]=(seen[t.key]||0)+1; }));
+  let best = null, bestScore = Infinity, bestSafe = -1;
+  hand.forEach(t=>{
+    let s = botTileUsefulness(hand, t);
+    let safe = seen[t.key]||0;
+    if(s<bestScore || (s===bestScore && safe>bestSafe)){
+      best = t; bestScore = s; bestSafe = safe;
+    }
+  });
+  return best || hand[Math.floor(Math.random()*hand.length)];
 }
 function botDecideClaim(bot, tile, isNext){
   if(tile.type==='flower') return null;
+  let lvl = botLevelOf(bot);
+  // HU: semua level selalu HU. Ini yang bikin game tetep fair, gak ada BOT yang sengaja ngalah.
   if(canHuWithTileAndMelds(bot.hand, bot.melds, tile)) return { action:'hu' };
   let count = bot.hand.filter(t=>t.key===tile.key).length;
-  if(count>=2) return { action:'pong' };
+  // KONG: kalo punya 3, ambil. Dulu gak pernah KONG, sekarang semua level bisa, tapi GAMPANG sering ragu.
+  if(count>=3){
+    if(lvl==='easy' && Math.random()<0.8) return null;
+    return { action:'kong' };
+  }
+  // PONG: GAMPANG sering ragu (65% skip), NORMAL selalu, SUSAH selalu.
+  if(count>=2){
+    if(lvl==='easy' && Math.random()<0.65) return null;
+    return { action:'pong' };
+  }
+  // CHOW: cuma boleh dari pemain sebelumnya, aturan lama tetep dipake.
   if(isNext && tile.type==='suit'){
     let nums = bot.hand.filter(t=>t.type==='suit' && t.suit===tile.suit).map(t=>t.num);
-    if(nums.includes(tile.num-2) && nums.includes(tile.num-1)) return { action:'chow', chowNums:[tile.num-2, tile.num-1] };
-    if(nums.includes(tile.num-1) && nums.includes(tile.num+1)) return { action:'chow', chowNums:[tile.num-1, tile.num+1] };
-    if(nums.includes(tile.num+1) && nums.includes(tile.num+2)) return { action:'chow', chowNums:[tile.num+1, tile.num+2] };
+    let options = [];
+    if(nums.includes(tile.num-2) && nums.includes(tile.num-1)) options.push([tile.num-2, tile.num-1]);
+    if(nums.includes(tile.num-1) && nums.includes(tile.num+1)) options.push([tile.num-1, tile.num+1]);
+    if(nums.includes(tile.num+1) && nums.includes(tile.num+2)) options.push([tile.num+1, tile.num+2]);
+    if(!options.length) return null;
+    // GAMPANG: 75% skip CHOW, biar tangannya lambat jadi set.
+    if(lvl==='easy' && Math.random()<0.75) return null;
+    // SUSAH: jangan CHOW kalo 2 tile-nya itu pair yang lagi dijaga. Cari yang 2-2nya single dulu.
+    if(lvl==='hard'){
+      let counts = {}; bot.hand.forEach(t=>{ counts[t.key]=(counts[t.key]||0)+1; });
+      let clean = options.filter(opt=>opt.every(n=>{
+        let k = bot.hand.find(t=>t.type==='suit' && t.suit===tile.suit && t.num===n);
+        return k && counts[k.key]===1;
+      }));
+      if(clean.length) return { action:'chow', chowNums: clean[Math.floor(Math.random()*clean.length)] };
+      return null;
+    }
+    return { action:'chow', chowNums: options[Math.floor(Math.random()*options.length)] };
   }
   return null;
 }
@@ -518,13 +584,13 @@ function botDrawAndDiscard(room, bot){
       if(drawn){ bot.hand.push(drawn); bot.hand = sortHand(bot.hand); }
   sendHand(room, bot);
   emitToRoom(room, 'playerDrew', { player:bot.name, wallLeft:room.wall.length });
-  setTimeout(()=>botDiscard(room, bot), 900);
+  setTimeout(()=>botDiscard(room, bot), botThinkMs(bot, 900));
 }
 function botDiscard(room, bot){
   if(!room || room.phase!=='playing') return;
   if(room.players[room.turnIdx].name!==bot.name) return;
   if(canHuWithMelds(bot.hand, bot.melds)){ endGameWin(room, bot.name, 'Bot HU! Chicken Hand!'); return; }
-  let tile = botChooseDiscard(bot);
+  let tile = botChooseDiscard(bot, room);
   if(!tile) return;
   let idx = bot.hand.findIndex(t=>t.id===tile.id);
   if(idx>=0) bot.hand.splice(idx,1);
@@ -540,8 +606,8 @@ function maybeBotTurn(room){
   if(room.waitingClaim) return;
   let cur = room.players[room.turnIdx];
   if(!cur || !cur.isBot) return;
-  if(cur.hand.length>=14){ setTimeout(()=>botDiscard(room, cur), 1000); return; }
-  setTimeout(()=>botDrawAndDiscard(room, cur), 1000);
+   if(cur.hand.length>=14){ setTimeout(()=>botDiscard(room, cur), botThinkMs(cur, 1000)); return; }
+  setTimeout(()=>botDrawAndDiscard(room, cur), botThinkMs(cur, 1000));
 }
 function getClaimsFor(room, tile, fromName){
   let claims=[];
@@ -614,7 +680,16 @@ function resolveClaimTimeout(room, discarder, tile){
     if(p.name===discarder.name) continue;
     if(p.isBot && canHuWithTileAndMelds(p.hand, p.melds, tile)){ endGameWin(room, p.name, `${p.name} HU dari buangan ${discarder.name}!`, tile); return; }
   }
-  // 2. Bot PONG
+   // 2. Bot KONG (baru, dulu gak ada, makanya BOT gak pernah KONG)
+  for(let i=0;i<room.players.length;i++){
+    let p=room.players[i];
+    if(p.name===discarder.name) continue;
+    if(p.isBot){
+      let dec=botDecideClaim(p, tile, false);
+      if(dec && dec.action==='kong'){ doClaim(room, p, 'kong', null, tile, discarder); return; }
+    }
+  }
+  // 3. Bot PONG
   for(let i=0;i<room.players.length;i++){
     let p=room.players[i];
     if(p.name===discarder.name) continue;
@@ -623,7 +698,7 @@ function resolveClaimTimeout(room, discarder, tile){
       if(dec && dec.action==='pong'){ doClaim(room, p, 'pong', null, tile, discarder); return; }
     }
   }
-  // 3. Bot CHOW (next player)
+  // 4. Bot CHOW (next player)
   let nextIdx=(discarderIdx+1)%room.players.length;
   let nextP=room.players[nextIdx];
   if(nextP && nextP.isBot){
@@ -729,7 +804,7 @@ if(action==='kong' && room.wall.length>0){
   room.players.forEach(p2=>sendHand(room,p2));
 }
  startTurnTimer(room);
-  if(claimer.isBot){ setTimeout(()=>{ botDiscard(room, claimer); }, 6500); }
+  if(claimer.isBot){ setTimeout(()=>{ botDiscard(room, claimer); }, botThinkMs(claimer, 6500)); }
 }
 function advanceTurn(room, fromPlayer){
   if(!room || room.phase!=='playing') return;
