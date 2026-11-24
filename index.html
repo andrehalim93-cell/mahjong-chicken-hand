@@ -59,6 +59,11 @@ input{font-family:inherit}
 .seat .role{font-size:11px;color:#fde68a;font-weight:700;background:rgba(0,0,0,.35);padding:3px 8px;border-radius:999px}
 .seat.host{border-color:#facc15;box-shadow:0 0 0 2px rgba(250,204,21,.25),0 10px 24px rgba(0,0,0,.4)}
 .seat.me{border-color:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.3)}
+/* BOT LEVEL - latar kursi lobby: hijau = GAMPANG, kuning = NORMAL, merah = SUSAH */
+.seat.bot-easy{background:linear-gradient(180deg,#15803d,#14532d)!important;border-color:#4ade80!important}
+.seat.bot-normal{background:linear-gradient(180deg,#a16207,#713f12)!important;border-color:#facc15!important}
+.seat.bot-hard{background:linear-gradient(180deg,#b91c1c,#7f1d1d)!important;border-color:#f87171!important}
+.seat.bot-easy .role,.seat.bot-normal .role,.seat.bot-hard .role{background:rgba(0,0,0,.45)!important;color:#fff!important}
 .seat .kickBtn{position:absolute;top:6px;right:6px;background:rgba(220,38,38,.9);color:#fff;border:none;width:24px;height:24px;border-radius:50%;font-size:11px;cursor:pointer}
 .botBox{max-width:560px;margin:0 auto;background:rgba(0,0,0,.35);border:1px solid rgba(250,204,21,.3);border-radius:18px;padding:14px}
 .botBox h3{font-size:14px;margin-bottom:8px}
@@ -142,6 +147,11 @@ input{font-family:inherit}
   z-index:5 !important;
 }
 .playerChip.turn{border-color:#facc15;box-shadow:0 0 0 3px rgba(250,204,21,.35),0 0 18px #facc15;color:#fde68a;animation:pulse 1s infinite}
+/* BOT LEVEL - latar chip di game */
+.playerChip.bot-easy{background:linear-gradient(180deg,#15803d,#14532d)!important;border-color:#4ade80!important;color:#fff!important}
+.playerChip.bot-normal{background:linear-gradient(180deg,#a16207,#713f12)!important;border-color:#facc15!important;color:#fff!important}
+.playerChip.bot-hard{background:linear-gradient(180deg,#b91c1c,#7f1d1d)!important;border-color:#f87171!important;color:#fff!important}
+.botLvl{font-size:9px;font-weight:900;padding:2px 6px;border-radius:999px;background:rgba(0,0,0,.45);color:#fff;white-space:nowrap}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 .miniHand{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-top:6px;min-height:28px}
 .miniHand .mTile{width:16px;height:22px;background:#fef3c7;border-radius:4px;border:1px solid #a16207;font-size:9px;color:#422006;display:flex;flex-direction:row;align-items:center;justify-content:center;font-weight:900;box-shadow:0 1px 2px rgba(0,0,0,.3)}
@@ -2724,6 +2734,10 @@ document.addEventListener('fullscreenchange', ()=>{
   document.querySelectorAll('.fsTopBtn').forEach(b=>{ b.classList.toggle('isFull', isFull); let t=b.querySelector('.fsTxt'); if(t) t.innerText = isFull ? 'KELUAR FULL' : 'LAYAR PENUH'; let ic=b.querySelector('.fsIcon'); if(ic) ic.innerText = isFull ? '✕' : '⛶'; });
   let p = document.querySelector('.fsPill'); if(p){ let t=p.querySelector('.fsTxt'); if(t) t.innerText = isFull ? 'KELUAR' : 'FULL'; let ic=p.querySelector('.fsIcon'); if(ic) ic.innerText = isFull ? '✕' : '⛶'; }
 });
+// ===== LEVEL BOT: hijau = GAMPANG, kuning = NORMAL, merah = SUSAH =====
+function botLevelOf(p){ let l = String((p&&(p.botLevel||p.level))||'easy').toLowerCase(); if(l==='medium') return 'normal'; if(l==='hard'||l==='normal'||l==='easy') return l; return 'easy'; }
+function botLevelLabel(p){ let l = botLevelOf(p); if(l==='hard') return '😈 SUSAH'; if(l==='normal') return '😐 NORMAL'; return '😊 GAMPANG'; }
+function botLevelClass(p){ return 'bot-' + botLevelOf(p); }
 function botDisplayName(p){ return esc(p.name); }
 function randomBotName(){ let pool=BOT_NAMES.filter(n=>!usedBotNames.includes(n) && n!==myName); if(pool.length===0) pool=BOT_NAMES.slice(); let n=pool[Math.floor(Math.random()*pool.length)]; usedBotNames.push(n); return n; }
 function setTurnTime(sec, btn){ if(!isHost){ toast('Cuma HOST yang bisa ganti waktu!'); return; } turnTimeSec=sec; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); el('timeInfo').innerText = sec===0 ? 'Saat ini: Tanpa batas' : 'Saat ini: '+sec+' detik per giliran'; el('turnTimer').innerText = sec===0 ? '♾️' : sec+'s'; socket.emit('setTurnTime',{code:myCode, seconds:sec}); }
@@ -3401,7 +3415,7 @@ socket.on('updateLobby', room=>{
     let av = p.avatar;
     if(!av && isMe && currentUser) av = currentUser.avatar;
     if(!av) av = '🧑';
-    wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''}"><div class="ava">${p.isBot?'🤖':avatarHTML(av, 56)}</div><div class="nm">${p.isBot?botDisplayName(p):esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?('🤖 BOT'+(isHost?' • Klik buat hapus':'')):(p.id===room.hostId?'👑 HOST':'Pemain')}</div>${p.isBot && isHost?`<button class="kickBtn" onclick="removeBot('${esc(p.name)}')">✕</button>`:''}</div>`;
+         wrap.innerHTML+=`<div class="seat ${isMe?'me':''} ${!p.isBot && p.id===room.hostId?'host':''} ${p.isBot?botLevelClass(p):''}"><div class="ava">${p.isBot?'🤖':avatarHTML(av, 56)}</div><div class="nm">${p.isBot?botDisplayName(p):esc(p.name)} ${isMe?'(Kamu)':''}</div><div class="role">${p.isBot?(botLevelLabel(p)+(isHost?' • Klik buat hapus':'')):(p.id===room.hostId?'👑 HOST':'Pemain')}</div>${p.isBot && isHost?`<button class="kickBtn" onclick="removeBot('${esc(p.name)}')">✕</button>`:''}</div>`;
   });
   for(let i=room.players.length;i<4;i++) wrap.innerHTML+=`<div class="seat empty" data-invite="1" style="cursor:pointer">💺 Kursi Kosong<br><small>Menunggu pemain...</small><button data-invite="1" style="margin-top:6px;background:#facc15;color:#422006;border:none;border-radius:999px;padding:7px 12px;font-weight:900;font-size:12px;cursor:pointer">👥 UNDANG TEMEN</button></div>`;
   el('startBtn').disabled = room.players.length<2;
@@ -3724,7 +3738,7 @@ applyTileColor(currentTileColor);
     let pos = posMap[idx] || 'top';
     let slot = slots[pos];
     let isTurn = p.name===turn;
-       slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span><small>• ${p.handCount} tile${p.flowers.length?` • 🌸 ${p.flowers.length} bunga`:''}</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill(backTileHTML()).join('')}</div>`;
+               slot.innerHTML = `<div class="playerChip ${isTurn?'turn':''} ${p.isBot?botLevelClass(p):''}" data-name="${esc(p.name)}">${p.isBot?'🤖 ':avatarHTML(p.avatar, 22)}<span class="nm">${botDisplayName(p)}</span>${p.isBot?`<span class="botLvl">${botLevelLabel(p)}</span>`:''}<small>• ${p.handCount} tile${p.flowers.length?` • 🌸 ${p.flowers.length} bunga`:''}</small></div><div class="miniHand" style="display:flex;gap:2px;justify-content:center">${Array(Math.min(p.handCount,13)).fill(backTileHTML()).join('')}</div>`;
     let meldHtml = p.melds.map(m=>`<div class="meld">${[...m.tiles].sort((a,b)=>(a.num||0)-(b.num||0)).map(t=>tileMini(t)).join('')}</div>`).join('');
     if(meldHtml && meldSlots[pos]) meldSlots[pos].innerHTML = meldHtml;
   });
