@@ -4162,7 +4162,7 @@ const SPECIAL_AVATARS=[
   {cat:'teknik',  file:'/avatars/special-teknik.png',  name:'Master Teknik',  desc:'Teknik 17/17'},
   {cat:'menang',  file:'/avatars/special-menang.png',  name:'Raja Menang',    desc:'Menang & Setia 23/23'},
   {cat:'bot',     file:'/avatars/special-bot.png',     name:'Pembasmi Bot',   desc:'Bot 6/6'},
-  {cat:'sosial',  file:'/avatars/special-sosial.png',  name:'Soulmate Meja',  desc:'Sosial 9/9'},
+  {cat:'sosial',  file:'/avatars/special-sosial.png',  name:'Soulmate Meja',  desc:'Sosial 13/13'},
   {cat:'rahasia', file:'/avatars/special-rahasia.png', name:'Master Rahasia', desc:'Rahasia 15/15'},
   {cat:'legend',  file:'/avatars/special-legend.png',  name:'CHICKEN HAND LEGEND', desc:'Semua 5 kategori 100%'},
 ];
@@ -4246,12 +4246,17 @@ function unlockAch(id){
     // Cek apa kategori ini baru aja lengkap -> dapet bintang
   let cat=achCatOf(id);
   let wasDone = cat.ids.filter(x=>x!==id).every(x=>d.unlocked.includes(x));
-    if(wasDone){
+  let _rewardSp = null, _rewardLegend = false;
+  if(wasDone){
     let sp = SPECIAL_AVATARS.find(x=>x.cat===cat.id);
     let allDone = getAchStars().every(c=>c.done);
     let extra = ' — ⭐ Kategori '+cat.name+' LENGKAP! Bintang baru kebuka!';
-    if(sp) extra += ' 🎁 Avatar "'+sp.name+'" KEBUKA! Cek di Profil > Ganti Avatar.';
-    if(allDone) extra += ' ✨✨ SEMUA KATEGORI LENGKAP! Avatar LEGEND KEBUKA!';
+    if(sp){ extra += ' 🎁 Avatar "'+sp.name+'" KEBUKA!'; _rewardSp = sp; }
+    if(allDone){
+      extra += ' ✨✨ SEMUA KATEGORI LENGKAP! Avatar LEGEND KEBUKA!';
+      // Kalo 5-5nya lengkap, yang ditawarin LEGEND, bukan yang kategori terakhir doang
+      let lg = SPECIAL_AVATARS.find(x=>x.cat==='legend'); if(lg){ _rewardSp = lg; _rewardLegend = true; }
+    }
     document.getElementById('achUnlockDesc').innerText = a.desc + extra;
   } else {
     document.getElementById('achUnlockDesc').innerText = a.desc;
@@ -4260,9 +4265,36 @@ function unlockAch(id){
   document.getElementById('achUnlockName').innerText=a.name;
   document.getElementById('achUnlockPopup').style.display='flex';
   if(typeof playMjSound==='function') playMjSound('win');
-  clearTimeout(window._achPopupTimer); window._achPopupTimer=setTimeout(closeAchUnlockPopup,2500);
+  clearTimeout(window._achPopupTimer);
+  window._achPopupTimer=setTimeout(()=>{
+    closeAchUnlockPopup();
+    // Abis popup kecil ilang, baru muncul popup CLAIM yang gede, biar gak numpuk
+    if(_rewardSp) setTimeout(()=>showAchRewardPopup(_rewardSp, _rewardLegend), 300);
+  },2500);
 }
 function closeAchUnlockPopup(){ let p=document.getElementById('achUnlockPopup'); if(p) p.style.display='none'; }
+let _achRewardFile = '';
+function showAchRewardPopup(sp, isLegend){
+  _achRewardFile = sp.file;
+  let kick = document.getElementById('achRewardKicker');
+  let av = document.getElementById('achRewardAvatar');
+  let t = document.getElementById('achRewardTitle');
+  let d = document.getElementById('achRewardDesc');
+  if(kick) kick.innerText = isLegend ? '👑👑 LEGEND! SEMUA KATEGORI 100%!' : '🎁 HADIAH KEBUKA! KATEGORI 100%!';
+  if(av) av.innerHTML = avatarHTML(sp.file, 64);
+  if(t) t.innerText = sp.name;
+  if(d) d.innerText = isLegend ? 'Lu udah tamat 5 kategori! Ini avatar paling langka di game. Pakai sekarang, biar di leaderboard ada 👑 + ✨ LEGEND.' : 'Kategori ' + sp.cat + ' udah 100%! Avatar spesial ini udah kebuka, pakai sekarang?';
+  let p = document.getElementById('achRewardPopup'); if(p) p.style.display='flex';
+  if(typeof playMjSound==='function') playMjSound('win');
+}
+function closeAchRewardPopup(){ let p=document.getElementById('achRewardPopup'); if(p) p.style.display='none'; _achRewardFile=''; }
+function claimAchRewardAvatar(){
+  let f = _achRewardFile; if(!f) return;
+  closeAchRewardPopup();
+  // changeAvatar() udah ngecek isSpecialUnlocked + manggil /api/change-avatar, jadi aman
+  changeAvatar(f);
+  toast('✨ Avatar hadiah udah dipake!');
+}
 function addAchStat(k,v){ let d=getAchData(); d.stats[k]=(d.stats[k]||0)+(v||1); saveAchData(d); return d.stats[k]; }
 function openAchModal(){
   let d=getAchData();
@@ -4495,7 +4527,18 @@ updateAchLabel();
     <button onclick="closeAchUnlockPopup()" style="margin-top:16px;background:#422006;color:#fef3c7;border:none;border-radius:99px;padding:10px 24px;font-weight:900;cursor:pointer;width:100%">MANTAP! 👍</button>
   </div>
 </div>
-<!-- POPUP PILIH AVATAR -->
+<!-- POPUP CLAIM HADIAH AVATAR - 1 kategori 100% / LEGEND -->
+<div id="achRewardPopup" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.8);align-items:center;justify-content:center;padding:16px">
+  <div style="width:100%;max-width:360px;background:linear-gradient(180deg,#fef3c7,#fde68a);border-radius:24px;padding:20px;text-align:center;border:3px solid #f59e0b">
+    <div id="achRewardKicker" style="font-size:12px;font-weight:900;letter-spacing:2px;color:#92400e">🎁 HADIAH KEBUKA!</div>
+    <div id="achRewardAvatar" style="font-size:64px;margin:10px 0">🎁</div>
+    <div id="achRewardTitle" style="font-size:22px;font-weight:900;color:#422006">-</div>
+    <div id="achRewardDesc" style="font-size:13px;color:#78350f;margin-top:6px">-</div>
+    <button onclick="claimAchRewardAvatar()" style="margin-top:16px;background:#422006;color:#fef3c7;border:none;border-radius:99px;padding:12px 24px;font-weight:900;cursor:pointer;width:100%">✨ PAKAI AVATAR INI SEKARANG</button>
+    <button onclick="closeAchRewardPopup()" style="margin-top:8px;background:transparent;color:#78350f;border:2px solid #92400e;border-radius:99px;padding:10px 24px;font-weight:900;cursor:pointer;width:100%">NANTI AJA</button>
+  </div>
+</div>
+  <!-- POPUP PILIH AVATAR -->
 <div id="avatarPickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) closeAvatarPicker()">
   <div class="card" style="max-width:420px;width:100%;margin:0;text-align:center;position:relative;max-height:85vh;overflow:auto">
     <button onclick="closeAvatarPicker()" style="position:absolute;top:8px;right:10px;background:none;border:none;color:#fff;font-size:20px;font-weight:900;cursor:pointer">✕</button>
