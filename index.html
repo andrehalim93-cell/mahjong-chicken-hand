@@ -3499,7 +3499,7 @@ socket.on('gameStarted', d=>{
   playMjSound('dice'); showDiceRoll(d.turn, d.dice);
   setTimeout(()=>{ showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Kamu dealer, buang 1 tile!'); } }, 2100);
   addLog('🀄 Game mulai! '+d.players.length+' pemain. Rebutan HU!');
-  renderSeats(d.players, d.turn); renderCentralPool(d.players);
+  if(lobbyMode==='pro') setTimeout(()=>{ renderProHuButton(); }, 2500);
   updateExitBotBtn();
   achOnGameStart(d.players);
 });
@@ -3551,8 +3551,10 @@ socket.on('yourHand', d=>{
     if(jiaTile) acts.push({type:'jiaKong', tile:jiaTile});
   }
   if(acts.length) renderActionBar(acts);
+  // ===== MODE PRO: tombol HU selalu ada pas giliran lu, walau tangan lu belum HU =====
+  if(lobbyMode==='pro') renderProHuButton();
 });
-socket.on('turnChanged', d=>{ if(d.turn!==myName) lastDrawnTileId=null; if(lobbyMode==='pro'){ let le = el('lastTileEl'); if(le) le.classList.remove('proClaimable'); window._proLastTile = null; } el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); }updateExitBotBtn(); });
+socket.on('turnChanged', d=>{ if(d.turn!==myName) lastDrawnTileId=null; if(lobbyMode==='pro'){ let le = el('lastTileEl'); if(le) le.classList.remove('proClaimable'); window._proLastTile = null; } el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); } if(lobbyMode==='pro') renderProHuButton(); updateExitBotBtn(); });
   socket.on('discarded', d=>{ if(d.from===myName && window._achGame) window._achGame.discards=(window._achGame.discards||0)+1; playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players;
   // ===== MODE PRO: tile buangan bisa diklik buat claim, jangan auto popup =====
   if(lobbyMode==='pro'){
@@ -4060,6 +4062,48 @@ socket.on('proClaimExpired', d=>{
 });
 socket.on('proPenaltyApplied', d=>{
   toast('⚠️ Giliran ini cuma ' + d.turnSec + ' detik! (dipotong ' + d.cut + ' detik karena spam klik)');
+});
+// ===== MODE PRO TAHAP 3: tombol HU dari awal =====
+function proTryHu(){
+  if(lobbyMode!=='pro') return;
+  if(!isMyTurn) return toast('Bukan giliran kamu! Tombol HU cuma bisa pas giliran kamu!');
+  socket.emit('selfHu', { code: myCode });
+}
+function renderProHuButton(){
+  if(lobbyMode!=='pro') return;
+  let bar = el('actionBar');
+  if(!bar) return;
+  // Kalo bukan giliran lu, sembunyiin tombol HU-nya
+  if(!isMyTurn){
+    let old = document.getElementById('proHuBtn');
+    if(old) old.remove();
+    return;
+  }
+  // Kalo udah ada, jangan bikin dobel
+  if(document.getElementById('proHuBtn')) return;
+  let btn = document.createElement('button');
+  btn.id = 'proHuBtn';
+  btn.className = 'aSelfHu';
+  btn.style.cssText = 'font-size:16px;padding:12px 18px;';
+  btn.innerText = '🐔 HU';
+  btn.onclick = proTryHu;
+  bar.appendChild(btn);
+}
+socket.on('proHuPenalty', d=>{
+  if(d.ended){
+    toast('❌ Bukan HU! Sisa giliran langsung HABIS!');
+    turnLeft = 0;
+    el('turnTimer').innerText = '0s';
+    return;
+  }
+  if(d.nextTurn){
+    toast('❌ Bukan HU dari buangan! Giliran berikutnya -3 detik!');
+    return;
+  }
+  toast('❌ Bukan HU! Giliran dikurangi 3 detik! Sisa ' + d.remaining + ' detik!');
+  // Sinkronin timer di HP lu sama server, biar gak beda
+  turnLeft = d.remaining;
+  el('turnTimer').innerText = turnLeft + 's';
 });
 let claimTimeoutInt=null;
 let lastDrawnTileId=null;
