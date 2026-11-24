@@ -294,7 +294,7 @@ let oldAch = oldRow?.ach||{unlocked:[],stats:{}}; if(typeof oldAch==='string'){ 
 let oldSet = new Set(oldAch.unlocked||[]);
 let incoming = Array.isArray(ach.unlocked)?[...new Set(ach.unlocked.filter(x=>KNOWN_ACH.includes(x)))]:[];
 let added = incoming.filter(x=>!oldSet.has(x));
-if(added.length>10) return res.status(403).json({ok:false, error:'Unlock achievement mencurigakan, ditolak!'});
+if(added.length>10) added = added.slice(0,10);
 let merged = [...oldSet, ...added];
 let cleanStats = {}; if(ach.stats&&typeof ach.stats==='object'){ for(let k in ach.stats){ let v=Number(ach.stats[k]); if(Number.isFinite(v)) cleanStats[k]=Math.max(0,Math.min(v,1000000)); } }
 for(let k in (oldAch.stats||{})){ if(cleanStats[k]===undefined) cleanStats[k]=oldAch.stats[k]; }
