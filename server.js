@@ -1252,8 +1252,6 @@ if(room.players.length<2){ socket.emit('errorMsg', 'Minimal 2 pemain buat mulai!
     // Bisa -> kirim pilihan ke pemain ini aja, jangan ke semua orang
     socket.emit('proClaimOptions', { tile, from, claim: mine });
   });
-
-  socket.on('claim', ({ code, action, chowNums })=>{
   socket.on('claim', ({ code, action, chowNums })=>{
     let room = rooms[(code||'').toUpperCase()];
     if(!room || room.phase!=='playing') return;
