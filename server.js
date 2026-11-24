@@ -181,7 +181,7 @@ app.post('/api/forgot-password', async (req, res) => {
 app.post('/api/add-hu', async (req, res)=>{
   try{
     let {id, mode, playerCount, huToken} = req.body || {};
-    if(mode!=='tanding') return res.json({ok:false, counted:false, reason:'latihan'});
+    if(mode!=='tanding' && mode!=='pro') return res.json({ok:false, counted:false, reason:'latihan'});
     if(Number(playerCount)!==4) return res.json({ok:false, counted:false, reason:'need-4-players'});
     if(!id) return res.json({ok:false, counted:false, reason:'no-id'});
     // INI KUNCINYA: tanpa token yang valid, ditolak. Token cuma didapat dari menang beneran.
@@ -863,7 +863,7 @@ function endGameWin(room, winnerName, msg, winningTile){
   }
   // BARU: hitung berapa orang asli (bot gak dihitung) + HU dihitung apa engga
   let realCount = room.players.filter(p=>!p.isBot).length;
-  let counted = (room.mode==='tanding' && realCount===4);
+  let counted = ((room.mode==='tanding' || room.mode==='pro') && realCount===4);
   emitToRoom(room, 'gameOver', { winner:winnerName, message:msg, msg, hand: fullHand, melds: winner?winner.melds:[], winningTile: winningTile||null, mode: room.mode, playerCount: realCount, counted: counted, finalHands: buildFinalHands(room, winnerName, winningTile) });
   addLog(room, '🏆 '+msg);
     if(winner && !winner.isBot){
@@ -986,10 +986,10 @@ io.on('connection', (socket)=>{
   });
   socket.on('createRoom', ({ name, roomName, isPrivate, password, mode, avatar })=>{ let _uid = socket.myUserId||'';
   let code = genCode();
-  let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec:30, turnTimer:null, lastDice:null, passCount:0, passNeeded:0, passedNames:[], claimTimer:null, skin:'hijau',
+  let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec: mode==='pro' ? 15 : 30, turnTimer:null, lastDice:null, passCount:0, passNeeded:0, passedNames:[], claimTimer:null, skin:'hijau',
     roomName: (roomName||'Meja '+(name||'Player')).trim(),
     isPrivate: !!isPrivate, password: isPrivate ? (password||'') : '',
-    mode: mode==='tanding' ? 'tanding' : 'latihan',
+    mode: mode==='tanding' ? 'tanding' : (mode==='pro' ? 'pro' : 'latihan'),
     hostName: (name||'Player').trim()
   };
     let host = { id:socket.id, name:(name||'Player').trim(), isBot:false, isHost:true, hand:[], melds:[], discards:[], flowers:[], level:'', avatar: avatar||'🧑', userId:_uid };
@@ -1037,7 +1037,7 @@ io.on('connection', (socket)=>{
   // FIX BUG 1: pake botName dari client, jangan bikin Bot Gampang lagi
   socket.on('addBot', ({ code, level, botName })=>{
   let room=rooms[(code||'').toUpperCase()]; if(!room) return;
-  if(room.mode==='tanding') return socket.emit('errorMsg','Mode Tanding gak bisa tambah BOT!');
+  if(room.mode==='tanding' || room.mode==='pro') return socket.emit('errorMsg','Mode PRO gak bisa tambah BOT!');
   let me = room.players.find(p=>p.id===socket.id);
   if(!me || !me.isHost){ socket.emit('errorMsg','Cuma HOST yang bisa tambah BOT!'); return; }
   if(room.players.length>=4){ socket.emit('errorMsg', 'Sudah 4 pemain!'); return; }
@@ -1054,7 +1054,7 @@ io.on('connection', (socket)=>{
 socket.on('fillBots', ({ code, level })=>{
   let room = rooms[(code||'').toUpperCase()];
   if(!room) return;
-  if(room.mode==='tanding') return socket.emit('errorMsg','Mode Tanding gak bisa tambah BOT!');
+  if(room.mode==='tanding' || room.mode==='pro') return socket.emit('errorMsg','Mode PRO gak bisa tambah BOT!');
   let me = room.players.find(p=>p.id===socket.id);
   if(me && !me.isHost){ socket.emit('errorMsg','Cuma HOST!'); return; }
   level = (level||'normal').toLowerCase();
@@ -1094,6 +1094,7 @@ socket.on('fillBots', ({ code, level })=>{
     if(!room) return;
     let me = room.players.find(p=>p.id===socket.id);
     if(!me || !me.isHost){ socket.emit('errorMsg','Cuma HOST yang bisa ganti waktu!'); return; }
+    if(room.mode==='pro'){ socket.emit('errorMsg','Mode PRO waktu dikunci 15 detik!'); return; }
     let sec = Number(seconds);
     if(isNaN(sec) || sec<0) sec = 30;
     if(sec!==0 && sec<5) sec = 5; // minimal 5 detik biar gak mustahil
@@ -1123,7 +1124,10 @@ socket.on('fillBots', ({ code, level })=>{
     // FIX 5: cuma HOST yang bisa mulai
     let me = room.players.find(p=>p.id===socket.id);
     if(!me || !me.isHost){ socket.emit('errorMsg','Cuma HOST yang bisa mulai game!'); return; }
-    if(room.players.length<2){ socket.emit('errorMsg', 'Minimal 2 pemain buat mulai! Tambah bot!'); return; }
+    if(room.mode==='pro' && room.players.length<4){ socket.emit('errorMsg','Mode PRO wajib 4 pemain baru bisa mulai!'); return; }
+if(room.mode==='pro' && room.players.some(p=>p.isBot)){ socket.emit('errorMsg','Mode PRO gak boleh ada BOT!'); return; }
+if(room.mode==='pro') turnTimeSec = 15;
+if(room.players.length<2){ socket.emit('errorMsg', 'Minimal 2 pemain buat mulai! Tambah bot!'); return; }
     startGame(room, turnTimeSec);
   });
 
