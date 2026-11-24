@@ -246,7 +246,7 @@ app.post('/api/change-avatar', async (req,res)=>{
         'special-teknik.png': ['first_pong','first_chow','first_kong','pong10','pong20','pong35','pong50','pong100','chow10','chow20','chow35','chow50','chow100','kong10','kong2','meld100','combo_meld'],
         'special-menang.png': ['first_game','first_hu','hu10','hu25','hu50','hu100','fast_hu','clean_win','hu_from_discard','streak3','streak5','streak10','perfect_hu','comeback','last_tile_hu','flower4','flower8','unlucky_to_lucky','self_hu5','login7','login30','games10','games100','games500'],
         'special-bot.png': ['bot1','bot10','bot20','bot50','bot_streak10','bot_fast'],
-        'special-sosial.png': ['play_friend','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend'],
+        'special-sosial.png': ['play_friend','friend5','friend10','friend20','friend30','invite10','invite50','chat100','chat500','emote50','emote200','loyal_friend','best_friend'],
         'special-rahasia.png': ['ninja','owl','revenge','midnight_hu','silent_killer','first_try','lose10','perfect_defense','maraton5','maraton10','tukang_intip','no_flower_win','kembar','kalah_tipis','bangkit3'],
       };
       let file = av.split('/').pop();
