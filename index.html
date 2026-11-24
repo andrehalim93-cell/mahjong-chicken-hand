@@ -3550,10 +3550,7 @@ socket.on('yourHand', d=>{
   }
   if(acts.length) renderActionBar(acts);
 });
-socket.on('turnChanged', d=>{
-  if(d.turn!==myName) lastDrawnTileId=null;
-  if(lobbyMode==='pro'){ let le = el('lastTileEl'); if(le) le.classList.remove('proClaimable'); window._proLastTile = null; }
-  el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); }updateExitBotBtn(); });
+socket.on('turnChanged', d=>{ if(d.turn!==myName) lastDrawnTileId=null; if(lobbyMode==='pro'){ let le = el('lastTileEl'); if(le) le.classList.remove('proClaimable'); window._proLastTile = null; } el('turnName').innerText=d.turn; isMyTurn = (d.turn===myName); el('myStatus').innerText = isMyTurn ? '• 🔥 GILIRAN KAMU! Klik tile buat buang!' : '• Menunggu giliran...'; el('wallLeft').innerText=d.wallLeft; document.querySelectorAll('.playerChip').forEach(c=>{ if(c.dataset.name===d.turn) c.classList.add('turn'); else c.classList.remove('turn'); }); showTurnPopup(d.turn); startTurnTimer(); if(isMyTurn){ playMjSound('turn'); toast('🔥 Giliran kamu! Buang 1 tile!'); }updateExitBotBtn(); });
   socket.on('discarded', d=>{ if(d.from===myName && window._achGame) window._achGame.discards=(window._achGame.discards||0)+1; playMjSound('discard'); el('wallLeft').innerText=d.wallLeft; currentPlayers=d.players;
   // ===== MODE PRO: tile buangan bisa diklik buat claim, jangan auto popup =====
   if(lobbyMode==='pro'){
