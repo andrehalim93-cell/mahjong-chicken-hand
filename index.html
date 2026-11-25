@@ -3684,7 +3684,7 @@ socket.on('youHu', async d=>{
   try{
     // FIX: kirim playerCount, kalau enggak server selalu nolak (counted:false)
     let r = await fetch('/api/add-hu',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id: currentUser.id, mode: d.mode, playerCount: d.playerCount, huToken: d.huToken})});
-    let j = await r.json();
+    j = await r.json();
     if(j.ok && j.counted && typeof j.hu === 'number') newHu = j.hu;
   }catch(e){}
    if(currentUser) currentUser.hu = newHu;
@@ -4309,7 +4309,6 @@ const ACH_LIST=[
   {id:'kembar',icon:'👯',name:'Kembar',desc:'Di tangan awal dapet 3 pasang yang sama persis',hidden:true},
   {id:'kalah_tipis',icon:'😖',name:'Kalah Tipis',desc:'Kalah padahal udah punya 3 meld',hidden:true},
   {id:'bangkit3',icon:'🔥',name:'Bangkit 3x',desc:'Kalah 3x berturut-turut lalu HU',hidden:true},
-    {id:'bangkit3',icon:'🔥',name:'Bangkit 3x',desc:'Kalah 3x berturut-turut lalu HU',hidden:true},
   {id:'pro_hu1',icon:'🔥',name:'PRO Pertama',desc:'HU 1x di Mode PRO'},
   {id:'pro_hu10',icon:'🔥',name:'PRO Jagoan',desc:'HU 10x di Mode PRO'},
   {id:'pro_hu25',icon:'🔥',name:'PRO Master',desc:'HU 25x di Mode PRO'},
