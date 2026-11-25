@@ -3472,7 +3472,7 @@ el('botBox').style.display = (isHost && !isTanding && !isPro) ? 'block' : 'none'
 
   // Header modern baru
   let modeEl = el('roomModeLabel');
-  if(modeEl){ modeEl.innerText = isPro ? '🔥 PRO' : (isTanding ? '🏆 TANDING' : '🎮 LATIHAN'); modeEl.className = 'lobbyMode' + (isPro ? ' pro' : (isTanding ? ' tanding' : '')); }
+  if(modeEl){ modeEl.innerText = isPro ? '👑 PRO' : (isTanding ? '🏆 TANDING' : '🎮 LATIHAN'); modeEl.className = 'lobbyMode' + (isPro ? ' pro' : (isTanding ? ' tanding' : '')); }
   let nameEl = el('lobbyRoomName');
   if(nameEl) nameEl.innerText = '🀄 ' + (room.name || room.roomName || 'Meja Mahjong');
   let countEl = el('lobbyPlayerCount');
@@ -4081,7 +4081,7 @@ function onLastDiscardClick(){
 socket.on('proClaimOptions', d=>{
   // Server bilang BISA claim, baru buka popup. Isinya cuma yang beneran bisa.
   window._lastChows = d.claim.chow || [];
-  el('claimTitle').innerText = '🔥 PRO - Bisa diambil!';
+  el('claimTitle').innerText = '👑 PRO - Bisa diambil!';
   el('claimSub').innerHTML = 'Lu klik tile buangan ' + esc(d.from) + ', ternyata bisa diambil! Mau ambil? <br><b style="color:#dc2626">Sisa waktu 7 detik dari server!</b>';
   openClaimPopup(d.claim, d.tile);
 });
