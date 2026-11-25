@@ -1913,7 +1913,10 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   <input id="nameInput" style="display:none" maxlength="15">
   <div class="homeTop">
     <div id="homeUserLabel" class="homeProfile" onclick="openProfile()" title="Klik buat buka profil"></div>
-    <button onclick="doLogout()" class="homeLogout">🚪 LOGOUT</button>
+    <div style="display:flex;flex-direction:column;gap:6px;flex:none">
+      <button onclick="doLogout()" class="homeLogout">🚪 LOGOUT</button>
+      <button onclick="showProInfoModal(true)" class="homeLogout" style="background:#14532d;color:#bbf7d0">ℹ️ INFORMASI</button>
+    </div>
   </div>
   <div style="max-width:460px;margin:0 auto;text-align:right"><button onclick="toggleFull()" class="fsTopBtn"><span class="fsIcon">⛶</span> <span class="fsTxt">LAYAR PENUH</span></button></div>
   <div class="topLogo"><div class="crown">👑🀄👑</div><h1>MAHJONG<br>CHICKEN HAND</h1><p></p></div>
@@ -3321,9 +3324,11 @@ function closeProRules(){
   if(m) m.style.display = 'none';
 }
 // ===== POPUP INFO MODE PRO HABIS LOGIN =====
-function showProInfoModal(){
+function showProInfoModal(force){
+  // force=true = dari tombol INFORMASI, lewatin cek "Jangan tampilin lagi", jangan buka profil pas ditutup
+  if(force) window._proInfoManual = true;
   // Kalo user udah centang "Jangan tampilin lagi", langsung loncat ke profil, jangan tampilin PRO
-  try{ if(localStorage.getItem('mahjong_pro_info_seen')==='1') return showProfileAfterPro(); }catch(e){}
+  try{ if(!force && localStorage.getItem('mahjong_pro_info_seen')==='1') return showProfileAfterPro(); }catch(e){} 
   let m = document.getElementById('proInfoModal');
   if(m) m.style.display = 'flex';
 }
@@ -3332,8 +3337,10 @@ function closeProInfoModal(){
     let cb = document.getElementById('proInfoDontShow');
     if(cb && cb.checked) localStorage.setItem('mahjong_pro_info_seen','1');
   }catch(e){}
-  let m = document.getElementById('proInfoModal');
+    let m = document.getElementById('proInfoModal');
   if(m) m.style.display = 'none';
+  // Kalo dibuka dari tombol INFORMASI, tutup aja, jangan nyodorin profil
+  if(window._proInfoManual){ window._proInfoManual = false; return; }
   // <-- INI KUNCINYA: habis tutup PRO, baru buka PROFIL
   showProfileAfterPro();
 }
