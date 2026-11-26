@@ -2004,7 +2004,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
       <button class="btn btn-dark" onclick="bolangStoryPrev()" style="flex:1">⬅️ SEBELUMNYA</button>
       <button id="bolangStoryNextBtn" class="btn btn-gold" onclick="bolangStoryNext()" style="flex:1">SELANJUTNYA ➡️</button>
     </div>
-    <button class="btn btn-dark" onclick="bolangCloseStory()" style="margin-top:10px">❌ LEWATI CERITA</button>
   </div>
 </div>
 
@@ -3421,19 +3420,27 @@ let BOLANG_STORY = [
   {
     title:'Perjalanan Dimulai',
     img:'🗺️',
-    text:'Malam itu, Bolang mutusin buat berangkat.<br><br>Dari Desa, ke Jakarta. Dari Jakarta, keliling dunia. Dari Singapura, Malaysia, Jepang, sampe Australia.<br><br>Perjalanan panjang ini baru dimulai. Dan lu yang bakal nemenin dia.'
+    text:'Malam itu, Bolang mutusin buat mencari tahu.<br><br>Apakah di desa ini ada tempat untuk berlatih bermain mahjong.<br><br>Perjalanan panjang ini baru dimulai. Semoga bisa mencapai tujuan yang diinginkan.'
   }
 ];
 function bolangRenderStory(){
   try{
     let s = BOLANG_STORY[bolangStoryIdx];
     if(!s) return;
+    // Nama pemain = nama tampilan lu, bukan "Bolang"
+    // bolangGetPlayerName() udah ada di file lu, ngambil dari currentUser.display_name
+    let nama = bolangGetPlayerName() || 'Bolang';
+    // esc() udah ada di file lu, biar nama yang aneh-aneh gak ngerusak HTML
+    let namaAman = (typeof esc === 'function') ? esc(nama) : nama;
+    // Ganti semua kata "Bolang" di teks cerita jadi nama lu
+    let teks = s.text.split('Bolang').join('<b style="color:#fde68a">' + namaAman + '</b>');
+
     let t = document.getElementById('bolangStoryTitle');
     if(t) t.innerText = s.title;
     let im = document.getElementById('bolangStoryImg');
     if(im) im.innerText = s.img;
     let tx = document.getElementById('bolangStoryText');
-    if(tx) tx.innerHTML = s.text;
+    if(tx) tx.innerHTML = teks;
     let pg = document.getElementById('bolangStoryPage');
     if(pg) pg.innerText = (bolangStoryIdx + 1) + ' / ' + BOLANG_STORY.length;
     let nb = document.getElementById('bolangStoryNextBtn');
@@ -3458,12 +3465,10 @@ function bolangStoryPrev(){
   if(bolangStoryIdx > 0){ bolangStoryIdx--; bolangRenderStory(); }
 }
 function bolangCloseStory(){
+  // FIX: Cerita WAJIB dibaca sampe habis. Kalo belum halaman terakhir, jangan tutup.
+  if(bolangStoryIdx < BOLANG_STORY.length - 1) return;
   let m = document.getElementById('bolangStoryModal');
   if(m) m.style.display = 'none';
-  // Kalo cerita di-skip, tetep kasih modal koin, biar player gak stuck tanpa koin
-  if(!bolangStoryDone && bolangCoins <= 0){
-    bolangShowStartCoin();
-  }
 }
 function bolangShowStartCoin(){
   // Kalo udah pernah ambil, jangan kasih lagi
