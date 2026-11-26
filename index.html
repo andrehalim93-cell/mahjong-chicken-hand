@@ -2420,19 +2420,24 @@ async function doForgot(){
   backToLogin();
 }
 async function doRegister(){
-  let id = el('regId').value.trim().toLowerCase();
-  let password = el('regPass').value;
-  let display_name = el('regName').value.trim();
-  let question = el('regQuestion').value;
-  let answerHash = await hashAnswer(el('regAnswer').value);
-  if(!id || !password || !display_name) return showAuthErr('Isi ID, Password & Nama dulu!');
-  if(!el('regAnswer').value.trim()) return showAuthErr('Isi jawaban pertanyaan keamanan!');
-  let r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password,display_name,gender:regGender,avatar:regAvatar,question,answerHash})});
-  let j = await r.json();
-  if(!j.ok) return showAuthErr(j.error||'Gagal daftar!');
-  if(el('saveLogin')) el('saveLogin').checked = true;
-loginSuccess(j.user, password, true, j.authToken);
-toast('Daftar berhasil! Selamat datang!');
+  try{
+    let id = el('regId').value.trim().toLowerCase();
+    let password = el('regPass').value;
+    let display_name = el('regName').value.trim();
+    let question = el('regQuestion').value;
+    if(!id || !password || !display_name) return showAuthErr('Isi ID, Password & Nama dulu!');
+    if(!el('regAnswer').value.trim()) return showAuthErr('Isi jawaban pertanyaan keamanan!');
+    let answerHash = await hashAnswer(el('regAnswer').value);
+    let r = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,password,display_name,gender:regGender,avatar:regAvatar,question,answerHash})});
+    let j = await r.json();
+    if(!j.ok) return showAuthErr(j.error||'Gagal daftar!');
+    if(el('saveLogin')) el('saveLogin').checked = true;
+    loginSuccess(j.user, password, true, j.authToken);
+    toast('Daftar berhasil! Selamat datang!');
+  }catch(e){
+    console.log('REGISTER GAGAL:', e);
+    showAuthErr('Gak bisa nyambung ke server! Cek internet / Render lagi tidur. (' + e.message + ')');
+  }
 }
 async function doLogin(){
   try{
@@ -3515,19 +3520,11 @@ async function bolangLoadFromDB(){
         bolangStoryDone = !!j.data.story_done;
         bolangHasEntered = !!j.data.has_entered;
       } else {
-        // FIX: ID baru, belum ada baris di DB -> reset total, jangan pake sisa akun lama
+        // ID baru, belum ada baris di DB -> reset total
         bolangCoins = 0;
         bolangStoryDone = false;
         bolangHasEntered = false;
       }
-      bolangLoadedFromDB = true;
-      bolangSaveLocal();
-      bolangUpdateProgress();
-      bolangRenderWorld();
-    }
-      bolangCoins = Number(j.data.coins || 0);
-      bolangStoryDone = !!j.data.story_done;
-      bolangHasEntered = !!j.data.has_entered;
       bolangLoadedFromDB = true;
       bolangSaveLocal();
       bolangUpdateProgress();
