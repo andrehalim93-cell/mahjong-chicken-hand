@@ -3424,6 +3424,22 @@ let BOLANG_STORY = [
     text:'Malam itu, Bolang mutusin buat berangkat.<br><br>Dari Desa, ke Jakarta. Dari Jakarta, keliling dunia. Dari Singapura, Malaysia, Jepang, sampe Australia.<br><br>Perjalanan panjang ini baru dimulai. Dan lu yang bakal nemenin dia.'
   }
 ];
+function bolangRenderStory(){
+  try{
+    let s = BOLANG_STORY[bolangStoryIdx];
+    if(!s) return;
+    let t = document.getElementById('bolangStoryTitle');
+    if(t) t.innerText = s.title;
+    let im = document.getElementById('bolangStoryImg');
+    if(im) im.innerText = s.img;
+    let tx = document.getElementById('bolangStoryText');
+    if(tx) tx.innerHTML = s.text;
+    let pg = document.getElementById('bolangStoryPage');
+    if(pg) pg.innerText = (bolangStoryIdx + 1) + ' / ' + BOLANG_STORY.length;
+    let nb = document.getElementById('bolangStoryNextBtn');
+    if(nb) nb.innerText = (bolangStoryIdx >= BOLANG_STORY.length - 1) ? 'AMBIL MODAL ➡️' : 'SELANJUTNYA ➡️';
+  }catch(e){ console.log('RENDER STORY GAGAL:', e); }
+}
 function bolangOpenStory(){
   // Tutup dunia kalo kebuka, buka cerita
   let w = document.getElementById('bolangWorld');
@@ -3520,7 +3536,6 @@ async function bolangLoadFromDB(){
         bolangStoryDone = !!j.data.story_done;
         bolangHasEntered = !!j.data.has_entered;
       } else {
-        // ID baru, belum ada baris di DB -> reset total
         bolangCoins = 0;
         bolangStoryDone = false;
         bolangHasEntered = false;
