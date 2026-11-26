@@ -1979,7 +1979,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
       <div style="height:14px;background:#1e293b;border-radius:10px;overflow:hidden;margin-top:6px">
         <div id="bolangProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fde68a);transition:width .5s"></div>
       </div>
-      <div id="bolangProgressInfo" style="font-size:12px;color:#94a3b8;margin-top:6px">Checkpoint: 0 / 56 • Koin: 0</div>
+      <div id="bolangProgressInfo" style="font-size:12px;color:#94a3b8;margin-top:6px"></div>
     </div>
 
     <button class="btn btn-dark" onclick="switchHomeTab('lobby')" style="margin-top:18px">⬅️ KEMBALI KE LOBBY</button>
@@ -1995,11 +1995,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
       <button class="btn btn-gold" onclick="bolangConfirmEnter()" style="flex:1">✅ IYA, MASUK</button>
       <button class="btn btn-dark" onclick="bolangCloseWelcome()" style="flex:1">❌ TIDAK</button>
     </div>
-  </div>
-</div>
-    <div style="font-size:12px;color:#94a3b8;margin-top:12px">TAHAP 2: Sampai di sini dulu.<br>Storyteller + modal 10.000 baru di TAHAP 3.</div>
-    <button class="btn btn-gold" onclick="bolangOpenStory()" style="margin-top:14px">📖 LANJUT KE CERITA BOLANG ➡️</button>
-    <button class="btn btn-dark" onclick="bolangCloseMap()" style="margin-top:8px">⬅️ TUTUP PETA</button>
   </div>
 </div>
 <!-- BOLANG - TAHAP 3: STORYTELLER -->
@@ -3310,21 +3305,33 @@ function bolangConfirmEnter(){
   // Tutup popup, jalankan efek keisap
   bolangCloseWelcome();
   let globe = document.getElementById('bolangGlobe');
-  if(!globe) return bolangShowMap();
+  if(!globe) return bolangAfterSuck();
   globe.classList.remove('bolang-suck');
-  // Trick biar animasi bisa jalan ulang kalo diklik 2x
   void globe.offsetWidth;
   globe.classList.add('bolang-suck');
-  // Abis 900ms, balikin globe + munculin peta
   setTimeout(()=>{
     globe.classList.remove('bolang-suck');
-    bolangShowMap();
+    bolangAfterSuck();
   }, 900);
 }
-// ===== BOLANG - TAHAP 3R: MASUK DUNIA FULL SCREEN, TANPA PETA =====
+// ===== BOLANG - FIX: ABIS KEISAP, CEK UDAH PERNAH CERITA BELUM =====
+function bolangAfterSuck(){
+  // Baca ulang dari localStorage, biar gak ketuker
+  try{
+    bolangStoryDone = localStorage.getItem('bolang_story_done') === '1';
+    bolangCoins = Number(localStorage.getItem('bolang_coins')||0) || 0;
+  }catch(e){}
+  // Kalo belum pernah cerita + belum punya koin, langsung buka cerita otomatis
+  if(!bolangStoryDone){
+    bolangOpenStory();
+  } else {
+    // Kalo udah pernah, langsung masuk dunia, gak usah cerita lagi
+    bolangEnterWorld();
+  }
+}
 function bolangShowMap(){
-  // Nama lama dipertahanin biar gak error, tapi isinya sekarang masuk dunia
-  bolangEnterWorld();
+  // Nama lama dipertahanin biar fungsi lama gak error, tapi sekarang larinya ke bolangAfterSuck
+  bolangAfterSuck();
 }
 function bolangEnterWorld(){
   try{ localStorage.setItem('bolang_has_entered','1'); }catch(e){}
@@ -3445,7 +3452,7 @@ function bolangUpdateProgress(){
   let txt = document.getElementById('bolangProgressText');
   if(txt) txt.innerText = '0%';
   let info = document.getElementById('bolangProgressInfo');
-  if(info) info.innerText = 'Checkpoint: 0 / 56 • Koin: ' + bolangCoins.toLocaleString('id-ID');
+  if(info) info.innerText = 'Koin: ' + bolangCoins.toLocaleString('id-ID');
   // Cara aman, gak manggil fungsi lain, cuma update tulisan koin di dunia
 let wc = document.getElementById('bolangWorldCoins');
 if(wc) wc.innerText = bolangCoins.toLocaleString('id-ID');
