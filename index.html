@@ -2453,6 +2453,7 @@ async function doLogin(){
 function loginSuccess(user, passwordForSave, showProfile, authToken){
   if(authToken){ try{ sessionStorage.setItem('mahjong_auth_token', authToken); }catch(e){} }
   currentUser = user;
+    setTimeout(()=>{ bolangLoadFromDB(); }, 500);
   let save = el('saveLogin') ? el('saveLogin').checked : false;
   // Simpen di sessionStorage aja: refresh tetep login, close browser auto logout
   localStorage.removeItem('mahjong_user');
@@ -3332,9 +3333,9 @@ function bolangShowMap(){
   bolangAfterSuck();
 }
 function bolangEnterWorld(){
-  try{ localStorage.setItem('bolang_has_entered','1'); }catch(e){}
-  try{ bolangCoins = Number(localStorage.getItem('bolang_coins')||0) || 0; }catch(e){}
   bolangHasEntered = true;
+  bolangSaveToDB();
+  bolangUpdateProgress();
   bolangUpdateProgress();
   bolangRenderWorld();
   let w = document.getElementById('bolangWorld');
@@ -3430,16 +3431,12 @@ function bolangShowStartCoin(){
 function bolangClaimStartCoin(){
   bolangCoins = 10000;
   bolangStoryDone = true;
-  try{
-    localStorage.setItem('bolang_coins','10000');
-    localStorage.setItem('bolang_story_done','1');
-  }catch(e){}
+  bolangHasEntered = true;
+  bolangSaveToDB();
   let m = document.getElementById('bolangStartCoinModal');
   if(m) m.style.display = 'none';
   bolangUpdateProgress();
-let m2 = document.getElementById('bolangStartCoinModal');
-if(m2) m2.style.display = 'none';
-bolangEnterWorld();
+  bolangEnterWorld();
 }
 function bolangUpdateProgress(){
   let wrap = document.getElementById('bolangProgressWrap');
@@ -3454,6 +3451,52 @@ function bolangUpdateProgress(){
   // Cara aman, gak manggil fungsi lain, cuma update tulisan koin di dunia
 let wc = document.getElementById('bolangWorldCoins');
 if(wc) wc.innerText = bolangCoins.toLocaleString('id-ID');
+}
+// ===== BOLANG - TAHAP 4: SIMPEN / LOAD DARI SERVER (SUPABASE) =====
+let bolangSaving = false;
+let bolangLoadedFromDB = false;
+
+function bolangSaveLocal(){
+  try{
+    localStorage.setItem('bolang_coins', String(bolangCoins));
+    localStorage.setItem('bolang_story_done', bolangStoryDone ? '1' : '0');
+    localStorage.setItem('bolang_has_entered', bolangHasEntered ? '1' : '0');
+  }catch(e){}
+}
+
+async function bolangSaveToDB(){
+  bolangSaveLocal();
+  let uid = (typeof myUserId === 'function') ? myUserId() : '';
+  if(!uid || bolangSaving) return;
+  bolangSaving = true;
+  try{
+    let _tok = '';
+    try{ _tok = sessionStorage.getItem('mahjong_auth_token') || ''; }catch(e){}
+    await fetch('/api/bolang-save', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id: uid, coins: bolangCoins, story_done: bolangStoryDone, has_entered: bolangHasEntered, authToken: _tok })
+    });
+  }catch(e){ console.log('BOLANG SAVE GAGAL:', e); }
+  bolangSaving = false;
+}
+
+async function bolangLoadFromDB(){
+  let uid = (typeof myUserId === 'function') ? myUserId() : '';
+  if(!uid) return;
+  try{
+    let r = await fetch('/api/bolang-get?id=' + encodeURIComponent(uid));
+    let j = await r.json();
+    if(j && j.ok && j.data){
+      bolangCoins = Number(j.data.coins || 0);
+      bolangStoryDone = !!j.data.story_done;
+      bolangHasEntered = !!j.data.has_entered;
+      bolangLoadedFromDB = true;
+      bolangSaveLocal();
+      bolangUpdateProgress();
+      bolangRenderWorld();
+    }
+  }catch(e){ console.log('BOLANG LOAD GAGAL:', e); }
 }
 function switchHomeTab(tab){
   document.querySelectorAll('.homeTabBtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
