@@ -1855,6 +1855,10 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   0%,100%{ transform:translateY(0); }
   50%{ transform:translateY(-8px); }
 }
+/* BOLANG - BACKGROUND PER KOTA, NANTI TINGGAL GANTI CLASS */
+.bolang-bg-desa{ background:linear-gradient(180deg,#7dd3fc 0%,#fef9c3 35%,#86efac 60%,#4ade80 100%) !important; }
+.bolang-bg-jakarta{ background:linear-gradient(180deg,#0ea5e9 0%,#f97316 45%,#1f2937 100%) !important; }
+.bolang-bg-singapura{ background:linear-gradient(180deg,#38bdf8 0%,#a5f3fc 40%,#0f766e 100%) !important; }
 @keyframes bolangJakartaBlink{
   0%,100%{ opacity:1; }
   50%{ opacity:.4; }
@@ -1993,21 +1997,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
     </div>
   </div>
 </div>
-
-<!-- BOLANG - TAHAP 2: PETA DUNIA POLOS, SOROT JAKARTA -->
-<div id="bolangMapModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;align-items:center;justify-content:center;padding:16px">
-  <div style="background:#0f172a;border:2px solid #38bdf8;border-radius:20px;padding:20px;max-width:460px;width:100%;text-align:center">
-    <h2 style="color:#fde68a;margin:0 0 4px">🗺️ PETA DUNIA</h2>
-    <div style="font-size:12px;color:#94a3b8">Posisi kamu sekarang:</div>
-    <div style="font-size:18px;color:#fff;margin:4px 0 12px">📍 <b style="color:#fde68a">JAKARTA</b> - Desa Bolang</div>
-    <!-- PETA POLOS SEMENTARA, NANTI DIGANTI map_dunia.png DI TAHAP 9 -->
-    <div style="background:#1e293b;border-radius:16px;padding:18px;font-size:13px;line-height:2.2;color:#cbd5e1">
-      🌎 AMERIKA &nbsp; 🌍 EROPA &nbsp; 🌏 ASIA<br>
-      <span style="background:#f59e0b;color:#000;padding:4px 10px;border-radius:20px;font-weight:bold">📍 JAKARTA ← KAMU DI SINI</span><br>
-      🗾 JEPANG &nbsp; 🇰🇷 KOREA &nbsp; 🇨🇳 CHINA<br>
-      🇸🇬 SINGAPURA &nbsp; 🇲🇾 MALAYSIA &nbsp; 🇹🇼 TAIWAN<br>
-      🇭🇰 HONGKONG &nbsp; 🇲🇴 MACAU &nbsp; 🇦🇺 AUSTRALIA
-    </div>
     <div style="font-size:12px;color:#94a3b8;margin-top:12px">TAHAP 2: Sampai di sini dulu.<br>Storyteller + modal 10.000 baru di TAHAP 3.</div>
     <button class="btn btn-gold" onclick="bolangOpenStory()" style="margin-top:14px">📖 LANJUT KE CERITA BOLANG ➡️</button>
     <button class="btn btn-dark" onclick="bolangCloseMap()" style="margin-top:8px">⬅️ TUTUP PETA</button>
@@ -3332,18 +3321,40 @@ function bolangConfirmEnter(){
     bolangShowMap();
   }, 900);
 }
+// ===== BOLANG - TAHAP 3R: MASUK DUNIA FULL SCREEN, TANPA PETA =====
 function bolangShowMap(){
-  // Tandain udah pernah masuk, buat TAHAP 4 nanti diambil dari database
-  try{ localStorage.setItem('bolang_has_entered','1'); }catch(e){}
-  bolangHasEntered = true;
-  try{ bolangCoins = Number(localStorage.getItem('bolang_coins')||0) || 0; }catch(e){}
-  bolangUpdateProgress();
-  let m = document.getElementById('bolangMapModal');
-  if(m) m.style.display = 'flex';
+  // Nama lama dipertahanin biar gak error, tapi isinya sekarang masuk dunia
+  bolangEnterWorld();
 }
-function bolangCloseMap(){
-  let m = document.getElementById('bolangMapModal');
-  if(m) m.style.display = 'none';
+function bolangEnterWorld(){
+  try{ localStorage.setItem('bolang_has_entered','1'); }catch(e){}
+  try{ bolangCoins = Number(localStorage.getItem('bolang_coins')||0) || 0; }catch(e){}
+  bolangHasEntered = true;
+  bolangUpdateProgress();
+  bolangRenderWorld();
+  let w = document.getElementById('bolangWorld');
+  if(w) w.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function bolangOpenBalaiDesa(){
+  // TAHAP 3R: belum ada meja dulu, baru placeholder
+  // TAHAP 5 baru diisi meja Mahjong lawan 3 bot Gampang
+  alert('BALAI DESA - TAHAP 3R: Tombolnya udah nyambung. Meja Mahjong-nya baru dibikin di TAHAP 5.');
+}
+function bolangExitWorld(){
+  let w = document.getElementById('bolangWorld');
+  if(w) w.style.display = 'none';
+  document.body.style.overflow = '';
+  // Balik ke tab Bolang, bukan ke lobby, biar alurnya enak
+  if(typeof switchHomeTab === 'function') switchHomeTab('bolang');
+}
+function bolangRenderWorld(){
+  let c = document.getElementById('bolangWorldCoins'); if(c) c.innerText = bolangCoins.toLocaleString('id-ID');
+  let bar = document.getElementById('bolangWorldProgressBar'); if(bar) bar.style.width = '0%';
+  let txt = document.getElementById('bolangWorldProgressText'); if(txt) txt.innerText = '0%';
+  // TAHAP 3R: masih Desa, nanti di TAHAP 6 diganti per kota
+  let city = document.getElementById('bolangWorldCity'); if(city) city.innerText = 'DESA';
+  let bet = document.getElementById('bolangWorldBet'); if(bet) bet.innerText = '1.000 / Meja';
 }
 // ===== BOLANG - TAHAP 3: STORYTELLER + MODAL 10.000 =====
 let bolangStoryIdx = 0;
@@ -3381,20 +3392,13 @@ let BOLANG_STORY = [
   }
 ];
 function bolangOpenStory(){
-  bolangCloseMap();
+  // Tutup dunia kalo kebuka, buka cerita
+  let w = document.getElementById('bolangWorld');
+  if(w) w.style.display = 'none';
   bolangStoryIdx = 0;
   bolangRenderStory();
   let m = document.getElementById('bolangStoryModal');
   if(m) m.style.display = 'flex';
-}
-function bolangRenderStory(){
-  let s = BOLANG_STORY[bolangStoryIdx];
-  let t = document.getElementById('bolangStoryTitle'); if(t) t.innerText = s.title;
-  let im = document.getElementById('bolangStoryImg'); if(im) im.innerHTML = s.img;
-  let tx = document.getElementById('bolangStoryText'); if(tx) tx.innerHTML = s.text;
-  let pg = document.getElementById('bolangStoryPage'); if(pg) pg.innerText = (bolangStoryIdx+1)+' / '+BOLANG_STORY.length;
-  let btn = document.getElementById('bolangStoryNextBtn');
-  if(btn) btn.innerText = bolangStoryIdx === BOLANG_STORY.length-1 ? '✅ SELESAI CERITA' : 'SELANJUTNYA ➡️';
 }
 function bolangStoryNext(){
   if(bolangStoryIdx < BOLANG_STORY.length-1){ bolangStoryIdx++; bolangRenderStory(); return; }
@@ -3428,7 +3432,9 @@ function bolangClaimStartCoin(){
   let m = document.getElementById('bolangStartCoinModal');
   if(m) m.style.display = 'none';
   bolangUpdateProgress();
-  alert('Selamat! Kamu dapet 10.000 koin Bolang. Cek bar progress di tab Bolang!');
+let m2 = document.getElementById('bolangStartCoinModal');
+if(m2) m2.style.display = 'none';
+bolangEnterWorld();
 }
 function bolangUpdateProgress(){
   let wrap = document.getElementById('bolangProgressWrap');
@@ -3440,6 +3446,9 @@ function bolangUpdateProgress(){
   if(txt) txt.innerText = '0%';
   let info = document.getElementById('bolangProgressInfo');
   if(info) info.innerText = 'Checkpoint: 0 / 56 • Koin: ' + bolangCoins.toLocaleString('id-ID');
+  // Cara aman, gak manggil fungsi lain, cuma update tulisan koin di dunia
+let wc = document.getElementById('bolangWorldCoins');
+if(wc) wc.innerText = bolangCoins.toLocaleString('id-ID');
 }
 function switchHomeTab(tab){
   document.querySelectorAll('.homeTabBtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
@@ -4990,6 +4999,59 @@ updateAchLabel();
       <label style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:12px;font-size:12px;color:#a7f3d0;cursor:pointer">
         <input type="checkbox" id="proInfoDontShow" style="width:16px;height:16px;accent-color:#facc15"> Jangan tampilin lagi
       </label>
+    </div>
+  </div>
+</div>
+<!-- BOLANG - TAHAP 3R: DUNIA BOLANG FULL SCREEN, BERSIH, BEDA DARI HOME -->
+<div id="bolangWorld" style="display:none;position:fixed;inset:0;z-index:10002;overflow-y:auto">
+  <!-- BACKGROUND DESA - NANTI DIGANTI PER KOTA DI TAHAP 6 -->
+  <div id="bolangWorldBg" style="min-height:100vh;background:linear-gradient(180deg,#7dd3fc 0%,#fef9c3 35%,#86efac 60%,#4ade80 100%);padding:14px;padding-bottom:30px">
+
+    <!-- HEADER: KOIN + KELUAR -->
+    <div style="display:flex;justify-content:space-between;align-items:center;max-width:520px;margin:0 auto">
+      <div style="background:rgba(0,0,0,.55);color:#fff;padding:8px 14px;border-radius:20px;font-weight:bold;font-size:14px">
+        🪙 <span id="bolangWorldCoins">0</span> KOIN
+      </div>
+      <button onclick="bolangExitWorld()" style="background:#dc2626;color:#fff;border:none;padding:10px 14px;border-radius:14px;font-weight:bold;cursor:pointer">⬅️ KELUAR</button>
+    </div>
+
+    <!-- JUDUL KOTA -->
+    <div style="text-align:center;margin-top:14px">
+      <div style="font-size:12px;color:#14532d;letter-spacing:2px">📍 POSISI SAAT INI</div>
+      <h1 id="bolangWorldCity" style="margin:2px 0;color:#14532d;font-size:30px">DESA</h1>
+      <div id="bolangWorldDesc" style="font-size:13px;color:#1f2937;max-width:420px;margin:0 auto;line-height:1.5">Sebuah desa kecil yang tenang. Dari sinilah perjalanan Bolang dimulai.</div>
+    </div>
+
+    <!-- AVATAR GEDE - NANTI DIGANTI PNG 3D -->
+    <div style="text-align:center;margin:16px 0 6px">
+      <!-- NANTI: ganti src-nya jadi assets/bolang/avatars/bolang_desa.png -->
+      <img id="bolangWorldAvatar" src="assets/bolang/avatars/bolang_desa.png" onerror="this.style.display='none';document.getElementById('bolangWorldAvatarFallback').style.display='block'" style="width:170px;height:170px;object-fit:cover;border-radius:50%;border:5px solid #f59e0b;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.35)">
+      <div id="bolangWorldAvatarFallback" style="display:none;font-size:140px;animation:bolangStoryFloat 2s ease-in-out infinite">🧑‍🌾</div>
+      <div style="margin-top:6px;font-weight:bold;color:#14532d">BOLANG</div>
+      <div id="bolangWorldTitle" style="font-size:12px;color:#92400e;background:#fde68a;display:inline-block;padding:3px 10px;border-radius:20px">🌱 PEMULA - Belum ada Title</div>
+    </div>
+
+    <!-- INFO MEJA -->
+    <div style="max-width:460px;margin:14px auto;background:rgba(255,255,255,.9);border-radius:16px;padding:12px;display:flex;justify-content:space-between;font-size:13px">
+      <div>🀄 <b>Taruhan</b><br><span id="bolangWorldBet">1.000 / Meja</span></div>
+      <div style="text-align:right">🏆 <b>Menang dapet</b><br><span style="color:#059669;font-weight:bold">+ 4.000 Koin</span></div>
+    </div>
+
+    <!-- BALAI DESA - BISA DIKLIK -->
+    <div style="max-width:460px;margin:0 auto;text-align:center">
+      <button onclick="bolangOpenBalaiDesa()" style="width:100%;background:linear-gradient(180deg,#92400e,#78350f);border:3px solid #fde68a;border-radius:20px;padding:18px;color:#fff;cursor:pointer">
+        <div style="font-size:60px">🏛️</div>
+        <div style="font-size:20px;font-weight:bold">BALAI DESA</div>
+        <div style="font-size:12px;opacity:.9">Klik buat main Mahjong di sini</div>
+        <div style="margin-top:10px;background:#f59e0b;color:#000;display:inline-block;padding:8px 16px;border-radius:20px;font-weight:bold">▶️ MASUK BALAI DESA</div>
+      </button>
+      <div id="bolangWorldShopInfo" style="margin-top:10px;font-size:12px;color:#14532d;background:rgba(255,255,255,.85);padding:10px;border-radius:12px">🚌 Syarat ke Jakarta: Beli tiket bus 50.000 + sisa uang minimal 50.000<br>Shop + tiket baru dibuka di TAHAP 6</div>
+    </div>
+
+    <!-- PROGRESS DI DUNIA -->
+    <div style="max-width:460px;margin:14px auto;background:rgba(0,0,0,.55);color:#fff;border-radius:14px;padding:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span>🗺️ Bolang Progress</span><span id="bolangWorldProgressText">0%</span></div>
+      <div style="height:12px;background:#1e293b;border-radius:10px;overflow:hidden;margin-top:6px"><div id="bolangWorldProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fde68a)"></div></div>
     </div>
   </div>
 </div>
