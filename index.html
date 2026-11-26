@@ -3488,20 +3488,22 @@ function bolangOpenBalaiDesa(){
   let c = document.getElementById('bolangBalaiCoins');
   if(c) c.innerText = bolangCoins.toLocaleString('id-ID');
   let w = document.getElementById('bolangBalaiWarn');
-  if(w) w.style.display = (bolangCoins < BOLANG_BET) ? 'block' : 'none';
+  if(w) w.style.display = (bolangCoins < BOLANG_BET()) ? 'block' : 'none';
+  let bb = document.getElementById('bolangBalaiBet'); if(bb) bb.innerText = '-' + BOLANG_BET().toLocaleString('id-ID');
+  let bw = document.getElementById('bolangBalaiWin'); if(bw) bw.innerText = '+' + BOLANG_WIN().toLocaleString('id-ID');
+  let br = document.getElementById('bolangBalaiRefund'); if(br) br.innerText = 'Refund ' + BOLANG_BET().toLocaleString('id-ID');
+  let bm = document.getElementById('bolangBalaiMasukBtn'); if(bm) bm.innerText = '✅ MASUK - BAYAR ' + BOLANG_BET().toLocaleString('id-ID');
   if(m) m.style.display = 'flex';
 }
 function bolangCloseBalai(){
   let m = document.getElementById('bolangBalaiModal');
-  let bb = document.getElementById('bolangBalaiBet'); if(bb) bb.innerText = '-' + bolangBet().toLocaleString('id-ID');
-  let bw = document.getElementById('bolangBalaiWin'); if(bw) bw.innerText = '+' + bolangWin().toLocaleString('id-ID');
   if(m) m.style.display = 'none';
 }
 function bolangConfirmBalai(){
-  if(bolangCoins < BOLANG_BET){ toast('❌ Koin kurang! Butuh 1.000 buat masuk Balai Desa.'); return; }
+  if(bolangCoins < BOLANG_BET()){ toast('❌ Koin kurang! Butuh ' + BOLANG_BET().toLocaleString('id-ID') + ' buat masuk ' + bolangFloorObj().name + '.'); return; }
   bolangCloseBalai();
   // Potong taruhan di awal, biar gak bisa kabur pas mau kalah
-  bolangCoins -= BOLANG_BET;
+  bolangCoins -= BOLANG_BET();
   bolangInGame = true;
   bolangSettled = false;
   bolangAutoStarted = false;
@@ -3509,17 +3511,24 @@ function bolangConfirmBalai(){
   bolangSaveToDB();
   bolangUpdateProgress();
   bolangRenderWorld();
-  // Sembunyiin dunia Bolang, buka lobby lewat sistem meja yang udah ada
   let w = document.getElementById('bolangWorld');
   if(w) w.style.display = 'none';
   document.body.style.overflow = '';
   myName = currentUser.display_name;
-socket.emit('createRoom', { name: myName, roomName: (bolangLevelObj().city + ' - ' + bolangFloorObj().name), ...
-...
-// 6A: bot ngikutin tabel, bukan selalu easy. Urutannya sesuai tabel.
-let _bots = bolangBots(); let _bi = 0;
-...
-try{ addBot(_bots[_bi % _bots.length]); _bi++; }catch(e){}
+  socket.emit('createRoom', { name: myName, roomName: (bolangLevelObj().city + ' - ' + bolangFloorObj().name), mode: 'latihan', isPrivate: true, password: '', avatar: currentUser ? currentUser.avatar : '🧑' });
+  toast('🏛️ Masuk ' + bolangFloorObj().name + '! Taruhan ' + BOLANG_BET().toLocaleString('id-ID') + ' dipotong.');
+  try{ clearInterval(bolangAutoTimer); }catch(e){}
+  // 6A: bot ngikutin tabel, urutannya sesuai tabel
+  let _bots = bolangBots();
+  let _bi = 0;
+  bolangAutoTimer = setInterval(()=>{
+    if(!bolangInGame){ clearInterval(bolangAutoTimer); return; }
+    if(!myCode) return;
+    let n = (currentPlayers || []).length;
+    if(n < 4){
+      if(Date.now() - bolangLastBotAdd > 1000){
+        bolangLastBotAdd = Date.now();
+        try{ addBot(_bots[_bi % _bots.length]); _bi++; }catch(e){}
       }
       return;
     }
@@ -3530,21 +3539,19 @@ try{ addBot(_bots[_bi % _bots.length]); _bi++; }catch(e){}
     }
   }, 500);
 }
-// Dipanggil di paling atas socket.on('gameOver') - lihat FIX 3
 function bolangSettleGame(d){
   if(!bolangInGame || bolangSettled) return;
   bolangSettled = true;
   try{ clearInterval(bolangAutoTimer); }catch(e){}
   if(!d || !d.winner){
-    // Seri: refund
-    bolangCoins += BOLANG_BET;
-    toast('😐 SERI! Taruhan 1.000 dibalikin.');
-  } else if(d.winner === myName){
-    bolangCoins += BOLANG_WIN;
-    toast('🏆 MENANG! +4.000 KOIN! Net +3.000.');
-  } else {
-    toast('😅 Kalah. Taruhan 1.000 hangus.');
-  }
+  bolangCoins += BOLANG_BET();
+  toast('😐 SERI! Taruhan ' + BOLANG_BET().toLocaleString('id-ID') + ' dibalikin.');
+} else if(d.winner === myName){
+  bolangCoins += BOLANG_WIN();
+  toast('🏆 MENANG! +' + BOLANG_WIN().toLocaleString('id-ID') + ' KOIN! Net +' + (BOLANG_WIN() - BOLANG_BET()).toLocaleString('id-ID') + '.');
+} else {
+  toast('😅 Kalah. Taruhan ' + BOLANG_BET().toLocaleString('id-ID') + ' hangus.');
+}
   bolangSaveToDB();
   bolangUpdateProgress();
   bolangRenderWorld();
@@ -3588,8 +3595,8 @@ function bolangRenderWorld(){
   let bar = document.getElementById('bolangWorldProgressBar'); if(bar) bar.style.width = '0%';
   let txt = document.getElementById('bolangWorldProgressText'); if(txt) txt.innerText = '0%';
   // TAHAP 3R: masih Desa, nanti di TAHAP 6 diganti per kota
-  let city = document.getElementById('bolangWorldCity'); if(city) city.innerText = 'DESA';
-  let bet = document.getElementById('bolangWorldBet'); if(bet) bet.innerText = '1.000 / Meja';
+let city = document.getElementById('bolangWorldCity'); if(city) city.innerText = bolangLevelObj().city + (bolangLevel() === 0 ? '' : ' - ' + bolangFloorObj().name);
+let bet = document.getElementById('bolangWorldBet'); if(bet) bet.innerText = BOLANG_BET().toLocaleString('id-ID') + ' / Meja';
 }
 // ===== BOLANG - TAHAP 3: STORYTELLER + MODAL 10.000 =====
 let bolangStoryIdx = 0;
@@ -4332,7 +4339,7 @@ function showWinModal(d){
     if(bolangInGame){
       let rb = document.getElementById('rematchBtn');
       if(rb){
-        rb.innerText = '🔁 MAIN LAGI - BAYAR 1.000';
+        rb.innerText = '🔁 MAIN LAGI - BAYAR ' + BOLANG_BET().toLocaleString('id-ID');
         rb.style.opacity = '1';
         rb.onclick = function(){ bolangRematch(); };
       }
@@ -5386,12 +5393,12 @@ updateAchLabel();
     <div style="background:rgba(0,0,0,.4);border-radius:14px;padding:12px;margin:14px 0;font-size:13px;color:#fff;line-height:1.7">
       🪙 Koin lu: <b id="bolangBalaiCoins">0</b><br>
      🎟️ Taruhan: <b id="bolangBalaiBet">-1.000</b>
-     🏆 Menang: <b id="bolangBalaiWin">+4.000</b>
-      😐 Seri: <b>Refund 1.000</b>
+🏆 Menang: <b id="bolangBalaiWin">+4.000</b>
+😐 Seri: <b id="bolangBalaiRefund">Refund 1.000</b>
     </div>
-    <div id="bolangBalaiWarn" style="display:none;color:#fca5a5;font-size:12px;margin-bottom:10px">❌ Koin lu kurang dari 1.000! Menangin dulu / tunggu modal lain.</div>
+    <div id="bolangBalaiWarn" style="display:none;color:#fca5a5;font-size:12px;margin-bottom:10px">❌ Koin lu kurang! Menangin dulu / tunggu modal lain.</div>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-gold" onclick="bolangConfirmBalai()" style="flex:1">✅ MASUK - BAYAR 1.000</button>
+      <button id="bolangBalaiMasukBtn" class="btn btn-gold" onclick="bolangConfirmBalai()" style="flex:1">✅ MASUK - BAYAR 1.000</button>
       <button class="btn btn-dark" onclick="bolangCloseBalai()" style="flex:1">❌ BATAL</button>
     </div>
   </div>
