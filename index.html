@@ -1843,6 +1843,18 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   from{ transform:rotate(0deg); }
   to{ transform:rotate(360deg); }
 }
+@keyframes bolangSuck{
+  0%{ transform:scale(1) rotate(0deg); opacity:1; }
+  50%{ transform:scale(1.4) rotate(180deg); opacity:.8; }
+  100%{ transform:scale(0) rotate(720deg); opacity:0; }
+}
+.bolang-suck{
+  animation:bolangSuck .9s ease-in forwards !important;
+}
+@keyframes bolangJakartaBlink{
+  0%,100%{ opacity:1; }
+  50%{ opacity:.4; }
+}
 </style>
 </head>
 <body>
@@ -1964,6 +1976,38 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 
     <button class="btn btn-dark" onclick="switchHomeTab('lobby')" style="margin-top:18px">⬅️ KEMBALI KE LOBBY</button>
   </div>
+  <!-- BOLANG - TAHAP 2: POPUP MASUK + PETA DUNIA -->
+<div id="bolangWelcomeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0f172a;border:2px solid #f59e0b;border-radius:20px;padding:20px;max-width:420px;width:100%;text-align:center">
+    <div style="font-size:48px">🌍</div>
+    <h2 style="color:#fde68a;margin:8px 0">Selamat datang <span id="bolangWelcomeName">Bolang</span><br>di dunia Bolang</h2>
+    <p style="color:#cbd5e1;font-size:13px;line-height:1.6">Kumpulin koin, keliling dunia,<br>jadi <b style="color:#fde68a">RAJA MAHJONG</b></p>
+    <div style="font-size:13px;color:#fff;margin:14px 0">Masuk ke dunia Bolang?</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold" onclick="bolangConfirmEnter()" style="flex:1">✅ IYA, MASUK</button>
+      <button class="btn btn-dark" onclick="bolangCloseWelcome()" style="flex:1">❌ TIDAK</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOLANG - TAHAP 2: PETA DUNIA POLOS, SOROT JAKARTA -->
+<div id="bolangMapModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0f172a;border:2px solid #38bdf8;border-radius:20px;padding:20px;max-width:460px;width:100%;text-align:center">
+    <h2 style="color:#fde68a;margin:0 0 4px">🗺️ PETA DUNIA</h2>
+    <div style="font-size:12px;color:#94a3b8">Posisi kamu sekarang:</div>
+    <div style="font-size:18px;color:#fff;margin:4px 0 12px">📍 <b style="color:#fde68a">JAKARTA</b> - Desa Bolang</div>
+    <!-- PETA POLOS SEMENTARA, NANTI DIGANTI map_dunia.png DI TAHAP 9 -->
+    <div style="background:#1e293b;border-radius:16px;padding:18px;font-size:13px;line-height:2.2;color:#cbd5e1">
+      🌎 AMERIKA &nbsp; 🌍 EROPA &nbsp; 🌏 ASIA<br>
+      <span style="background:#f59e0b;color:#000;padding:4px 10px;border-radius:20px;font-weight:bold">📍 JAKARTA ← KAMU DI SINI</span><br>
+      🗾 JEPANG &nbsp; 🇰🇷 KOREA &nbsp; 🇨🇳 CHINA<br>
+      🇸🇬 SINGAPURA &nbsp; 🇲🇾 MALAYSIA &nbsp; 🇹🇼 TAIWAN<br>
+      🇭🇰 HONGKONG &nbsp; 🇲🇴 MACAU &nbsp; 🇦🇺 AUSTRALIA
+    </div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:12px">TAHAP 2: Sampai di sini dulu.<br>Storyteller + modal 10.000 baru di TAHAP 3.</div>
+    <button class="btn btn-dark" onclick="bolangCloseMap()" style="margin-top:14px">⬅️ TUTUP PETA</button>
+  </div>
+</div>
 </div>
     <div id="tab-friends" class="homeTabPanel hidden">
     <div class="card">
@@ -3218,10 +3262,57 @@ function renderPublicRooms(list){
 }
 // ===== BOLANG - TAHAP 1: TAB + GLOBE DOANG, BELUM ADA GAME =====
 let bolangHasEntered = false; // nanti di TAHAP 4 diganti jadi ambil dari database
+// ===== BOLANG - TAHAP 2: POPUP + KEISAP + PETA =====
+function bolangGetPlayerName(){
+  // Coba ambil dari variabel game lu, kalo gak ketemu pake Bolang
+  try{
+    if(typeof currentUser !== 'undefined' && currentUser && currentUser.display_name) return currentUser.display_name;
+    if(typeof myName !== 'undefined' && myName) return myName;
+    if(typeof playerName !== 'undefined' && playerName) return playerName;
+    let inp = document.getElementById('nameInput');
+    if(inp && inp.value) return inp.value;
+    let lbl = document.getElementById('homeUserLabel');
+    if(lbl && lbl.innerText) return lbl.innerText.trim();
+  }catch(e){}
+  return 'Bolang';
+}
 function bolangGlobeClick(){
-  // TAHAP 1: belum ngapa-ngapain dulu, biar gak error
-  // TAHAP 2 baru diisi: popup konfirmasi + efek keisap
-  alert('TAHAP 1: Bola dunia udah bisa diklik. Popup masuk baru dibikin di TAHAP 2.');
+  // Buka popup selamat datang, jangan langsung keisap
+  let nameEl = document.getElementById('bolangWelcomeName');
+  if(nameEl) nameEl.innerText = bolangGetPlayerName();
+  let m = document.getElementById('bolangWelcomeModal');
+  if(m) m.style.display = 'flex';
+}
+function bolangCloseWelcome(){
+  let m = document.getElementById('bolangWelcomeModal');
+  if(m) m.style.display = 'none';
+}
+function bolangConfirmEnter(){
+  // Tutup popup, jalankan efek keisap
+  bolangCloseWelcome();
+  let globe = document.getElementById('bolangGlobe');
+  if(!globe) return bolangShowMap();
+  globe.classList.remove('bolang-suck');
+  // Trick biar animasi bisa jalan ulang kalo diklik 2x
+  void globe.offsetWidth;
+  globe.classList.add('bolang-suck');
+  // Abis 900ms, balikin globe + munculin peta
+  setTimeout(()=>{
+    globe.classList.remove('bolang-suck');
+    bolangShowMap();
+  }, 900);
+}
+function bolangShowMap(){
+  // Tandain udah pernah masuk, buat TAHAP 4 nanti diambil dari database
+  try{ localStorage.setItem('bolang_has_entered','1'); }catch(e){}
+  bolangHasEntered = true;
+  bolangUpdateProgress();
+  let m = document.getElementById('bolangMapModal');
+  if(m) m.style.display = 'flex';
+}
+function bolangCloseMap(){
+  let m = document.getElementById('bolangMapModal');
+  if(m) m.style.display = 'none';
 }
 function bolangUpdateProgress(){
   // TAHAP 1: progress masih di-hide, karena bolangHasEntered = false
