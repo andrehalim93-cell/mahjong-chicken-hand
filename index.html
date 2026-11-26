@@ -1839,6 +1839,10 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   color:#451a03; font-size:10px; font-weight:900; padding:2px 7px; border-radius:99px;
   margin-left:6px; vertical-align:middle; letter-spacing:.5px;
 }
+@keyframes bolangSpin{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(360deg); }
+}
 </style>
 </head>
 <body>
@@ -1922,6 +1926,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   <div class="topLogo"><div class="crown">👑🀄👑</div><h1>MAHJONG<br>CHICKEN HAND</h1><p></p></div>
   <div class="homeTabs">
     <button class="homeTabBtn active" data-tab="lobby" onclick="switchHomeTab('lobby')">🀄 LOBBY</button>
+    <button class="homeTabBtn" data-tab="bolang" onclick="switchHomeTab('bolang')">🌍 BOLANG</button>
     <button class="homeTabBtn" data-tab="friends" onclick="switchHomeTab('friends')">👥 TEMEN <span id="friendBadge" style="display:none;background:#dc2626;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px">0</span></button>
     <button class="homeTabBtn" data-tab="leaderboard" onclick="switchHomeTab('leaderboard')">🏆 LEADERBOARD</button>
     <button class="homeTabBtn" data-tab="howto" onclick="switchHomeTab('howto')">❓ CARA MAIN</button>
@@ -1935,6 +1940,31 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
       <div id="homeErr" style="display:none;margin-top:10px;background:#7f1d1d;color:#fecaca;padding:10px;border-radius:10px;font-size:13px"></div>
     </div>
   </div>
+<div id="tab-bolang" class="homeTabPanel hidden">
+  <div class="card" style="text-align:center">
+    <div style="font-size:44px">🌍</div>
+    <h2 style="margin:6px 0 4px;font-size:22px;color:#fde68a">BOLANG</h2>
+    <div style="font-size:13px;color:#cbd5e1;line-height:1.5">Bocah Malang<br>Petualangan jadi Raja Mahjong</div>
+
+    <!-- BOLA DUNIA BERPUTAR - TAHAP 1, BELUM BISA DIKLIK DULU -->
+    <div id="bolangGlobe" style="font-size:110px;margin:18px 0 8px;animation:bolangSpin 8s linear infinite;cursor:pointer" onclick="bolangGlobeClick()">🌍</div>
+    <div style="font-size:12px;color:#94a3b8">Klik bola dunia buat masuk</div>
+
+    <!-- BAR PROGRESS - TAHAP 1 DI-HIDE DULU, BARU MUNCUL DI TAHAP 4 -->
+    <div id="bolangProgressWrap" style="display:none;margin-top:18px;text-align:left">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#cbd5e1">
+        <span>🗺️ Bolang Progress</span>
+        <span id="bolangProgressText">0%</span>
+      </div>
+      <div style="height:14px;background:#1e293b;border-radius:10px;overflow:hidden;margin-top:6px">
+        <div id="bolangProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fde68a);transition:width .5s"></div>
+      </div>
+      <div id="bolangProgressInfo" style="font-size:12px;color:#94a3b8;margin-top:6px">Checkpoint: 0 / 56 • Koin: 0</div>
+    </div>
+
+    <button class="btn btn-dark" onclick="switchHomeTab('lobby')" style="margin-top:18px">⬅️ KEMBALI KE LOBBY</button>
+  </div>
+</div>
     <div id="tab-friends" class="homeTabPanel hidden">
     <div class="card">
       <h2>👥 TEMEN</h2>
@@ -3186,12 +3216,26 @@ function renderPublicRooms(list){
     + '<div style="font-size:12px;color:#a7f3d0;margin-top:4px">👑 Host: '+esc(r.hostName||'-')+' &nbsp; 👥 '+r.players+'/4 &nbsp; 👉 '+(isPriv?'KLIK - MINTA PASSWORD':'KLIK BUAT JOIN')+'</div></button>';
   }).join('');
 }
+// ===== BOLANG - TAHAP 1: TAB + GLOBE DOANG, BELUM ADA GAME =====
+let bolangHasEntered = false; // nanti di TAHAP 4 diganti jadi ambil dari database
+function bolangGlobeClick(){
+  // TAHAP 1: belum ngapa-ngapain dulu, biar gak error
+  // TAHAP 2 baru diisi: popup konfirmasi + efek keisap
+  alert('TAHAP 1: Bola dunia udah bisa diklik. Popup masuk baru dibikin di TAHAP 2.');
+}
+function bolangUpdateProgress(){
+  // TAHAP 1: progress masih di-hide, karena bolangHasEntered = false
+  let wrap = document.getElementById('bolangProgressWrap');
+  if(!wrap) return;
+  wrap.style.display = bolangHasEntered ? 'block' : 'none';
+}
 function switchHomeTab(tab){
   document.querySelectorAll('.homeTabBtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.querySelectorAll('.homeTabPanel').forEach(p=>p.classList.add('hidden'));
   let elp=document.getElementById('tab-'+tab); if(elp) elp.classList.remove('hidden');
   if(tab==='leaderboard') loadLeaderboardTab();
   if(tab==='friends') refreshFriends();
+  if(tab==='bolang') bolangUpdateProgress();
   if(tab==='howto'){ tutIdx=0; renderTut(); }
 }
 function openLeaderboard(){ switchHomeTab('leaderboard'); }
