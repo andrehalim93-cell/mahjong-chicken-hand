@@ -3374,9 +3374,114 @@ let bolangSettled = false;
 let bolangAutoTimer = null;
 let bolangAutoStarted = false;
 let bolangLastBotAdd = 0;
-const BOLANG_BET = 1000;
-const BOLANG_WIN = 4000;
-
+// 6A: BET/WIN udah gak hardcode lagi, ngikutin tabel di atas
+function BOLANG_BET(){ return bolangBet(); }
+function BOLANG_WIN(){ return bolangWin(); }
+// ===== TAHAP 6A: TABEL BOLANG - PERSIS EXCEL, JANGAN DIUBAH MANUAL =====
+// checkpoint: 1-56. progress = checkpoint / 56.
+// next: syarat buat naik. minMoney = uang minimal SEBELUM beli tiket (harus sisa segitu SESUDAH beli? TIDAK - di Excel: "beli tiket + sisa uang minimal X" artinya: koin lu harus >= harga tiket + sisa minimal. Cek di 6B.)
+// bots: 'easy' = GAMPANG, 'normal' = NORMAL, 'hard' = SUSAH, 'extreme' = EXTREME (server, 6F)
+// work: kerja sampingan kalo bangkrut. minBet = kalo koin < ini, kerja muncul. hours = lama kerja. reward = modal balik.
+const BOLANG_TOTAL_CHECKPOINT = 56;
+const BOLANG_LEVELS = [
+  { level:0, city:'DESA', title:'ADVENTURE', desc:'Sebuah desa kecil yang tenang. Dari sinilah perjalanan Bolang dimulai.', work:{ job:'BERTANI', hours:1, reward:10000, emoji:'🌾' },
+    floors:[
+      { floor:0, name:'BALAI DESA', bet:1000, bots:['easy','easy','easy'], checkpoint:1, next:{ kind:'city', ticket:'BUS', price:50000, minMoney:50000, toLevel:1, toFloor:0 } }
+    ]},
+  { level:1, city:'JAKARTA', title:'JAKARTA CHAMPION', desc:'Gedung di perkotaan Jakarta.', work:{ job:'BERJUALAN KORAN', hours:2, reward:50000, emoji:'📰' },
+    floors:[
+      { floor:0, name:'LANTAI 1', bet:5000, bots:['easy','easy','easy'], checkpoint:2, next:{ kind:'floor', ticket:'BRONZE', price:50000, minMoney:100000, toLevel:1, toFloor:1 } },
+      { floor:1, name:'LANTAI 2', bet:10000, bots:['easy','easy','normal'], checkpoint:3, next:{ kind:'floor', ticket:'SILVER', price:80000, minMoney:200000, toLevel:1, toFloor:2 } },
+      { floor:2, name:'LANTAI 3', bet:20000, bots:['easy','easy','normal'], checkpoint:4, next:{ kind:'floor', ticket:'GOLD', price:100000, minMoney:300000, toLevel:1, toFloor:3 } },
+      { floor:3, name:'LANTAI 4', bet:30000, bots:['easy','easy','normal'], checkpoint:5, next:{ kind:'floor', ticket:'PLATINUM', price:150000, minMoney:500000, toLevel:1, toFloor:4 } },
+      { floor:4, name:'LANTAI 5', bet:50000, bots:['easy','normal','normal'], checkpoint:6, next:{ kind:'floor', ticket:'VIP', price:200000, minMoney:750000, toLevel:1, toFloor:5 } },
+      { floor:5, name:'LANTAI 6', bet:100000, bots:['normal','normal','normal'], checkpoint:7, next:{ kind:'city', ticket:'PESAWAT', price:750000, minMoney:250000, toLevel:2, toFloor:0 } }
+    ]},
+  { level:2, city:'SINGAPURA', title:'SINGAPORE CHAMPION', desc:'Gedung latar kota Singapura.', work:{ job:'PELAYAN RESTORAN', hours:2, reward:200000, emoji:'🍽️' },
+    floors:[
+      { floor:0, name:'LANTAI 1', bet:50000, bots:['easy','normal','normal'], checkpoint:8, next:{ kind:'floor', ticket:'BRONZE', price:100000, minMoney:500000, toLevel:2, toFloor:1 } },
+      { floor:1, name:'LANTAI 2', bet:100000, bots:['easy','normal','normal'], checkpoint:9, next:{ kind:'floor', ticket:'SILVER', price:200000, minMoney:750000, toLevel:2, toFloor:2 } },
+      { floor:2, name:'LANTAI 3', bet:150000, bots:['normal','normal','normal'], checkpoint:10, next:{ kind:'floor', ticket:'GOLD', price:300000, minMoney:1000000, toLevel:2, toFloor:3 } },
+      { floor:3, name:'LANTAI 4', bet:200000, bots:['normal','normal','normal'], checkpoint:11, next:{ kind:'floor', ticket:'PLATINUM', price:400000, minMoney:1250000, toLevel:2, toFloor:4 } },
+      { floor:4, name:'LANTAI 5', bet:250000, bots:['normal','normal','normal'], checkpoint:12, next:{ kind:'floor', ticket:'VIP', price:500000, minMoney:1500000, toLevel:2, toFloor:5 } },
+      { floor:5, name:'LANTAI 6', bet:300000, bots:['normal','normal','normal'], checkpoint:13, next:{ kind:'city', ticket:'PESAWAT', price:1000000, minMoney:500000, toLevel:3, toFloor:0 } }
+    ]},
+  { level:3, city:'MALAYSIA', title:'MALAYSIA CHAMPION', desc:'Gedung latar kota Malaysia.', work:{ job:'BARTENDER DI BAR', hours:2, reward:300000, emoji:'🍹' },
+    floors:[
+      { floor:0, name:'LANTAI 1', bet:100000, bots:['normal','normal','normal'], checkpoint:14, next:{ kind:'floor', ticket:'SILVER', price:200000, minMoney:750000, toLevel:3, toFloor:1 } },
+      { floor:1, name:'LANTAI 2', bet:150000, bots:['normal','normal','normal'], checkpoint:15, next:{ kind:'floor', ticket:'GOLD', price:300000, minMoney:1000000, toLevel:3, toFloor:2 } },
+      { floor:2, name:'LANTAI 3', bet:200000, bots:['normal','normal','hard'], checkpoint:16, next:{ kind:'floor', ticket:'PLATINUM', price:400000, minMoney:1250000, toLevel:3, toFloor:3 } },
+      { floor:3, name:'LANTAI 4', bet:250000, bots:['normal','normal','hard'], checkpoint:17, next:{ kind:'floor', ticket:'VIP', price:500000, minMoney:1500000, toLevel:3, toFloor:4 } },
+      { floor:4, name:'LANTAI 5', bet:300000, bots:['normal','normal','hard'], checkpoint:18, next:{ kind:'floor', ticket:'VIP', price:750000, minMoney:1750000, toLevel:3, toFloor:5 } },
+      { floor:5, name:'LANTAI 6', bet:500000, bots:['normal','hard','hard'], checkpoint:19, next:{ kind:'city', ticket:'PESAWAT', price:1500000, minMoney:750000, toLevel:4, toFloor:0 } }
+    ]},
+  { level:4, city:'JEPANG', title:'JAPAN CHAMPION', desc:'Gedung latar kota Jepang.', work:{ job:'KOKI DI RESTORAN', hours:2, reward:400000, emoji:'🍳' },
+    floors:[
+      { floor:0, name:'LANTAI 1', bet:150000, bots:['normal','normal','hard'], checkpoint:20, next:{ kind:'floor', ticket:'GOLD', price:300000, minMoney:1000000, toLevel:4, toFloor:1 } },
+      { floor:1, name:'LANTAI 2', bet:200000, bots:['normal','normal','hard'], checkpoint:21, next:{ kind:'floor', ticket:'PLATINUM', price:400000, minMoney:1250000, toLevel:4, toFloor:2 } },
+      { floor:2, name:'LANTAI 3', bet:250000, bots:['normal','normal','hard'], checkpoint:22, next:{ kind:'floor', ticket:'VIP', price:500000, minMoney:1500000, toLevel:4, toFloor:3 } },
+      { floor:3, name:'LANTAI 4', bet:300000, bots:['normal','normal','hard'], checkpoint:23, next:{ kind:'floor', ticket:'VIP', price:750000, minMoney:1750000, toLevel:4, toFloor:4 } },
+      { floor:4, name:'LANTAI 5', bet:500000, bots:['normal','hard','hard'], checkpoint:24, next:{ kind:'floor', ticket:'VIP', price:1000000, minMoney:2000000, toLevel:4, toFloor:5 } },
+      { floor:5, name:'LANTAI 6', bet:750000, bots:['normal','hard','hard'], checkpoint:25, next:{ kind:'city', ticket:'PESAWAT', price:2000000, minMoney:1000000, toLevel:5, toFloor:0 } }
+    ]},
+  { level:5, city:'TAIWAN', title:'TAIWAN CHAMPION', desc:'Gedung latar kota Taiwan.', work:{ job:'KASIR DI SAUNA', hours:2, reward:500000, emoji:'🧖' },
+    floors:[
+      { floor:0, name:'LANTAI 1', bet:200000, bots:['normal','hard','hard'], checkpoint:26, next:{ kind:'floor', ticket:'PLATINUM', price:400000, minMoney:1250000, toLevel:5, toFloor:1 } },
+      { floor:1, name:'LANTAI 2', bet:250000, bots:['normal','hard','hard'], checkpoint:27, next:{ kind:'floor', ticket:'VIP', price:500000, minMoney:1500000, toLevel:5, toFloor:2 } },
+      { floor:2, name:'LANTAI 3', bet:300000, bots:['normal','hard','hard'], checkpoint:28, next:{ kind:'floor', ticket:'VIP', price:750000, minMoney:1750000, toLevel:5, toFloor:3 } },
+      { floor:3, name:'LANTAI 4', bet:500000, bots:['normal','hard','hard'], checkpoint:29, next:{ kind:'floor', ticket:'VIP', price:1000000, minMoney:2000000, toLevel:5, toFloor:4 } },
+      { floor:4, name:'LANTAI 5', bet:750000, bots:['hard','hard','hard'], checkpoint:30, next:{ kind:'floor', ticket:'VIP', price:1250000, minMoney:2250000, toLevel:5, toFloor:5 } },
+      { floor:5, name:'LANTAI 6', bet:1000000, bots:['hard','hard','hard'], checkpoint:31, next:{ kind:'city', ticket:'PESAWAT', price:2500000, minMoney:1500000, toLevel:6, toFloor:0 } }
+    ]},
+  { level:6, city:'KOREA', title:'KOREAN CHAMPION', desc:'Gedung latar kota Korea.', work:{ job:'PENJAGA KASIR MINIMARKET', hours:2, reward:500000, emoji:'🏪' },
+    floors:[
+      { floor:0, name:'LANTAI 1', bet:250000, bots:['normal','hard','hard'], checkpoint:32, next:{ kind:'floor', ticket:'VIP', price:500000, minMoney:1500000, toLevel:6, toFloor:1 } },
+      { floor:1, name:'LANTAI 2', bet:300000, bots:['normal','hard','hard'], checkpoint:33, next:{ kind:'floor', ticket:'VIP', price:750000, minMoney:1750000, toLevel:6, toFloor:2 } },
+      { floor:2, name:'LANTAI 3', bet:500000, bots:['normal','hard','hard'], checkpoint:34, next:{ kind:'floor', ticket:'VIP', price:1000000, minMoney:2000000, toLevel:6, toFloor:3 } },
+      { floor:3, name:'LANTAI 4', bet:750000, bots:['hard','hard','hard'], checkpoint:35, next:{ kind:'floor', ticket:'VIP', price:1250000, minMoney:2250000, toLevel:6, toFloor:4 } },
+      { floor:4, name:'LANTAI 5', bet:1000000, bots:['hard','hard','hard'], checkpoint:36, next:{ kind:'floor', ticket:'VIP', price:1500000, minMoney:2500000, toLevel:6, toFloor:5 } },
+      { floor:5, name:'LANTAI 6', bet:1250000, bots:['hard','hard','extreme'], checkpoint:37, next:{ kind:'city', ticket:'PESAWAT', price:3000000, minMoney:2000000, toLevel:7, toFloor:0 } }
+    ]},
+  { level:7, city:'HONGKONG', title:'HONGKONG CHAMPION', desc:'Gedung latar kota Hongkong.', work:{ job:'KASIR DI KASINO', hours:2, reward:600000, emoji:'🎰' },
+    floors:[
+      { floor:0, name:'LANTAI 1', bet:300000, bots:['normal','hard','hard'], checkpoint:38, next:{ kind:'floor', ticket:'VIP', price:1000000, minMoney:1750000, toLevel:7, toFloor:1 } },
+      { floor:1, name:'LANTAI 2', bet:500000, bots:['hard','hard','hard'], checkpoint:39, next:{ kind:'floor', ticket:'VIP', price:2000000, minMoney:3000000, toLevel:7, toFloor:2 } },
+      { floor:2, name:'LANTAI 3', bet:750000, bots:['hard','hard','hard'], checkpoint:40, next:{ kind:'floor', ticket:'VIP', price:3000000, minMoney:3500000, toLevel:7, toFloor:3 } },
+      { floor:3, name:'LANTAI 4', bet:1000000, bots:['hard','hard','hard'], checkpoint:41, next:{ kind:'floor', ticket:'VIP', price:5000000, minMoney:5000000, toLevel:7, toFloor:4 } },
+      { floor:4, name:'LANTAI 5', bet:1250000, bots:['hard','hard','extreme'], checkpoint:42, next:{ kind:'floor', ticket:'VIP', price:7500000, minMoney:7500000, toLevel:7, toFloor:5 } },
+      { floor:5, name:'LANTAI 6', bet:1500000, bots:['hard','hard','extreme'], checkpoint:43, next:{ kind:'city', ticket:'PESAWAT', price:3500000, minMoney:7500000, toLevel:8, toFloor:0 } }
+    ]},
+  { level:8, city:'MACAU', title:'MACAO CHAMPION', desc:'Gedung latar Macao Tower.', work:{ job:'DEALER DI KASINO', hours:2, reward:1000000, emoji:'🃏' },
+    floors:[
+      { floor:0, name:'LANTAI 1', bet:500000, bots:['hard','hard','hard'], checkpoint:44, next:{ kind:'floor', ticket:'VIP', price:2000000, minMoney:3000000, toLevel:8, toFloor:1 } },
+      { floor:1, name:'LANTAI 2', bet:750000, bots:['hard','hard','hard'], checkpoint:45, next:{ kind:'floor', ticket:'VIP', price:3000000, minMoney:3500000, toLevel:8, toFloor:2 } },
+      { floor:2, name:'LANTAI 3', bet:1000000, bots:['hard','hard','hard'], checkpoint:46, next:{ kind:'floor', ticket:'VIP', price:5000000, minMoney:5000000, toLevel:8, toFloor:3 } },
+      { floor:3, name:'LANTAI 4', bet:1250000, bots:['hard','hard','hard'], checkpoint:47, next:{ kind:'floor', ticket:'VIP', price:7500000, minMoney:7500000, toLevel:8, toFloor:4 } },
+      { floor:4, name:'LANTAI 5', bet:1500000, bots:['hard','hard','extreme'], checkpoint:48, next:{ kind:'floor', ticket:'VIP', price:10000000, minMoney:10000000, toLevel:8, toFloor:5 } },
+      { floor:5, name:'LANTAI 6', bet:1750000, bots:['hard','extreme','extreme'], checkpoint:49, next:{ kind:'city', ticket:'PESAWAT', price:5000000, minMoney:15000000, toLevel:9, toFloor:0 } }
+    ]},
+  { level:9, city:'CHINA', title:'CHINA CHAMPION', desc:'Gedung latar kota Shanghai.', work:{ job:'TOUR GUIDE DI CHINA', hours:2, reward:1500000, emoji:'🗺️' },
+    floors:[
+      { floor:0, name:'LANTAI 1', bet:750000, bots:['hard','hard','extreme'], checkpoint:50, next:{ kind:'floor', ticket:'VIP', price:3000000, minMoney:3500000, toLevel:9, toFloor:1 } },
+      { floor:1, name:'LANTAI 2', bet:1000000, bots:['hard','hard','extreme'], checkpoint:51, next:{ kind:'floor', ticket:'VIP', price:5000000, minMoney:5000000, toLevel:9, toFloor:2 } },
+      { floor:2, name:'LANTAI 3', bet:1250000, bots:['hard','extreme','extreme'], checkpoint:52, next:{ kind:'floor', ticket:'VIP', price:7500000, minMoney:7500000, toLevel:9, toFloor:3 } },
+      { floor:3, name:'LANTAI 4', bet:1500000, bots:['hard','extreme','extreme'], checkpoint:53, next:{ kind:'floor', ticket:'VIP', price:10000000, minMoney:10000000, toLevel:9, toFloor:4 } },
+      { floor:4, name:'LANTAI 5', bet:1750000, bots:['hard','extreme','extreme'], checkpoint:54, next:{ kind:'floor', ticket:'VIP', price:20000000, minMoney:15000000, toLevel:9, toFloor:5 } },
+      { floor:5, name:'LANTAI 6', bet:2000000, bots:['extreme','extreme','extreme'], checkpoint:55, next:{ kind:'city', ticket:'PESAWAT+TOKEN', price:30000000, minMoney:10000000, toLevel:10, toFloor:0, note:'Pesawat 15jt + Token 15jt' } }
+    ]}
+];
+// Posisi sekarang. Default Desa Lantai 0. Di-load dari server di 6C.
+let bolangLevel = 0;
+let bolangFloor = 0;
+// Title yang udah kebuka. Desa (ADVENTURE) kebuka dari awal, sisanya ??? sampe tamat kota itu.
+let bolangTitles = ['ADVENTURE'];
+function bolangLevelObj(){ return BOLANG_LEVELS[bolangLevel] || BOLANG_LEVELS[0]; }
+function bolangFloorObj(){ let L = bolangLevelObj(); return (L.floors||[])[bolangFloor] || L.floors[0]; }
+function bolangBet(){ return bolangFloorObj().bet || 1000; }
+function bolangWin(){ return bolangBet() * 4; }
+function bolangBots(){ return bolangFloorObj().bots || ['easy','easy','easy']; }
+function bolangCheckpoint(){ return bolangFloorObj().checkpoint || 1; }
+function bolangProgressPct(){ return Math.min(100, Math.round(bolangCheckpoint() / BOLANG_TOTAL_CHECKPOINT * 100)); }
 function bolangOpenBalaiDesa(){
   if(!currentUser) return toast('Login dulu!');
   let m = document.getElementById('bolangBalaiModal');
@@ -3388,6 +3493,8 @@ function bolangOpenBalaiDesa(){
 }
 function bolangCloseBalai(){
   let m = document.getElementById('bolangBalaiModal');
+  let bb = document.getElementById('bolangBalaiBet'); if(bb) bb.innerText = '-' + bolangBet().toLocaleString('id-ID');
+  let bw = document.getElementById('bolangBalaiWin'); if(bw) bw.innerText = '+' + bolangWin().toLocaleString('id-ID');
   if(m) m.style.display = 'none';
 }
 function bolangConfirmBalai(){
@@ -3407,19 +3514,12 @@ function bolangConfirmBalai(){
   if(w) w.style.display = 'none';
   document.body.style.overflow = '';
   myName = currentUser.display_name;
-  socket.emit('createRoom', { name: myName, roomName: 'Balai Desa - Desa', mode: 'latihan', isPrivate: true, password: '', avatar: currentUser ? currentUser.avatar : '🧑' });
-  toast('🏛️ Masuk Balai Desa! Taruhan 1.000 dipotong.');
-  // Auto-isi bot + auto-start, polling biar gak perlu utak-atik updateLobby
-  try{ clearInterval(bolangAutoTimer); }catch(e){}
-  bolangAutoTimer = setInterval(()=>{
-    if(!bolangInGame){ clearInterval(bolangAutoTimer); return; }
-    if(!myCode) return;
-    let n = (currentPlayers || []).length;
-    if(n < 4){
-      // Tambah bot 1 per 1, jangan spam
-      if(Date.now() - bolangLastBotAdd > 1000){
-        bolangLastBotAdd = Date.now();
-        try{ addBot('easy'); }catch(e){}
+socket.emit('createRoom', { name: myName, roomName: (bolangLevelObj().city + ' - ' + bolangFloorObj().name), ...
+...
+// 6A: bot ngikutin tabel, bukan selalu easy. Urutannya sesuai tabel.
+let _bots = bolangBots(); let _bi = 0;
+...
+try{ addBot(_bots[_bi % _bots.length]); _bi++; }catch(e){}
       }
       return;
     }
@@ -5285,8 +5385,8 @@ updateAchLabel();
     <h2 style="color:#fde68a;margin:8px 0">BALAI DESA</h2>
     <div style="background:rgba(0,0,0,.4);border-radius:14px;padding:12px;margin:14px 0;font-size:13px;color:#fff;line-height:1.7">
       🪙 Koin lu: <b id="bolangBalaiCoins">0</b><br>
-      🎟️ Taruhan: <b style="color:#fca5a5">-1.000</b><br>
-      🏆 Menang: <b style="color:#4ade80">+4.000</b><br>
+     🎟️ Taruhan: <b id="bolangBalaiBet">-1.000</b>
+     🏆 Menang: <b id="bolangBalaiWin">+4.000</b>
       😐 Seri: <b>Refund 1.000</b>
     </div>
     <div id="bolangBalaiWarn" style="display:none;color:#fca5a5;font-size:12px;margin-bottom:10px">❌ Koin lu kurang dari 1.000! Menangin dulu / tunggu modal lain.</div>
