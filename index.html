@@ -1962,7 +1962,6 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
   </div>
 <div id="tab-bolang" class="homeTabPanel hidden">
   <div class="card" style="text-align:center">
-    <div style="font-size:44px">🌍</div>
     <h2 style="margin:6px 0 4px;font-size:22px;color:#fde68a">BOLANG</h2>
     <div style="font-size:13px;color:#cbd5e1;line-height:1.5">Bocah Malang<br>Petualangan jadi Raja Mahjong</div>
 
@@ -1980,6 +1979,7 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
         <div id="bolangProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fde68a);transition:width .5s"></div>
       </div>
       </div>
+    </div>
   <!-- BOLANG - TAHAP 2: POPUP MASUK + PETA DUNIA -->
 <div id="bolangWelcomeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;align-items:center;justify-content:center;padding:16px">
   <div style="background:#0f172a;border:2px solid #f59e0b;border-radius:20px;padding:20px;max-width:420px;width:100%;text-align:center">
@@ -3271,7 +3271,9 @@ function renderPublicRooms(list){
   }).join('');
 }
 // ===== BOLANG - TAHAP 1: TAB + GLOBE DOANG, BELUM ADA GAME =====
-let bolangHasEntered = false; // nanti di TAHAP 4 diganti jadi ambil dari database
+let bolangHasEntered = false;
+try{ bolangHasEntered = localStorage.getItem('bolang_has_entered') === '1'; }catch(e){}
+try{ bolangCoins = Number(localStorage.getItem('bolang_coins')||0) || 0; }catch(e){}
 // ===== BOLANG - TAHAP 2: POPUP + KEISAP + PETA =====
 function bolangGetPlayerName(){
   // Coba ambil dari variabel game lu, kalo gak ketemu pake Bolang
