@@ -2452,6 +2452,21 @@ async function doLogin(){
 }
 function loginSuccess(user, passwordForSave, showProfile, authToken){
   if(authToken){ try{ sessionStorage.setItem('mahjong_auth_token', authToken); }catch(e){} }
+    // FIX: Kalo ganti akun, bersihin dulu sisa akun lama di HP ini
+  try{
+    let oldId = (currentUser && currentUser.id) ? String(currentUser.id).toLowerCase() : '';
+    let newId = (user && user.id) ? String(user.id).toLowerCase() : '';
+    if(oldId && newId && oldId !== newId){
+      localStorage.removeItem('mj_ach');
+      localStorage.removeItem('bolang_coins');
+      localStorage.removeItem('bolang_story_done');
+      localStorage.removeItem('bolang_has_entered');
+      bolangCoins = 0;
+      bolangStoryDone = false;
+      bolangHasEntered = false;
+      bolangLoadedFromDB = false;
+    }
+  }catch(e){}
   currentUser = user;
     setTimeout(()=>{ bolangLoadFromDB(); }, 500);
   let save = el('saveLogin') ? el('saveLogin').checked : false;
@@ -2737,8 +2752,12 @@ function exitBotGame(){
   refreshRooms();
   toast('Balik ke Home!');
 }
-    function doLogout(){
+  function doLogout(){
   currentUser = null;
+  localStorage.removeItem('mj_ach');
+  localStorage.removeItem('bolang_coins');
+  localStorage.removeItem('bolang_story_done');
+  localStorage.removeItem('bolang_has_entered');
   localStorage.removeItem('mahjong_user');
   localStorage.removeItem('mahjong_remember_token');
   sessionStorage.removeItem('mahjong_user');
@@ -3487,7 +3506,22 @@ async function bolangLoadFromDB(){
   try{
     let r = await fetch('/api/bolang-get?id=' + encodeURIComponent(uid));
     let j = await r.json();
-    if(j && j.ok && j.data){
+    if(j && j.ok){
+      if(j.data){
+        bolangCoins = Number(j.data.coins || 0);
+        bolangStoryDone = !!j.data.story_done;
+        bolangHasEntered = !!j.data.has_entered;
+      } else {
+        // FIX: ID baru, belum ada baris di DB -> reset total, jangan pake sisa akun lama
+        bolangCoins = 0;
+        bolangStoryDone = false;
+        bolangHasEntered = false;
+      }
+      bolangLoadedFromDB = true;
+      bolangSaveLocal();
+      bolangUpdateProgress();
+      bolangRenderWorld();
+    }
       bolangCoins = Number(j.data.coins || 0);
       bolangStoryDone = !!j.data.story_done;
       bolangHasEntered = !!j.data.has_entered;
@@ -4717,15 +4751,9 @@ async function loadAchFromServer(){
   try{
     let r = await fetch('/api/get-ach?id='+encodeURIComponent(currentUser.id));
     let j = await r.json(); if(!j.ok || !j.ach) return;
-    let local = getAchData();
-    // Server menang kalo lebih banyak, biar ganti HP tetep ikut. Kalo lokal lebih banyak (main offline), upload lokal ke server
-    if((j.ach.unlocked||[]).length >= (local.unlocked||[]).length){
-  let mergedStats = {...(j.ach.stats||{}), ...(local.stats||{})};
-  for(let k in (j.ach.stats||{})) mergedStats[k] = Math.max(Number(j.ach.stats[k])||0, Number((local.stats||{})[k])||0);
-  localStorage.setItem('mj_ach', JSON.stringify({unlocked:j.ach.unlocked||[], stats:mergedStats}));
-} else {
-      syncAchToServer(local);
-    }
+      // FIX: Server menang 100%. Jangan merge sama lokal, karena lokal itu bisa punya akun lain.
+    // Kalo ID baru, server-nya 0, ya lokal harus jadi 0 juga, bukan di-upload balik.
+    localStorage.setItem('mj_ach', JSON.stringify({unlocked: j.ach.unlocked || [], stats: j.ach.stats || {}}));
     updateAchLabel();
   }catch(e){}
 }
