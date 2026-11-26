@@ -3368,10 +3368,113 @@ function bolangEnterWorld(){
   if(w) w.style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
+// ===== TAHAP 5: BALAI DESA - MEJA LATIHAN LAWAN 3 BOT GAMPANG =====
+let bolangInGame = false;
+let bolangSettled = false;
+let bolangAutoTimer = null;
+let bolangAutoStarted = false;
+let bolangLastBotAdd = 0;
+const BOLANG_BET = 1000;
+const BOLANG_WIN = 4000;
+
 function bolangOpenBalaiDesa(){
-  // TAHAP 3R: belum ada meja dulu, baru placeholder
-  // TAHAP 5 baru diisi meja Mahjong lawan 3 bot Gampang
-  alert('BALAI DESA - TAHAP 3R: Tombolnya udah nyambung. Meja Mahjong-nya baru dibikin di TAHAP 5.');
+  if(!currentUser) return toast('Login dulu!');
+  let m = document.getElementById('bolangBalaiModal');
+  let c = document.getElementById('bolangBalaiCoins');
+  if(c) c.innerText = bolangCoins.toLocaleString('id-ID');
+  let w = document.getElementById('bolangBalaiWarn');
+  if(w) w.style.display = (bolangCoins < BOLANG_BET) ? 'block' : 'none';
+  if(m) m.style.display = 'flex';
+}
+function bolangCloseBalai(){
+  let m = document.getElementById('bolangBalaiModal');
+  if(m) m.style.display = 'none';
+}
+function bolangConfirmBalai(){
+  if(bolangCoins < BOLANG_BET){ toast('❌ Koin kurang! Butuh 1.000 buat masuk Balai Desa.'); return; }
+  bolangCloseBalai();
+  // Potong taruhan di awal, biar gak bisa kabur pas mau kalah
+  bolangCoins -= BOLANG_BET;
+  bolangInGame = true;
+  bolangSettled = false;
+  bolangAutoStarted = false;
+  bolangLastBotAdd = 0;
+  bolangSaveToDB();
+  bolangUpdateProgress();
+  bolangRenderWorld();
+  // Sembunyiin dunia Bolang, buka lobby lewat sistem meja yang udah ada
+  let w = document.getElementById('bolangWorld');
+  if(w) w.style.display = 'none';
+  document.body.style.overflow = '';
+  myName = currentUser.display_name;
+  socket.emit('createRoom', { name: myName, roomName: 'Balai Desa - Desa', mode: 'latihan', isPrivate: true, password: '', avatar: currentUser ? currentUser.avatar : '🧑' });
+  toast('🏛️ Masuk Balai Desa! Taruhan 1.000 dipotong.');
+  // Auto-isi bot + auto-start, polling biar gak perlu utak-atik updateLobby
+  try{ clearInterval(bolangAutoTimer); }catch(e){}
+  bolangAutoTimer = setInterval(()=>{
+    if(!bolangInGame){ clearInterval(bolangAutoTimer); return; }
+    if(!myCode) return;
+    let n = (currentPlayers || []).length;
+    if(n < 4){
+      // Tambah bot 1 per 1, jangan spam
+      if(Date.now() - bolangLastBotAdd > 1000){
+        bolangLastBotAdd = Date.now();
+        try{ addBot('easy'); }catch(e){}
+      }
+      return;
+    }
+    if(n >= 4 && !bolangAutoStarted){
+      bolangAutoStarted = true;
+      clearInterval(bolangAutoTimer);
+      setTimeout(()=>{ try{ doStartGame(); }catch(e){} }, 600);
+    }
+  }, 500);
+}
+// Dipanggil di paling atas socket.on('gameOver') - lihat FIX 3
+function bolangSettleGame(d){
+  if(!bolangInGame || bolangSettled) return;
+  bolangSettled = true;
+  try{ clearInterval(bolangAutoTimer); }catch(e){}
+  if(!d || !d.winner){
+    // Seri: refund
+    bolangCoins += BOLANG_BET;
+    toast('😐 SERI! Taruhan 1.000 dibalikin.');
+  } else if(d.winner === myName){
+    bolangCoins += BOLANG_WIN;
+    toast('🏆 MENANG! +4.000 KOIN! Net +3.000.');
+  } else {
+    toast('😅 Kalah. Taruhan 1.000 hangus.');
+  }
+  bolangSaveToDB();
+  bolangUpdateProgress();
+  bolangRenderWorld();
+}
+function bolangBackToWorld(){
+  try{ socket.emit('cancelRematch', { code: myCode }); }catch(e){}
+  try{ if(myCode) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
+  bolangInGame = false;
+  try{ clearInterval(bolangAutoTimer); }catch(e){}
+  let wm = document.getElementById('winModal');
+  if(wm){ wm.classList.remove('show'); wm.style.display = 'none'; }
+  // backToHome(true) = bersihin lobby/game, tapi JANGAN leaveRoom lagi (udah di-leave di atas)
+  try{ backToHome(true); }catch(e){}
+  myCode = '';
+  try{ sessionStorage.removeItem('mahjong_room'); }catch(e){}
+  // Balik ke dunia Bolang, bukan ke Home doang
+  setTimeout(()=>{ bolangEnterWorld(); }, 150);
+}
+function bolangRematch(){
+  // Main lagi = keluar meja ini, terus buka konfirmasi Balai lagi (bayar 1.000 lagi)
+  try{ socket.emit('cancelRematch', { code: myCode }); }catch(e){}
+  try{ if(myCode) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
+  bolangInGame = false;
+  try{ clearInterval(bolangAutoTimer); }catch(e){}
+  let wm = document.getElementById('winModal');
+  if(wm){ wm.classList.remove('show'); wm.style.display = 'none'; }
+  try{ backToHome(true); }catch(e){}
+  myCode = '';
+  try{ sessionStorage.removeItem('mahjong_room'); }catch(e){}
+  setTimeout(()=>{ bolangEnterWorld(); bolangOpenBalaiDesa(); }, 200);
 }
 function bolangExitWorld(){
   let w = document.getElementById('bolangWorld');
@@ -4070,6 +4173,7 @@ socket.on('youHu', async d=>{
   refreshMyGelar();
 });
 socket.on('gameOver', d=>{
+  try{ bolangSettleGame(d); }catch(e){}
   if(d.finalHands) lastShowdown = d.finalHands;
   clearInterval(turnTimerInt);
   if(el('turnCountdown')) el('turnCountdown').style.display='none';
@@ -4121,6 +4225,25 @@ function showWinModal(d){
       rb.innerText = '🔁 MAIN LAGI LAWAN BOT';
       rb.style.opacity = '1';
       rb.onclick = function(){ el('winModal').classList.remove('show'); el('winModal').style.display='none'; try{ socket.emit('cancelRematch',{code:myCode}); }catch(e){} backToHome(true); };
+    }
+  }catch(e){}
+    // TAHAP 5: Kalo game ini dari Balai Desa, tombolnya balik ke Desa, bukan ke Home
+  try{
+    if(bolangInGame){
+      let rb = document.getElementById('rematchBtn');
+      if(rb){
+        rb.innerText = '🔁 MAIN LAGI - BAYAR 1.000';
+        rb.style.opacity = '1';
+        rb.onclick = function(){ bolangRematch(); };
+      }
+      // Tombol "BALIK KE HOME" di winModal gak ada ID, cari lewat teks-nya
+      let allBtns = document.querySelectorAll('#winModal button');
+      allBtns.forEach(function(b){
+        if(b.innerText.indexOf('BALIK KE HOME') !== -1){
+          b.innerText = '🏛️ BALIK KE DESA';
+          b.onclick = function(){ bolangBackToWorld(); };
+        }
+      });
     }
   }catch(e){}
   addLog('🏁 '+(d.message||'HU!'));
@@ -5158,6 +5281,25 @@ updateAchLabel();
     <div style="max-width:460px;margin:14px auto;background:rgba(0,0,0,.55);color:#fff;border-radius:14px;padding:10px">
       <div style="display:flex;justify-content:space-between;font-size:12px"><span>🗺️ Bolang Progress</span><span id="bolangWorldProgressText">0%</span></div>
       <div style="height:12px;background:#1e293b;border-radius:10px;overflow:hidden;margin-top:6px"><div id="bolangWorldProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fde68a)"></div></div>
+    </div>
+  </div>
+</div>
+<!-- TAHAP 5: KONFIRMASI MASUK BALAI DESA -->
+<div id="bolangBalaiModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:10003;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0f172a;border:2px solid #f59e0b;border-radius:20px;padding:22px;max-width:400px;width:100%;text-align:center">
+    <div style="font-size:60px">🏛️</div>
+    <h2 style="color:#fde68a;margin:8px 0">BALAI DESA - DESA</h2>
+    <p style="color:#cbd5e1;font-size:13px;line-height:1.6">Main Mahjong lawan <b style="color:#fff">3 Bot Gampang</b>.<br>Mode Latihan, HU gak dihitung leaderboard.</p>
+    <div style="background:rgba(0,0,0,.4);border-radius:14px;padding:12px;margin:14px 0;font-size:13px;color:#fff;line-height:1.7">
+      🪙 Koin lu: <b id="bolangBalaiCoins">0</b><br>
+      🎟️ Taruhan: <b style="color:#fca5a5">-1.000</b><br>
+      🏆 Menang: <b style="color:#4ade80">+4.000</b><br>
+      😐 Seri: <b>Refund 1.000</b>
+    </div>
+    <div id="bolangBalaiWarn" style="display:none;color:#fca5a5;font-size:12px;margin-bottom:10px">❌ Koin lu kurang dari 1.000! Menangin dulu / tunggu modal lain.</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-gold" onclick="bolangConfirmBalai()" style="flex:1">✅ MASUK - BAYAR 1.000</button>
+      <button class="btn btn-dark" onclick="bolangCloseBalai()" style="flex:1">❌ BATAL</button>
     </div>
   </div>
 </div>
