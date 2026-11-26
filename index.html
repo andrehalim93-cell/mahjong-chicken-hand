@@ -1851,6 +1851,10 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
 .bolang-suck{
   animation:bolangSuck .9s ease-in forwards !important;
 }
+@keyframes bolangStoryFloat{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-8px); }
+}
 @keyframes bolangJakartaBlink{
   0%,100%{ opacity:1; }
   50%{ opacity:.4; }
@@ -2005,7 +2009,33 @@ button[onclick*="fullscreen"], button[onclick*="FullScreen"]{
       🇭🇰 HONGKONG &nbsp; 🇲🇴 MACAU &nbsp; 🇦🇺 AUSTRALIA
     </div>
     <div style="font-size:12px;color:#94a3b8;margin-top:12px">TAHAP 2: Sampai di sini dulu.<br>Storyteller + modal 10.000 baru di TAHAP 3.</div>
-    <button class="btn btn-dark" onclick="bolangCloseMap()" style="margin-top:14px">⬅️ TUTUP PETA</button>
+    <button class="btn btn-gold" onclick="bolangOpenStory()" style="margin-top:14px">📖 LANJUT KE CERITA BOLANG ➡️</button>
+    <button class="btn btn-dark" onclick="bolangCloseMap()" style="margin-top:8px">⬅️ TUTUP PETA</button>
+  </div>
+</div>
+<!-- BOLANG - TAHAP 3: STORYTELLER -->
+<div id="bolangStoryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:10000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0f172a;border:2px solid #f59e0b;border-radius:20px;padding:20px;max-width:460px;width:100%;text-align:center">
+    <div style="font-size:12px;color:#94a3b8">📖 CERITA BOLANG - <span id="bolangStoryPage">1 / 5</span></div>
+    <h2 id="bolangStoryTitle" style="color:#fde68a;margin:8px 0">Di Sebuah Desa di Jakarta</h2>
+    <div id="bolangStoryImg" style="font-size:70px;margin:10px 0;animation:bolangStoryFloat 2s ease-in-out infinite">🌾</div>
+    <p id="bolangStoryText" style="color:#e2e8f0;font-size:14px;line-height:1.7;text-align:left"></p>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-dark" onclick="bolangStoryPrev()" style="flex:1">⬅️ SEBELUMNYA</button>
+      <button id="bolangStoryNextBtn" class="btn btn-gold" onclick="bolangStoryNext()" style="flex:1">SELANJUTNYA ➡️</button>
+    </div>
+    <button class="btn btn-dark" onclick="bolangCloseStory()" style="margin-top:10px">❌ LEWATI CERITA</button>
+  </div>
+</div>
+
+<!-- BOLANG - TAHAP 3: MODAL AWAL 10.000 -->
+<div id="bolangStartCoinModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:10001;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0f172a;border:2px solid #f59e0b;border-radius:20px;padding:22px;max-width:400px;width:100%;text-align:center">
+    <div style="font-size:60px">🪙</div>
+    <h2 style="color:#fde68a;margin:8px 0">MODAL AWAL</h2>
+    <div style="font-size:28px;color:#fff;font-weight:bold">+ 10.000 KOIN</div>
+    <p style="color:#cbd5e1;font-size:13px;line-height:1.6">Ini modal perjuangan lu.<br>Jangan dihabisin di Desa. Menangin meja, kumpulin koin,<br>jadi <b style="color:#fde68a">RAJA MAHJONG</b>.</p>
+    <button class="btn btn-gold" onclick="bolangClaimStartCoin()">✅ AMBIL 10.000 KOIN</button>
   </div>
 </div>
 </div>
@@ -3306,6 +3336,7 @@ function bolangShowMap(){
   // Tandain udah pernah masuk, buat TAHAP 4 nanti diambil dari database
   try{ localStorage.setItem('bolang_has_entered','1'); }catch(e){}
   bolangHasEntered = true;
+  try{ bolangCoins = Number(localStorage.getItem('bolang_coins')||0) || 0; }catch(e){}
   bolangUpdateProgress();
   let m = document.getElementById('bolangMapModal');
   if(m) m.style.display = 'flex';
@@ -3314,11 +3345,101 @@ function bolangCloseMap(){
   let m = document.getElementById('bolangMapModal');
   if(m) m.style.display = 'none';
 }
+// ===== BOLANG - TAHAP 3: STORYTELLER + MODAL 10.000 =====
+let bolangStoryIdx = 0;
+let bolangCoins = 0;
+let bolangStoryDone = false;
+try{
+  bolangCoins = Number(localStorage.getItem('bolang_coins')||0) || 0;
+  bolangStoryDone = localStorage.getItem('bolang_story_done') === '1';
+}catch(e){}
+let BOLANG_STORY = [
+  {
+    title:'Di Sebuah Desa di Jakarta',
+    img:'🌾',
+    text:'Di sebuah desa kecil di Jakarta, hiduplah seorang bocah bernama <b style="color:#fde68a">Bolang</b>.<br><br>Hidupnya sederhana. Tiap hari dia bertani, bantuin orang, dan pulang dengan badan capek tapi hati tetap tenang.'
+  },
+  {
+    title:'Gubuk di Tengah Sawah',
+    img:'🛖',
+    text:'Sore itu, Bolang istirahat di sebuah <b style="color:#fde68a">gubuk kecil di tengah sawah</b>.<br><br>Angin sepoi-sepoi, sawah hijau sejauh mata memandang. Dia cuma mau duduk sebentar, ngilangin capek.'
+  },
+  {
+    title:'Nonton Turnamen Mahjong',
+    img:'🀄🏆',
+    text:'Tiba-tiba, dari jauh terdengar suara riuh.<br><br>Bolang ngintip. Ternyata ada <b style="color:#fde68a">turnamen Mahjong</b>! Orang-orang tepuk tangan, yang menang dielu-eluin kayak pahlawan.<br><br>Buat pertama kalinya, mata Bolang berbinar.'
+  },
+  {
+    title:'Timbul Niat Ubah Nasib',
+    img:'🔥',
+    text:'Di gubuk itu, Bolang mikir keras.<br><br><i>"Kalau aku terus bertani gini aja, nasibku gak akan berubah..."</i><br><br><i>"Aku mau jadi seperti mereka. Aku mau jadi <b style="color:#fde68a">RAJA MAHJONG</b>!"</i>'
+  },
+  {
+    title:'Perjalanan Dimulai',
+    img:'🗺️',
+    text:'Malam itu, Bolang mutusin buat berangkat.<br><br>Dari Desa, ke Jakarta. Dari Jakarta, keliling dunia. Dari Singapura, Malaysia, Jepang, sampe Australia.<br><br>Perjalanan panjang ini baru dimulai. Dan lu yang bakal nemenin dia.'
+  }
+];
+function bolangOpenStory(){
+  bolangCloseMap();
+  bolangStoryIdx = 0;
+  bolangRenderStory();
+  let m = document.getElementById('bolangStoryModal');
+  if(m) m.style.display = 'flex';
+}
+function bolangRenderStory(){
+  let s = BOLANG_STORY[bolangStoryIdx];
+  let t = document.getElementById('bolangStoryTitle'); if(t) t.innerText = s.title;
+  let im = document.getElementById('bolangStoryImg'); if(im) im.innerHTML = s.img;
+  let tx = document.getElementById('bolangStoryText'); if(tx) tx.innerHTML = s.text;
+  let pg = document.getElementById('bolangStoryPage'); if(pg) pg.innerText = (bolangStoryIdx+1)+' / '+BOLANG_STORY.length;
+  let btn = document.getElementById('bolangStoryNextBtn');
+  if(btn) btn.innerText = bolangStoryIdx === BOLANG_STORY.length-1 ? '✅ SELESAI CERITA' : 'SELANJUTNYA ➡️';
+}
+function bolangStoryNext(){
+  if(bolangStoryIdx < BOLANG_STORY.length-1){ bolangStoryIdx++; bolangRenderStory(); return; }
+  bolangCloseStory();
+  bolangShowStartCoin();
+}
+function bolangStoryPrev(){
+  if(bolangStoryIdx > 0){ bolangStoryIdx--; bolangRenderStory(); }
+}
+function bolangCloseStory(){
+  let m = document.getElementById('bolangStoryModal');
+  if(m) m.style.display = 'none';
+  // Kalo cerita di-skip, tetep kasih modal koin, biar player gak stuck tanpa koin
+  if(!bolangStoryDone && bolangCoins <= 0){
+    bolangShowStartCoin();
+  }
+}
+function bolangShowStartCoin(){
+  // Kalo udah pernah ambil, jangan kasih lagi
+  if(bolangStoryDone && bolangCoins > 0) return;
+  let m = document.getElementById('bolangStartCoinModal');
+  if(m) m.style.display = 'flex';
+}
+function bolangClaimStartCoin(){
+  bolangCoins = 10000;
+  bolangStoryDone = true;
+  try{
+    localStorage.setItem('bolang_coins','10000');
+    localStorage.setItem('bolang_story_done','1');
+  }catch(e){}
+  let m = document.getElementById('bolangStartCoinModal');
+  if(m) m.style.display = 'none';
+  bolangUpdateProgress();
+  alert('Selamat! Kamu dapet 10.000 koin Bolang. Cek bar progress di tab Bolang!');
+}
 function bolangUpdateProgress(){
-  // TAHAP 1: progress masih di-hide, karena bolangHasEntered = false
   let wrap = document.getElementById('bolangProgressWrap');
   if(!wrap) return;
   wrap.style.display = bolangHasEntered ? 'block' : 'none';
+  let bar = document.getElementById('bolangProgressBar');
+  if(bar) bar.style.width = '0%';
+  let txt = document.getElementById('bolangProgressText');
+  if(txt) txt.innerText = '0%';
+  let info = document.getElementById('bolangProgressInfo');
+  if(info) info.innerText = 'Checkpoint: 0 / 56 • Koin: ' + bolangCoins.toLocaleString('id-ID');
 }
 function switchHomeTab(tab){
   document.querySelectorAll('.homeTabBtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
