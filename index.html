@@ -3313,6 +3313,7 @@ function bolangGetPlayerName(){
     let lbl = document.getElementById('homeUserLabel');
     if(lbl && lbl.innerText) return lbl.innerText.trim();
   }catch(e){}
+  bolangLoadLocal();
   return 'Bolang';
 }
 function bolangGlobeClick(){
@@ -3591,11 +3592,96 @@ function bolangExitWorld(){
 }
 function bolangRenderWorld(){
   let c = document.getElementById('bolangWorldCoins'); if(c) c.innerText = bolangCoins.toLocaleString('id-ID');
-  let bar = document.getElementById('bolangWorldProgressBar'); if(bar) bar.style.width = '0%';
-  let txt = document.getElementById('bolangWorldProgressText'); if(txt) txt.innerText = '0%';
-  // TAHAP 3R: masih Desa, nanti di TAHAP 6 diganti per kota
-let city = document.getElementById('bolangWorldCity'); if(city) city.innerText = bolangLevelObj().city + (bolangLevel === 0 ? '' : ' - ' + bolangFloorObj().name);
-let bet = document.getElementById('bolangWorldBet'); if(bet) bet.innerText = BOLANG_BET().toLocaleString('id-ID') + ' / Meja';
+  let pct = bolangProgressPct();
+  let bar = document.getElementById('bolangWorldProgressBar'); if(bar) bar.style.width = pct + '%';
+  let txt = document.getElementById('bolangWorldProgressText'); if(txt) txt.innerText = pct + '% (' + bolangCheckpoint() + ' / ' + BOLANG_TOTAL_CHECKPOINT + ')';
+  let city = document.getElementById('bolangWorldCity'); if(city) city.innerText = bolangLevelObj().city + (bolangLevel === 0 ? '' : ' - ' + bolangFloorObj().name);
+  let bet = document.getElementById('bolangWorldBet'); if(bet) bet.innerText = BOLANG_BET().toLocaleString('id-ID') + ' / Meja';
+  let desc = document.getElementById('bolangWorldDesc'); if(desc) desc.innerText = bolangLevelObj().desc || '';
+  let titleEl = document.getElementById('bolangWorldTitle'); if(titleEl) titleEl.innerText = '🏆 ' + (bolangTitles && bolangTitles.length ? bolangTitles[bolangTitles.length - 1] : 'ADVENTURE');
+  let shopInfo = document.getElementById('bolangWorldShopInfo');
+  if(shopInfo){
+    let info = bolangNextInfo();
+    if(!info) shopInfo.innerText = '🏆 Udah mentok! Tunggu TAHAP 7.';
+    else if(info.next.toLevel >= BOLANG_LEVELS.length) shopInfo.innerText = '🔒 Tujuan berikutnya: Turnamen Australia. Belum dibuka, tunggu TAHAP 7.';
+    else if(info.isCity) shopInfo.innerText = '🛒 Ke ' + info.destName + ': Beli tiket ' + info.next.ticket + ' ' + info.next.price.toLocaleString('id-ID') + ' + sisa ' + info.next.minMoney.toLocaleString('id-ID') + ' (butuh total ' + info.need.toLocaleString('id-ID') + ')';
+    else shopInfo.innerText = '🛒 Ke ' + info.destName + ': Uang minimal ' + info.need.toLocaleString('id-ID') + ', beli tiket ' + info.next.ticket + ' ' + info.next.price.toLocaleString('id-ID');
+  }
+}
+// ===== TAHAP 6B: SHOP + NAIK LANTAI / PINDAH KOTA =====
+function bolangNextInfo(){
+  let cur = bolangFloorObj();
+  let nx = cur.next;
+  if(!nx) return null;
+  let toLevelObj = BOLANG_LEVELS[nx.toLevel];
+  let destName = toLevelObj ? (toLevelObj.city + ' - ' + (toLevelObj.floors[nx.toFloor] ? toLevelObj.floors[nx.toFloor].name : '')) : '???';
+  let need = (nx.kind === 'city') ? (nx.price + nx.minMoney) : nx.minMoney;
+  let isCity = (nx.kind === 'city');
+  return { cur: cur, next: nx, destName: destName, need: need, isCity: isCity };
+}
+function bolangOpenShop(){
+  let info = bolangNextInfo();
+  if(!info) return toast('Udah mentok, gak ada tujuan lagi.');
+  if(info.next.toLevel >= BOLANG_LEVELS.length){
+    toast('🔒 Turnamen Australia belum dibuka. Tunggu TAHAP 7.');
+    return;
+  }
+  let pos = document.getElementById('bolangShopPos'); if(pos) pos.innerText = bolangLevelObj().city + ' - ' + bolangFloorObj().name;
+  let dest = document.getElementById('bolangShopDest'); if(dest) dest.innerText = info.destName;
+  let tk = document.getElementById('bolangShopTicket'); if(tk) tk.innerText = info.next.ticket + ' - ' + info.next.price.toLocaleString('id-ID');
+  let rq = document.getElementById('bolangShopReq');
+  if(rq){
+    if(info.isCity) rq.innerText = 'Koin >= ' + info.need.toLocaleString('id-ID') + ' (' + info.next.price.toLocaleString('id-ID') + ' tiket + sisa ' + info.next.minMoney.toLocaleString('id-ID') + ')';
+    else rq.innerText = 'Koin >= ' + info.need.toLocaleString('id-ID') + ', abis itu dipotong ' + info.next.price.toLocaleString('id-ID') + ' buat tiket';
+  }
+  let cn = document.getElementById('bolangShopCoins'); if(cn) cn.innerText = bolangCoins.toLocaleString('id-ID');
+  let tt = document.getElementById('bolangShopTitle');
+  if(tt) tt.innerText = info.isCity ? ('Dapet title: ' + bolangLevelObj().title) : 'Gak dapet title, title cuma pas pindah kota';
+  let warn = document.getElementById('bolangShopWarn');
+  let btn = document.getElementById('bolangShopBuyBtn');
+  if(bolangCoins < info.need){
+    if(warn){ warn.style.display = 'block'; warn.innerText = '❌ Koin kurang ' + (info.need - bolangCoins).toLocaleString('id-ID') + ' lagi. Menangin dulu di ' + bolangFloorObj().name + '.'; }
+    if(btn){ btn.innerText = '❌ KOIN KURANG'; btn.style.opacity = '0.5'; }
+  } else {
+    if(warn) warn.style.display = 'none';
+    if(btn){ btn.innerText = '✅ BELI + BERANGKAT (' + info.next.price.toLocaleString('id-ID') + ')'; btn.style.opacity = '1'; }
+  }
+  let m = document.getElementById('bolangShopModal'); if(m) m.style.display = 'flex';
+}
+function bolangCloseShop(){
+  let m = document.getElementById('bolangShopModal'); if(m) m.style.display = 'none';
+}
+function bolangBuyTicket(){
+  let info = bolangNextInfo();
+  if(!info) return;
+  if(info.next.toLevel >= BOLANG_LEVELS.length){ toast('🔒 Turnamen Australia belum dibuka. Tunggu TAHAP 7.'); return; }
+  if(bolangCoins < info.need){
+    toast('❌ Koin kurang! Butuh ' + info.need.toLocaleString('id-ID') + ', koin lu ' + bolangCoins.toLocaleString('id-ID') + '.');
+    bolangOpenShop();
+    return;
+  }
+  bolangCoins -= info.next.price;
+  if(info.isCity){
+    let t = bolangLevelObj().title;
+    if(t && !(bolangTitles || []).includes(t)) bolangTitles.push(t);
+    if(t) toast('🏆 TITLE BARU KEBUKA: ' + t + '!');
+  }
+  bolangLevel = info.next.toLevel;
+  bolangFloor = info.next.toFloor;
+  bolangSaveToDB();
+  bolangCloseShop();
+  let tm = document.getElementById('bolangTravelModal');
+  let em = document.getElementById('bolangTravelEmoji');
+  let tx = document.getElementById('bolangTravelText');
+  if(em) em.innerText = info.isCity ? (info.next.ticket === 'BUS' ? '🚌' : '✈️') : '🛗';
+  if(tx) tx.innerText = info.isCity ? ('OTW ke ' + BOLANG_LEVELS[bolangLevel].city + '...') : ('OTW ke ' + BOLANG_LEVELS[bolangLevel].floors[bolangFloor].name + '...');
+  if(tm) tm.style.display = 'flex';
+  setTimeout(()=>{
+    if(tm) tm.style.display = 'none';
+    bolangUpdateProgress();
+    bolangRenderWorld();
+    toast('📍 Nyampe di ' + BOLANG_LEVELS[bolangLevel].city + ' - ' + BOLANG_LEVELS[bolangLevel].floors[bolangFloor].name + '!');
+  }, 1200);
 }
 // ===== BOLANG - TAHAP 3: STORYTELLER + MODAL 10.000 =====
 let bolangStoryIdx = 0;
@@ -3718,6 +3804,19 @@ function bolangSaveLocal(){
     localStorage.setItem('bolang_coins', String(bolangCoins));
     localStorage.setItem('bolang_story_done', bolangStoryDone ? '1' : '0');
     localStorage.setItem('bolang_has_entered', bolangHasEntered ? '1' : '0');
+    localStorage.setItem('bolang_level', String(bolangLevel));
+    localStorage.setItem('bolang_floor', String(bolangFloor));
+    localStorage.setItem('bolang_titles', JSON.stringify(bolangTitles || ['ADVENTURE']));
+  }catch(e){}
+}
+function bolangLoadLocal(){
+  try{
+    let l = Number(localStorage.getItem('bolang_level') || 0);
+    let f = Number(localStorage.getItem('bolang_floor') || 0);
+    if(Number.isFinite(l) && l >= 0 && l < BOLANG_LEVELS.length) bolangLevel = l;
+    if(Number.isFinite(f) && f >= 0 && f < (BOLANG_LEVELS[bolangLevel].floors || []).length) bolangFloor = f;
+    let t = JSON.parse(localStorage.getItem('bolang_titles') || '["ADVENTURE"]');
+    if(Array.isArray(t) && t.length) bolangTitles = t;
   }catch(e){}
 }
 
@@ -3732,7 +3831,7 @@ async function bolangSaveToDB(){
     await fetch('/api/bolang-save', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ id: uid, coins: bolangCoins, story_done: bolangStoryDone, has_entered: bolangHasEntered, authToken: _tok })
+      body: JSON.stringify({ id: uid, coins: bolangCoins, story_done: bolangStoryDone, has_entered: bolangHasEntered, level: bolangLevel, floor: bolangFloor, titles: bolangTitles, authToken: _tok })
     });
   }catch(e){ console.log('BOLANG SAVE GAGAL:', e); }
   bolangSaving = false;
@@ -3755,6 +3854,11 @@ async function bolangLoadFromDB(){
         bolangHasEntered = false;
       }
       bolangLoadedFromDB = true;
+      // 6B: server belum tentu kirim level/floor (server lama). Kalo server kirim, pake server. Kalo enggak, pake local.
+if(j.data && typeof j.data.level === 'number') bolangLevel = j.data.level;
+if(j.data && typeof j.data.floor === 'number') bolangFloor = j.data.floor;
+if(j.data && Array.isArray(j.data.titles) && j.data.titles.length) bolangTitles = j.data.titles;
+bolangLoadLocal();
       bolangSaveLocal();
       bolangUpdateProgress();
       bolangRenderWorld();
@@ -5374,7 +5478,8 @@ updateAchLabel();
         <div style="font-size:12px;opacity:.9">Klik buat main Mahjong di sini</div>
         <div style="margin-top:10px;background:#f59e0b;color:#000;display:inline-block;padding:8px 16px;border-radius:20px;font-weight:bold">▶️ MASUK BALAI DESA</div>
       </button>
-      <div id="bolangWorldShopInfo" style="margin-top:10px;font-size:12px;color:#14532d;background:rgba(255,255,255,.85);padding:10px;border-radius:12px">🚌 Syarat ke Jakarta: Beli tiket bus 50.000 + sisa uang minimal 50.000<br>Shop + tiket baru dibuka di TAHAP 6</div>
+      <button onclick="bolangOpenShop()" style="width:100%;margin-top:10px;background:#f59e0b;color:#000;border:none;border-radius:14px;padding:12px;font-weight:900;cursor:pointer;font-size:14px">🛒 SHOP - BELI TIKET NAIK</button>
+<div id="bolangWorldShopInfo" style="margin-top:10px;font-size:12px;color:#14532d;background:rgba(255,255,255,.85);padding:10px;border-radius:12px">🚌 Syarat ke Jakarta: Beli tiket bus 50.000 + sisa uang minimal 50.000</div>
     </div>
 
     <!-- PROGRESS DI DUNIA -->
@@ -5400,6 +5505,34 @@ updateAchLabel();
       <button id="bolangBalaiMasukBtn" class="btn btn-gold" onclick="bolangConfirmBalai()" style="flex:1">✅ MASUK - BAYAR 1.000</button>
       <button class="btn btn-dark" onclick="bolangCloseBalai()" style="flex:1">❌ BATAL</button>
     </div>
+  </div>
+</div>
+<!-- TAHAP 6B: SHOP TIKET -->
+<div id="bolangShopModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:10004;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0f172a;border:2px solid #f59e0b;border-radius:20px;padding:22px;max-width:420px;width:100%;text-align:center">
+    <div style="font-size:50px">🛒</div>
+    <h2 style="color:#fde68a;margin:8px 0">SHOP TIKET</h2>
+    <div style="background:rgba(0,0,0,.4);border-radius:14px;padding:12px;margin:12px 0;font-size:13px;color:#fff;line-height:1.7;text-align:left">
+      📍 Posisi: <b id="bolangShopPos">DESA - BALAI DESA</b><br>
+      🎯 Tujuan: <b id="bolangShopDest">JAKARTA - LANTAI 1</b><br>
+      🎟️ Tiket: <b id="bolangShopTicket">BUS - 50.000</b><br>
+      📋 Syarat: <span id="bolangShopReq">Koin >= 100.000 (50.000 tiket + sisa 50.000)</span><br>
+      🪙 Koin lu: <b id="bolangShopCoins">0</b><br>
+      🏆 Title kalo pindah kota: <b id="bolangShopTitle">-</b>
+    </div>
+    <div id="bolangShopWarn" style="display:none;color:#fca5a5;font-size:12px;margin-bottom:10px"></div>
+    <div style="display:flex;gap:10px">
+      <button id="bolangShopBuyBtn" class="btn btn-gold" onclick="bolangBuyTicket()" style="flex:1">✅ BELI + BERANGKAT</button>
+      <button class="btn btn-dark" onclick="bolangCloseShop()" style="flex:1">❌ BATAL</button>
+    </div>
+  </div>
+</div>
+<!-- TAHAP 6B: ANIMASI PERJALANAN BUS / PESAWAT -->
+<div id="bolangTravelModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10005;align-items:center;justify-content:center;padding:16px">
+  <div style="text-align:center">
+    <div id="bolangTravelEmoji" style="font-size:100px;animation:bolangStoryFloat 1s ease-in-out infinite">🚌</div>
+    <div id="bolangTravelText" style="color:#fde68a;font-size:18px;font-weight:900;margin-top:12px">OTW ke Jakarta...</div>
+    <div style="color:#cbd5e1;font-size:12px;margin-top:6px">Sabar ya, Bolang lagi di jalan...</div>
   </div>
 </div>
 </body>
