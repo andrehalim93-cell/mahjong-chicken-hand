@@ -213,6 +213,45 @@ app.get('/api/get-hu', async (req,res)=>{
   let { data:u } = await supabase.from('users').select('hu').eq('id', req.query.id).maybeSingle();
   res.json({ok:true, hu: u?.hu||0});
 });
+// ===== BOLANG - TAHAP 4: SIMPEN / LOAD PROGRESS KE SUPABASE =====
+app.get('/api/bolang-get', async (req,res)=>{
+  try{
+    let id = normId(req.query.id);
+    if(!id) return res.json({ok:false, error:'ID kosong!'});
+    let { data, error } = await supabase.from('bolang_progress').select('user_id, coins, story_done, has_entered').eq('user_id', id).maybeSingle();
+    if(error) throw error;
+    if(!data) return res.json({ok:true, data:null});
+    return res.json({ok:true, data:{
+      coins: data.coins || 0,
+      story_done: !!data.story_done,
+      has_entered: !!data.has_entered
+    }});
+  }catch(e){ console.log('BOLANG-GET EX:', e); return res.json({ok:false, error:'Server error'}); }
+});
+
+app.post('/api/bolang-save', async (req,res)=>{
+  try{
+    let { id, coins, story_done, has_entered, authToken } = req.body || {};
+    id = normId(id);
+    if(!id) return res.json({ok:false, error:'ID kosong!'});
+    // Cek token, sama kayak /api/me, biar orang lain gak bisa ngarang koin orang
+    if(authToken){
+      let at = authTokens.get(authToken);
+      if(!at || at.exp < Date.now() || at.userId !== id) return res.status(403).json({ok:false, error:'Sesi kadaluarsa, login ulang!'});
+    }
+    // Amanin angka koin, jangan sampe minus / ngaco
+    let safeCoins = Math.max(0, Math.floor(Number(coins) || 0));
+    let { data, error } = await supabase.from('bolang_progress').upsert({
+      user_id: id,
+      coins: safeCoins,
+      story_done: !!story_done,
+      has_entered: !!has_entered,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' }).select().maybeSingle();
+    if(error) throw error;
+    return res.json({ok:true, data: data});
+  }catch(e){ console.log('BOLANG-SAVE EX:', e); return res.json({ok:false, error:'Server error'}); }
+});
 app.post('/api/me', async (req, res)=>{
   try{
     let { id, authToken } = req.body||{};
