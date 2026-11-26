@@ -3362,11 +3362,10 @@ function bolangEnterWorld(){
   bolangHasEntered = true;
   bolangSaveToDB();
   bolangUpdateProgress();
-  bolangUpdateProgress();
-  bolangRenderWorld();
   let w = document.getElementById('bolangWorld');
   if(w) w.style.display = 'block';
   document.body.style.overflow = 'hidden';
+  try{ bolangRenderWorld(); }catch(e){ console.log('BOLANG RENDER GAGAL:', e); }
 }
 // ===== TAHAP 5: BALAI DESA - MEJA LATIHAN LAWAN 3 BOT GAMPANG =====
 let bolangInGame = false;
@@ -3595,7 +3594,7 @@ function bolangRenderWorld(){
   let bar = document.getElementById('bolangWorldProgressBar'); if(bar) bar.style.width = '0%';
   let txt = document.getElementById('bolangWorldProgressText'); if(txt) txt.innerText = '0%';
   // TAHAP 3R: masih Desa, nanti di TAHAP 6 diganti per kota
-let city = document.getElementById('bolangWorldCity'); if(city) city.innerText = bolangLevelObj().city + (bolangLevel() === 0 ? '' : ' - ' + bolangFloorObj().name);
+let city = document.getElementById('bolangWorldCity'); if(city) city.innerText = bolangLevelObj().city + (bolangLevel === 0 ? '' : ' - ' + bolangFloorObj().name);
 let bet = document.getElementById('bolangWorldBet'); if(bet) bet.innerText = BOLANG_BET().toLocaleString('id-ID') + ' / Meja';
 }
 // ===== BOLANG - TAHAP 3: STORYTELLER + MODAL 10.000 =====
