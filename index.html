@@ -2454,6 +2454,8 @@ function loginSuccess(user, passwordForSave, showProfile, authToken){
   if(authToken){ try{ sessionStorage.setItem('mahjong_auth_token', authToken); }catch(e){} }
     // FIX: Kalo ganti akun, bersihin dulu sisa akun lama di HP ini
   try{
+    try{ clearTimeout(window._achSyncTimer); }catch(e){}
+    try{ localStorage.removeItem('mj_ach'); }catch(e){}
     let oldId = (currentUser && currentUser.id) ? String(currentUser.id).toLowerCase() : '';
     let newId = (user && user.id) ? String(user.id).toLowerCase() : '';
     if(oldId && newId && oldId !== newId){
@@ -2754,6 +2756,7 @@ function exitBotGame(){
 }
   function doLogout(){
   currentUser = null;
+  try{ clearTimeout(window._achSyncTimer); }catch(e){}
   localStorage.removeItem('mj_ach');
   localStorage.removeItem('bolang_coins');
   localStorage.removeItem('bolang_story_done');
@@ -4735,15 +4738,25 @@ function achStarsText(){
   let s=getAchStars();
   return s.filter(c=>c.done).length+'/5 Bintang';
 }
-function getAchData(){ try{ return JSON.parse(localStorage.getItem('mj_ach')||'{"unlocked":[],"stats":{}}'); }catch(e){ return {unlocked:[],stats:{}}; } }
-function saveAchData(d){ localStorage.setItem('mj_ach',JSON.stringify(d)); updateAchLabel(); syncAchToServer(d); }
+function achStorageKey(){
+  try{
+    if(currentUser && currentUser.id) return 'mj_ach_' + String(currentUser.id).toLowerCase();
+  }catch(e){}
+  return 'mj_ach_guest';
+}
+function getAchData(){ try{ return JSON.parse(localStorage.getItem(achStorageKey())||'{"unlocked":[],"stats":{}}'); }catch(e){ return {unlocked:[],stats:{}}; } }
+function saveAchData(d){ localStorage.setItem(achStorageKey(),JSON.stringify(d)); updateAchLabel(); syncAchToServer(d); }
 function getAchToken(){ try{ return sessionStorage.getItem('mahjong_auth_token')||''; }catch(e){ return ''; } }
 function syncAchToServer(d){
   if(!currentUser || !currentUser.id) return;
   let _tok = getAchToken(); if(!_tok) return;
+  let ownerId = String(currentUser.id).toLowerCase();
+  let payload = JSON.parse(JSON.stringify(d || {unlocked:[], stats:{}}));
   clearTimeout(window._achSyncTimer);
   window._achSyncTimer = setTimeout(()=>{
-    fetch('/api/save-ach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentUser.id,authToken:_tok,ach:d})}).catch(()=>{});
+    // Kalo udah ganti akun pas timer jalan, JANGAN kirim, buang aja
+    if(!currentUser || String(currentUser.id).toLowerCase() !== ownerId) return;
+    fetch('/api/save-ach',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:ownerId,authToken:_tok,ach:payload})}).catch(()=>{});
   }, 500);
 }
 async function loadAchFromServer(){
@@ -4753,7 +4766,7 @@ async function loadAchFromServer(){
     let j = await r.json(); if(!j.ok || !j.ach) return;
       // FIX: Server menang 100%. Jangan merge sama lokal, karena lokal itu bisa punya akun lain.
     // Kalo ID baru, server-nya 0, ya lokal harus jadi 0 juga, bukan di-upload balik.
-    localStorage.setItem('mj_ach', JSON.stringify({unlocked: j.ach.unlocked || [], stats: j.ach.stats || {}}));
+    localStorage.setItem(achStorageKey(), JSON.stringify({unlocked: j.ach.unlocked || [], stats: j.ach.stats || {}}));
     updateAchLabel();
   }catch(e){}
 }
