@@ -3475,6 +3475,10 @@ let bolangLevel = 0;
 let bolangFloor = 0;
 // Title yang udah kebuka. Desa (ADVENTURE) kebuka dari awal, sisanya ??? sampe tamat kota itu.
 let bolangTitles = ['ADVENTURE'];
+// 6C: title yang lagi dipake (buat 6D nanti bisa dipilih). Default = title terakhir yang kebuka.
+let bolangActiveTitle = 'ADVENTURE';
+let bolangLastSaveAt = 0;
+let bolangSaveTimer = null;
 function bolangLevelObj(){ return BOLANG_LEVELS[bolangLevel] || BOLANG_LEVELS[0]; }
 function bolangFloorObj(){ let L = bolangLevelObj(); return (L.floors||[])[bolangFloor] || L.floors[0]; }
 function bolangBet(){ return bolangFloorObj().bet || 1000; }
@@ -3598,7 +3602,7 @@ function bolangRenderWorld(){
   let city = document.getElementById('bolangWorldCity'); if(city) city.innerText = bolangLevelObj().city + (bolangLevel === 0 ? '' : ' - ' + bolangFloorObj().name);
   let bet = document.getElementById('bolangWorldBet'); if(bet) bet.innerText = BOLANG_BET().toLocaleString('id-ID') + ' / Meja';
   let desc = document.getElementById('bolangWorldDesc'); if(desc) desc.innerText = bolangLevelObj().desc || '';
-  let titleEl = document.getElementById('bolangWorldTitle'); if(titleEl) titleEl.innerText = '🏆 ' + (bolangTitles && bolangTitles.length ? bolangTitles[bolangTitles.length - 1] : 'ADVENTURE');
+  let titleEl = document.getElementById('bolangWorldTitle'); if(titleEl) titleEl.innerText = '🏆 ' + (bolangActiveTitle || (bolangTitles && bolangTitles.length ? bolangTitles[bolangTitles.length - 1] : 'ADVENTURE'));
   let shopInfo = document.getElementById('bolangWorldShopInfo');
   if(shopInfo){
     let info = bolangNextInfo();
@@ -3668,7 +3672,7 @@ function bolangBuyTicket(){
   }
   bolangLevel = info.next.toLevel;
   bolangFloor = info.next.toFloor;
-  bolangSaveToDB();
+  bolangSaveNow();
   bolangCloseShop();
   let tm = document.getElementById('bolangTravelModal');
   let em = document.getElementById('bolangTravelEmoji');
@@ -3807,6 +3811,8 @@ function bolangSaveLocal(){
     localStorage.setItem('bolang_level', String(bolangLevel));
     localStorage.setItem('bolang_floor', String(bolangFloor));
     localStorage.setItem('bolang_titles', JSON.stringify(bolangTitles || ['ADVENTURE']));
+    localStorage.setItem('bolang_active_title', bolangActiveTitle || 'ADVENTURE');
+    localStorage.setItem('bolang_updated_at', String(bolangLastSaveAt || Date.now()));
   }catch(e){}
 }
 function bolangLoadLocal(){
@@ -3817,53 +3823,116 @@ function bolangLoadLocal(){
     if(Number.isFinite(f) && f >= 0 && f < (BOLANG_LEVELS[bolangLevel].floors || []).length) bolangFloor = f;
     let t = JSON.parse(localStorage.getItem('bolang_titles') || '["ADVENTURE"]');
     if(Array.isArray(t) && t.length) bolangTitles = t;
+    let at = localStorage.getItem('bolang_active_title') || '';
+    if(at && bolangTitles.includes(at)) bolangActiveTitle = at;
+    else bolangActiveTitle = bolangTitles[bolangTitles.length - 1] || 'ADVENTURE';
+    let ua = Number(localStorage.getItem('bolang_updated_at') || 0);
+    if(Number.isFinite(ua) && ua) bolangLastSaveAt = ua;
   }catch(e){}
 }
 
 async function bolangSaveToDB(){
+  bolangLastSaveAt = Date.now();
+  bolangSaveLocal();
+  let uid = (typeof myUserId === 'function') ? myUserId() : '';
+  if(!uid) return;
+  // 6C: debounce 2 detik, biar menang + naik lantai + claim dalam 1 detik gak spam server
+  if(bolangSaveTimer) clearTimeout(bolangSaveTimer);
+  bolangSaveTimer = setTimeout(async ()=>{
+    if(bolangSaving) return;
+    bolangSaving = true;
+    try{
+      let _tok = '';
+      try{ _tok = sessionStorage.getItem('mahjong_auth_token') || ''; }catch(e){}
+      let r = await fetch('/api/bolang-save', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id: uid, coins: bolangCoins, story_done: bolangStoryDone, has_entered: bolangHasEntered, level: bolangLevel, floor: bolangFloor, titles: bolangTitles, active_title: bolangActiveTitle, authToken: _tok })
+      });
+      let j = null;
+      try{ j = await r.json(); }catch(e){}
+      if(j && j.ok && j.data){
+        if(typeof j.data.level === 'number') bolangLevel = j.data.level;
+        if(typeof j.data.floor === 'number') bolangFloor = j.data.floor;
+        if(Array.isArray(j.data.titles) && j.data.titles.length) bolangTitles = j.data.titles;
+        if(typeof j.data.active_title === 'string' && j.data.active_title) bolangActiveTitle = j.data.active_title;
+        bolangSaveLocal();
+        try{ bolangRenderWorld(); }catch(_){}
+      }
+    }catch(e){ console.log('BOLANG SAVE GAGAL:', e); }
+    bolangSaving = false;
+  }, 2000);
+}
+function bolangSaveNow(){
+  // 6C: buat momen penting (naik lantai / pindah kota), langsung kirim, gak nunggu debounce
+  if(bolangSaveTimer) clearTimeout(bolangSaveTimer);
+  bolangSaveTimer = null;
+  bolangLastSaveAt = Date.now();
   bolangSaveLocal();
   let uid = (typeof myUserId === 'function') ? myUserId() : '';
   if(!uid || bolangSaving) return;
   bolangSaving = true;
-  try{
-    let _tok = '';
-    try{ _tok = sessionStorage.getItem('mahjong_auth_token') || ''; }catch(e){}
-    await fetch('/api/bolang-save', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ id: uid, coins: bolangCoins, story_done: bolangStoryDone, has_entered: bolangHasEntered, level: bolangLevel, floor: bolangFloor, titles: bolangTitles, authToken: _tok })
-    });
-  }catch(e){ console.log('BOLANG SAVE GAGAL:', e); }
-  bolangSaving = false;
+  (async ()=>{
+    try{
+      let _tok = '';
+      try{ _tok = sessionStorage.getItem('mahjong_auth_token') || ''; }catch(e){}
+      await fetch('/api/bolang-save', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ id: uid, coins: bolangCoins, story_done: bolangStoryDone, has_entered: bolangHasEntered, level: bolangLevel, floor: bolangFloor, titles: bolangTitles, active_title: bolangActiveTitle, authToken: _tok })
+      });
+    }catch(e){ console.log('BOLANG SAVE NOW GAGAL:', e); }
+    bolangSaving = false;
+  })();
 }
 
 async function bolangLoadFromDB(){
   let uid = (typeof myUserId === 'function') ? myUserId() : '';
   if(!uid) return;
+  let localBackup = { coins: bolangCoins, level: bolangLevel, floor: bolangFloor, titles: (bolangTitles || []).slice(), active: bolangActiveTitle, at: bolangLastSaveAt };
   try{
     let r = await fetch('/api/bolang-get?id=' + encodeURIComponent(uid));
     let j = await r.json();
     if(j && j.ok){
       if(j.data){
+        // 6C: SERVER MENANG. Pake server, jangan ditimpa local lagi.
         bolangCoins = Number(j.data.coins || 0);
         bolangStoryDone = !!j.data.story_done;
         bolangHasEntered = !!j.data.has_entered;
+        if(typeof j.data.level === 'number' && j.data.level >= 0 && j.data.level < BOLANG_LEVELS.length) bolangLevel = j.data.level;
+        if(typeof j.data.floor === 'number' && j.data.floor >= 0) bolangFloor = j.data.floor;
+        if(Array.isArray(j.data.titles) && j.data.titles.length) bolangTitles = j.data.titles;
+        if(typeof j.data.active_title === 'string' && j.data.active_title && bolangTitles.includes(j.data.active_title)) bolangActiveTitle = j.data.active_title;
+        else bolangActiveTitle = bolangTitles[bolangTitles.length - 1] || 'ADVENTURE';
+        if(j.data.updated_at){
+          let t = Date.parse(j.data.updated_at);
+          if(Number.isFinite(t)) bolangLastSaveAt = t;
+        }
       } else {
-        bolangCoins = 0;
+        // Akun baru, belum ada di server: pake local (biasanya Desa, koin 0)
+        bolangCoins = localBackup.coins;
+        bolangLevel = localBackup.level;
+        bolangFloor = localBackup.floor;
+        bolangTitles = localBackup.titles;
+        bolangActiveTitle = localBackup.active;
         bolangStoryDone = false;
         bolangHasEntered = false;
       }
       bolangLoadedFromDB = true;
-      // 6B: server belum tentu kirim level/floor (server lama). Kalo server kirim, pake server. Kalo enggak, pake local.
-if(j.data && typeof j.data.level === 'number') bolangLevel = j.data.level;
-if(j.data && typeof j.data.floor === 'number') bolangFloor = j.data.floor;
-if(j.data && Array.isArray(j.data.titles) && j.data.titles.length) bolangTitles = j.data.titles;
-bolangLoadLocal();
       bolangSaveLocal();
       bolangUpdateProgress();
       bolangRenderWorld();
     }
-  }catch(e){ console.log('BOLANG LOAD GAGAL:', e); }
+  }catch(e){
+    console.log('BOLANG LOAD GAGAL, PAKE LOCAL:', e);
+    bolangCoins = localBackup.coins;
+    bolangLevel = localBackup.level;
+    bolangFloor = localBackup.floor;
+    bolangTitles = localBackup.titles;
+    bolangActiveTitle = localBackup.active;
+    bolangUpdateProgress();
+    try{ bolangRenderWorld(); }catch(_){}
+  }
 }
 function switchHomeTab(tab){
   document.querySelectorAll('.homeTabBtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
