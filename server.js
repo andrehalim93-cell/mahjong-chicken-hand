@@ -213,41 +213,77 @@ app.get('/api/get-hu', async (req,res)=>{
   let { data:u } = await supabase.from('users').select('hu').eq('id', req.query.id).maybeSingle();
   res.json({ok:true, hu: u?.hu||0});
 });
-// ===== BOLANG - TAHAP 4: SIMPEN / LOAD PROGRESS KE SUPABASE =====
+// ===== BOLANG - 6C: GET + SAVE LEVEL / FLOOR / TITLES / ACTIVE_TITLE =====
+const BOLANG_VALID_TITLES_6C = ['ADVENTURE','JAKARTA CHAMPION','SINGAPORE STAR','THAI MASTER','MALAYSIA HERO','PHILIPPINES KING','VIETNAM LEGEND','JAPAN SENSEI','KOREA IDOL','CHINA DRAGON','SHANGHAI EMPEROR','RAJA MAHJONG'];
 app.get('/api/bolang-get', async (req,res)=>{
   try{
     let id = normId(req.query.id);
     if(!id) return res.json({ok:false, error:'ID kosong!'});
-    let { data, error } = await supabase.from('bolang_progress').select('user_id, coins, story_done, has_entered').eq('user_id', id).maybeSingle();
-    if(error) throw error;
+    // Coba baca kolom baru dulu. Kalo kolom belum ada di Supabase (belum migrasi), fallback ke kolom lama, biar gak crash.
+    let { data, error } = await supabase.from('bolang_progress').select('user_id, coins, story_done, has_entered, level, floor, titles, active_title, updated_at').eq('user_id', id).maybeSingle();
+    if(error && String(error.message||'').toLowerCase().includes('column')){
+      let r2 = await supabase.from('bolang_progress').select('user_id, coins, story_done, has_entered').eq('user_id', id).maybeSingle();
+      if(r2.error) throw r2.error;
+      data = r2.data;
+    } else if(error) throw error;
     if(!data) return res.json({ok:true, data:null});
+    let tt = Array.isArray(data.titles) ? data.titles.filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : ['ADVENTURE'];
+    if(!tt.length) tt = ['ADVENTURE'];
     return res.json({ok:true, data:{
       coins: data.coins || 0,
       story_done: !!data.story_done,
-      has_entered: !!data.has_entered
+      has_entered: !!data.has_entered,
+      level: (typeof data.level === 'number' ? data.level : 0),
+      floor: (typeof data.floor === 'number' ? data.floor : 0),
+      titles: tt,
+      active_title: (typeof data.active_title === 'string' && tt.includes(data.active_title) ? data.active_title : tt[tt.length-1]),
+      updated_at: data.updated_at || null
     }});
   }catch(e){ console.log('BOLANG-GET EX:', e); return res.json({ok:false, error:'Server error'}); }
 });
 
 app.post('/api/bolang-save', async (req,res)=>{
   try{
-    let { id, coins, story_done, has_entered, authToken } = req.body || {};
+    let { id, coins, story_done, has_entered, level, floor, titles, active_title, authToken } = req.body || {};
     id = normId(id);
     if(!id) return res.json({ok:false, error:'ID kosong!'});
-    // Cek token, sama kayak /api/me, biar orang lain gak bisa ngarang koin orang
     if(authToken){
       let at = authTokens.get(authToken);
       if(!at || at.exp < Date.now() || at.userId !== id) return res.status(403).json({ok:false, error:'Sesi kadaluarsa, login ulang!'});
     }
-    // Amanin angka koin, jangan sampe minus / ngaco
-    let safeCoins = Math.max(0, Math.floor(Number(coins) || 0));
-    let { data, error } = await supabase.from('bolang_progress').upsert({
+    let safeCoins = Math.max(0, Math.min(999999999, Math.floor(Number(coins) || 0)));
+    // 6C: validasi level/floor, jangan percaya HP mentah-mentah
+    let lv = Number(level);
+    if(!Number.isFinite(lv) || lv < 0 || lv > 10) lv = 0;
+    let fl = Number(floor);
+    if(!Number.isFinite(fl) || fl < 0 || fl > 5) fl = 0;
+    // 6C: validasi titles, buang yang ngawur. RAJA MAHJONG (index 11) cuma boleh kalo level 10, itu dicek di TAHAP 7, di 6C potong sampe SHANGHAI EMPEROR.
+    let tt = Array.isArray(titles) ? titles.filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : ['ADVENTURE'];
+    if(!tt.includes('ADVENTURE')) tt.unshift('ADVENTURE');
+    let maxIdx = Math.min(lv + 1, 10);
+    tt = tt.filter(t=>BOLANG_VALID_TITLES_6C.indexOf(t) <= maxIdx);
+    if(!tt.length) tt = ['ADVENTURE'];
+    let at2 = (typeof active_title === 'string' && tt.includes(active_title)) ? active_title : tt[tt.length-1];
+    let payload = {
       user_id: id,
       coins: safeCoins,
       story_done: !!story_done,
       has_entered: !!has_entered,
+      level: lv,
+      floor: fl,
+      titles: tt,
+      active_title: at2,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' }).select().maybeSingle();
+    };
+    let { data, error } = await supabase.from('bolang_progress').upsert(payload, { onConflict: 'user_id' }).select().maybeSingle();
+    // Kalo kolom baru belum ada di Supabase, fallback ke save lama (koin doang), biar game gak mati total
+    if(error && String(error.message||'').toLowerCase().includes('column')){
+      let r2 = await supabase.from('bolang_progress').upsert({
+        user_id: id, coins: safeCoins, story_done: !!story_done, has_entered: !!has_entered, updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' }).select().maybeSingle();
+      if(r2.error) throw r2.error;
+      return res.json({ok:true, data: r2.data, warn:'BOLANG_COLUMNS_MISSING'});
+    }
     if(error) throw error;
     return res.json({ok:true, data: data});
   }catch(e){ console.log('BOLANG-SAVE EX:', e); return res.json({ok:false, error:'Server error'}); }
