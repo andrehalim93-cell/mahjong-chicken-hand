@@ -3883,7 +3883,7 @@ function bolangLoadLocal(){
     let f = Number(localStorage.getItem('bolang_floor') || 0);
     if(Number.isFinite(l) && l >= 0 && l < BOLANG_LEVELS.length) bolangLevel = l;
     if(Number.isFinite(f) && f >= 0 && f < (BOLANG_LEVELS[bolangLevel].floors || []).length) bolangFloor = f;
-    let _mapT = (x)=>{ let _m = {'ADVENTURE':'SANG PETUALANG','JAKARTA CHAMPION':'JAWARA JAKARTA','SINGAPORE CHAMPION':'SINGA MERLION','MALAYSIA CHAMPION':'PENDEKAR MALAYA','JAPAN CHAMPION':'RONIN MAHJONG','TAIWAN CHAMPION':'NAGA FORMOSA','KOREAN CHAMPION':'BINTANG SEOUL','HONGKONG CHAMPION':'RAJA KOWLOON','MACAO CHAMPION':'BANDAR MACAO','CHINA CHAMPION':'KAISAR NAGA','RAJA MAHJONG':'KING OF MAHJONG'}; return _m[x] || x; };
+    let _mapT = (x)=>{ let _m = {'ADVENTURE':'SANG PETUALANG','JAKARTA CHAMPION':'JAWARA JAKARTA','SINGAPORE CHAMPION':'SINGA MERLION','MALAYSIA CHAMPION':'PENDEKAR MALAYA','JAPAN CHAMPION':'RONIN MAHJONG','TAIWAN CHAMPION':'NAGA FORMOSA','KOREAN CHAMPION':'BINTANG SEOUL','HONGKONG CHAMPION':'RAJA KOWLOON','MACAO CHAMPION':'NAGA PUTIH MACAO','BANDAR MACAO':'NAGA PUTIH MACAO','CHINA CHAMPION':'KAISAR NAGA','RAJA MAHJONG':'KING OF MAHJONG'}; return _m[x] || x; };
     let t = JSON.parse(localStorage.getItem('bolang_titles') || '[]');
     if(Array.isArray(t)) bolangTitles = t.map(x=> _mapT(x));
     let at = localStorage.getItem('bolang_active_title') || '';
