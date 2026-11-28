@@ -843,9 +843,13 @@ function startGame(room, turnTimeSec){
   let d1 = 1+Math.floor(Math.random()*6);
   let d2 = 1+Math.floor(Math.random()*6);
   let total = d1+d2;
-  let dealerIdx = (total-1) % room.players.length;
-  room.turnIdx = dealerIdx;
-  room.lastDice = { d1, d2, total, dealer: room.players[dealerIdx].name };
+let total = d1+d2; 
+let baseIdx = 0; 
+if(room._countFromWinner && room.lastWinnerName){ let wi = room.players.findIndex(p=>p.name===room.lastWinnerName); if(wi>=0) baseIdx = wi; } 
+room._countFromWinner = false; 
+let dealerIdx = (baseIdx + total - 1) % room.players.length; 
+room.turnIdx = dealerIdx; 
+room.lastDice = { d1, d2, total, dealer: room.players[dealerIdx].name, countFrom: room.players[baseIdx].name };
   let dealerDrawnTile = null;
   room.players.forEach((p, idx)=>{
     p.hand=[]; p.melds=[]; p.discards=[]; p.flowers=[];
@@ -858,8 +862,8 @@ function startGame(room, turnTimeSec){
     p.hand = sortHand(p.hand);
   });
   let dealer = room.players[dealerIdx];
-  emitToRoom(room, 'diceRolled', { d1, d2, total, dealer: dealer.name });
-  emitToRoom(room, 'gameStarted', { players:publicPlayers(room), wallLeft:room.wall.length, turn:dealer.name, turnTimeSec:room.turnTimeSec, dice:{d1,d2,total,dealer:dealer.name} });
+emitToRoom(room, 'diceRolled', { d1, d2, total, dealer: dealer.name, countFrom: room.lastDice.countFrom }); 
+emitToRoom(room, 'gameStarted', { players:publicPlayers(room), wallLeft:room.wall.length, turn:dealer.name, turnTimeSec:room.turnTimeSec, dice:{d1,d2,total,dealer:dealer.name,countFrom: room.lastDice.countFrom} });
   room.players.forEach(p=>sendHand(room,p));
   if(dealer && !dealer.isBot && dealerDrawnTile){ io.to(dealer.id).emit('youDrew', { tile: dealerDrawnTile, wallLeft: room.wall.length }); }
   addLog(room, `🎲 Dadu: ${d1} + ${d2} = ${total}! Dealer: ${dealer.name}. Rebutan HU!`);
@@ -1096,9 +1100,9 @@ function endGameDraw(room){
   emitToRoom(room, 'gameOver', { winner:null, message:'Tembok habis! Seri!', reason:'draw', msg:'Tembok habis! Seri!', finalHands: buildFinalHands(room, null, null) });
   addLog(room, '🏳️ Tembok habis, seri!');
 }
-function endGameWin(room, winnerName, msg, winningTile){
-  clearTurnTimer(room); clearClaimTimer(room);
-  room.phase='finished'; room.waitingClaim=false;
+function endGameWin(room, winnerName, msg, winningTile){ 
+  clearTurnTimer(room); clearClaimTimer(room); 
+  room.phase='finished'; room.waitingClaim=false; room.lastWinnerName=winnerName;
   let winner = room.players.find(p=>p.name===winnerName);
   // FIX HU 14 TILE: jangan cuma kirim winner.hand (sisa tangan, bisa cuma 4 tile kalau udah ada meld).
   // Full = semua meld PONG/CHOW yang udah kebuka + sisa tangan + tile HU (kalau HU dari buangan orang, tile itu belum masuk tangan).
@@ -1396,11 +1400,12 @@ if(room.players.length<2){ socket.emit('errorMsg', 'Minimal 2 pemain buat mulai!
     let count = room.rematchVotes.filter(n=>humans.some(p=>p.name===n)).length;
     emitToRoom(room, 'rematchUpdate', { count, total: humans.length, voters: room.rematchVotes });
     if(count >= humans.length && humans.length>0){
-      room.rematchVotes = [];
-      room.phase='lobby';
-      room.players.forEach(p=>{ p.hand=[]; p.melds=[]; p.discards=[]; p.flowers=[]; });
-      // Langsung mulai lagi, gak balik lobby, pemain sama persis
-      startGame(room, room.turnTimeSec);
+    room.rematchVotes = []; 
+    room.phase='lobby'; 
+    room.players.forEach(p=>{ p.hand=[]; p.melds=[]; p.discards=[]; p.flowers=[]; }); 
+    // Langsung mulai lagi, gak balik lobby, pemain sama persis 
+    room._countFromWinner = true; 
+    startGame(room, room.turnTimeSec);
     }
   });
   socket.on('cancelRematch', ({ code })=>{
