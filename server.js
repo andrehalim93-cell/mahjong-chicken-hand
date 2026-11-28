@@ -214,7 +214,7 @@ app.get('/api/get-hu', async (req,res)=>{
   res.json({ok:true, hu: u?.hu||0});
 });
 // ===== BOLANG - 6C: GET + SAVE LEVEL / FLOOR / TITLES / ACTIVE_TITLE =====
-const BOLANG_VALID_TITLES_6C = ['ADVENTURE','JAKARTA CHAMPION','SINGAPORE STAR','THAI MASTER','MALAYSIA HERO','PHILIPPINES KING','VIETNAM LEGEND','JAPAN SENSEI','KOREA IDOL','CHINA DRAGON','SHANGHAI EMPEROR','RAJA MAHJONG'];
+const BOLANG_VALID_TITLES_6C = ['ADVENTURE','JAKARTA CHAMPION','SINGAPORE CHAMPION','MALAYSIA CHAMPION','JAPAN CHAMPION','TAIWAN CHAMPION','KOREAN CHAMPION','HONGKONG CHAMPION','MACAO CHAMPION','CHINA CHAMPION','RAJA MAHJONG'];
 app.get('/api/bolang-get', async (req,res)=>{
   try{
     let id = normId(req.query.id);
@@ -256,7 +256,7 @@ app.post('/api/bolang-save', async (req,res)=>{
     if(!Number.isFinite(lv) || lv < 0 || lv > 10) lv = 0;
     let fl = Number(floor);
     if(!Number.isFinite(fl) || fl < 0 || fl > 5) fl = 0;
-    // 6C: validasi titles, buang yang ngawur. RAJA MAHJONG (index 11) cuma boleh kalo level 10, itu dicek di TAHAP 7, di 6C potong sampe SHANGHAI EMPEROR.
+       // 6D: validasi titles pake daftar asli BOLANG_LEVELS. RAJA MAHJONG cuma boleh kalo udah tamat, dicek di TAHAP 7.
     let tt = Array.isArray(titles) ? titles.filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : [];
     // Jangan unshift ADVENTURE lagi. ADVENTURE cuma masuk kalo beneran udah lewat Desa (dari bolangBuyTicket).
     // lv = level sekarang. Kalo lv 0 (masih di Desa), belum boleh punya title apa-apa. Kalo lv 1 (udah di Jakarta), boleh punya ADVENTURE (index 0). Kalo lv 2, boleh punya sampe JAKARTA CHAMPION (index 1), dst.
