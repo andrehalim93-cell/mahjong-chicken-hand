@@ -227,8 +227,7 @@ app.get('/api/bolang-get', async (req,res)=>{
       data = r2.data;
     } else if(error) throw error;
     if(!data) return res.json({ok:true, data:null});
-    let tt = Array.isArray(data.titles) ? data.titles.filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : ['ADVENTURE'];
-    if(!tt.length) tt = ['ADVENTURE'];
+    let tt = Array.isArray(data.titles) ? data.titles.filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : [];
     return res.json({ok:true, data:{
       coins: data.coins || 0,
       story_done: !!data.story_done,
@@ -258,12 +257,13 @@ app.post('/api/bolang-save', async (req,res)=>{
     let fl = Number(floor);
     if(!Number.isFinite(fl) || fl < 0 || fl > 5) fl = 0;
     // 6C: validasi titles, buang yang ngawur. RAJA MAHJONG (index 11) cuma boleh kalo level 10, itu dicek di TAHAP 7, di 6C potong sampe SHANGHAI EMPEROR.
-    let tt = Array.isArray(titles) ? titles.filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : ['ADVENTURE'];
-    if(!tt.includes('ADVENTURE')) tt.unshift('ADVENTURE');
-    let maxIdx = Math.min(lv + 1, 10);
+    let tt = Array.isArray(titles) ? titles.filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : [];
+    // Jangan unshift ADVENTURE lagi. ADVENTURE cuma masuk kalo beneran udah lewat Desa (dari bolangBuyTicket).
+    // lv = level sekarang. Kalo lv 0 (masih di Desa), belum boleh punya title apa-apa. Kalo lv 1 (udah di Jakarta), boleh punya ADVENTURE (index 0). Kalo lv 2, boleh punya sampe JAKARTA CHAMPION (index 1), dst.
+    let maxIdx = lv - 1;
+    if(lv >= 10) maxIdx = 10;
     tt = tt.filter(t=>BOLANG_VALID_TITLES_6C.indexOf(t) <= maxIdx);
-    if(!tt.length) tt = ['ADVENTURE'];
-    let at2 = (typeof active_title === 'string' && tt.includes(active_title)) ? active_title : tt[tt.length-1];
+    let at2 = (typeof active_title === 'string' && tt.includes(active_title)) ? active_title : (tt.length ? tt[tt.length-1] : '');
     let payload = {
       user_id: id,
       coins: safeCoins,
