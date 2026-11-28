@@ -3701,11 +3701,30 @@ function bolangTourneyPlay(){
   bolangCloseTourneyModal();
   bolangInTourney = true;
   bolangInGame = true; bolangSettled = false; bolangAutoStarted = false; bolangLastBotAdd = 0;
-  // Bet 0, jadi gak potong koin. Kalo pake bolangConfirmBalai, koin kepotong. Makanya langsung createRoom.
   let w = document.getElementById('bolangWorld'); if(w) w.style.display = 'none'; document.body.style.overflow = '';
   myName = currentUser.display_name;
   socket.emit('createRoom', { name: myName, roomName: ('AUSTRALIA - ' + bolangTourneyStageName() + ' - GRUP ' + bolangTourney.group), mode: 'latihan', isPrivate: true, password: '', avatar: currentUser ? currentUser.avatar : '🧑' });
   toast('🇦🇺 ' + bolangTourneyStageName() + ' - Grup ' + bolangTourney.group + '! Lawan 3 bot EXTREME!');
+  // 6F-BOT FIX: ini yang kemarin kelewat. Sama kayak Balai biasa, auto-isi 3 bot extreme sampe 4 orang, baru start.
+  try{ clearInterval(bolangAutoTimer); }catch(e){}
+  let _bi = 0;
+  bolangAutoTimer = setInterval(()=>{
+    if(!bolangInGame){ clearInterval(bolangAutoTimer); return; }
+    if(!myCode) return;
+    let n = (currentPlayers || []).length;
+    if(n < 4){
+      if(Date.now() - bolangLastBotAdd > 1000){
+        bolangLastBotAdd = Date.now();
+        try{ addBot('extreme'); _bi++; }catch(e){}
+      }
+      return;
+    }
+    if(n >= 4 && !bolangAutoStarted){
+      bolangAutoStarted = true;
+      clearInterval(bolangAutoTimer);
+      setTimeout(()=>{ try{ doStartGame(); }catch(e){} }, 600);
+    }
+  }, 500);
 }
 // Dipanggil dari bolangSettleGame (6F-4). Menang = naik stage, kalah = gugur ke cafe.
 function bolangTourneyOnResult(isWin, isDraw){
