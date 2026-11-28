@@ -3431,7 +3431,7 @@ const BOLANG_LEVELS = [
       { floor:4, name:'LANTAI 5', bet:500000, bots:['normal','hard','hard'], checkpoint:24, next:{ kind:'floor', ticket:'VIP', price:1000000, minMoney:2000000, toLevel:4, toFloor:5 } },
       { floor:5, name:'LANTAI 6', bet:750000, bots:['normal','hard','hard'], checkpoint:25, next:{ kind:'city', ticket:'PESAWAT', price:2000000, minMoney:1000000, toLevel:5, toFloor:0 } }
     ]},
-  { level:5, city:'TAIWAN', title:'NAGA FORMOSA', desc:'Gedung latar kota Taiwan.', work:{ job:'KASIR DI SAUNA', hours:2, reward:500000, emoji:'🧖' },
+  { level:5, city:'TAIWAN', title:'NAGA FORMOSA', desc:'Gedung latar kota Taiwan.', work:{ job:'KASIR DI TEMPAT SAUNA NUANSA KOREA', hours:2, reward:500000, emoji:'🧖' },
     floors:[
       { floor:0, name:'LANTAI 1', bet:200000, bots:['normal','hard','hard'], checkpoint:26, next:{ kind:'floor', ticket:'PLATINUM', price:400000, minMoney:1250000, toLevel:5, toFloor:1 } },
       { floor:1, name:'LANTAI 2', bet:250000, bots:['normal','hard','hard'], checkpoint:27, next:{ kind:'floor', ticket:'VIP', price:500000, minMoney:1500000, toLevel:5, toFloor:2 } },
@@ -3511,7 +3511,8 @@ function bolangCloseBalai(){
   if(m) m.style.display = 'none';
 }
 function bolangConfirmBalai(){
-  if(bolangCoins < BOLANG_BET()){ toast('❌ Koin kurang! Butuh ' + BOLANG_BET().toLocaleString('id-ID') + ' buat masuk ' + bolangFloorObj().name + '.'); return; }
+  if(bolangWorkIsActive()){ toast('⏳ Lu lagi kerja! Tunggu sampe kelar dulu, baru bisa main.'); bolangCloseBalai(); bolangOpenWorkModal(); return; }
+  if(bolangCoins < BOLANG_BET()){ toast('❌ Koin kurang! Butuh ' + BOLANG_BET().toLocaleString('id-ID') + ' buat masuk ' + bolangFloorObj().name + '.'); bolangCloseBalai(); bolangOpenWorkModal(); return; }
   bolangCloseBalai();
   // Potong taruhan di awal, biar gak bisa kabur pas mau kalah
   bolangCoins -= BOLANG_BET();
@@ -3550,6 +3551,93 @@ function bolangConfirmBalai(){
     }
   }, 500);
 }
+// ===== 6E: KERJA DARURAT - MUNCUL KALO KOIN < TARUHAN =====
+// Aturan dari gambar: Desa 1 jam 10k, Jakarta 2 jam 50k, Singapura 2 jam 200k, Malaysia 2 jam 300k, Jepang 2 jam 400k, Taiwan 2 jam 500k, Korea 2 jam 500k, Hongkong 2 jam 600k, Macau 2 jam 1jt, China 2 jam 1.5jt. Australia (TAHAP 7) 3 jam.
+let bolangWork = null; // {level, job, emoji, reward, endAt, startedAt}
+let bolangWorkTimer = null;
+function bolangWorkInfo(){ return bolangLevelObj().work || { job:'BERTANI', hours:1, reward:10000, emoji:'🌾' }; }
+function bolangWorkSaveLocal(){ try{ if(bolangWork) localStorage.setItem('bolang_work', JSON.stringify(bolangWork)); else localStorage.removeItem('bolang_work'); }catch(e){} }
+function bolangWorkLoadLocal(){ try{ let w = JSON.parse(localStorage.getItem('bolang_work') || 'null'); if(w && w.endAt && w.level === bolangLevel) bolangWork = w; else if(w && w.endAt) bolangWork = w; }catch(e){} }
+function bolangWorkFmt(ms){ if(ms < 0) ms = 0; let s = Math.floor(ms / 1000); let h = String(Math.floor(s / 3600)).padStart(2,'0'); let m = String(Math.floor((s % 3600) / 60)).padStart(2,'0'); let ss = String(s % 60).padStart(2,'0'); return h + ':' + m + ':' + ss; }
+function bolangWorkIsActive(){ return !!(bolangWork && bolangWork.endAt && Date.now() < bolangWork.endAt); }
+function bolangOpenWorkModal(){
+  let w = bolangWorkInfo();
+  let m = document.getElementById('bolangWorkModal'); if(!m) return;
+  let em = document.getElementById('bolangWorkEmoji'); if(em) em.innerText = w.emoji || '🌾';
+  let t = document.getElementById('bolangWorkTitle'); if(t) t.innerText = bolangWorkIsActive() ? ('SEDANG ' + (w.job || '')) : 'KOIN HABIS!';
+  let d = document.getElementById('bolangWorkDesc'); if(d) d.innerHTML = 'Koin lu <b>' + bolangCoins.toLocaleString('id-ID') + '</b>, taruhan di <b>' + bolangLevelObj().city + ' - ' + bolangFloorObj().name + '</b> = <b>' + BOLANG_BET().toLocaleString('id-ID') + '</b>.<br>' + (bolangWorkIsActive() ? 'Kerja lu lagi jalan, tunggu sampe kelar.' : 'Mau kerja dulu biar dapet modal lagi?');
+  let dt = document.getElementById('bolangWorkDetail'); if(dt) dt.innerHTML = (w.emoji || '') + ' Kerja: <b>' + (w.job || '') + '</b><br>⏳ Durasi: <b>' + (w.hours || 1) + ' jam</b><br>💰 Hadiah: <b>' + (w.reward || 0).toLocaleString('id-ID') + ' koin</b>';
+  m.style.display = 'flex';
+  bolangWorkTick();
+}
+function bolangCloseWorkModal(){ let m = document.getElementById('bolangWorkModal'); if(m) m.style.display = 'none'; }
+function bolangWorkTick(){
+  let cd = document.getElementById('bolangWorkCountdown'); let bw = document.getElementById('bolangWorkBarWrap'); let bar = document.getElementById('bolangWorkBar'); let btn = document.getElementById('bolangWorkActionBtn'); let em = document.getElementById('bolangWorkEmoji');
+  if(!cd || !btn) return;
+  if(bolangWorkTimer) clearInterval(bolangWorkTimer); bolangWorkTimer = null;
+  if(!bolangWork){ cd.style.display = 'none'; if(bw) bw.style.display = 'none'; btn.innerText = '🌾 MULAI KERJA'; btn.disabled = false; return; }
+  let left = bolangWork.endAt - Date.now();
+  if(left <= 0){
+    cd.style.display = 'block'; cd.innerText = '00:00:00'; if(bw) bw.style.display = 'block'; if(bar) bar.style.width = '100%';
+    btn.innerText = '✅ KLAIM ' + (bolangWork.reward || 0).toLocaleString('id-ID') + ' KOIN'; btn.disabled = false;
+    let t = document.getElementById('bolangWorkTitle'); if(t) t.innerText = 'KERJA SELESAI!';
+    return;
+  }
+  cd.style.display = 'block'; if(bw) bw.style.display = 'block';
+  let total = (bolangWork.endAt - (bolangWork.startedAt || bolangWork.endAt)) || 1;
+  let done = total - left;
+  if(bar) bar.style.width = Math.min(100, Math.max(0, Math.round(done / total * 100))) + '%';
+  cd.innerText = bolangWorkFmt(left);
+  btn.innerText = '⏳ LAGI KERJA - ' + bolangWorkFmt(left); btn.disabled = true;
+  let t2 = document.getElementById('bolangWorkTitle'); if(t2) t2.innerText = 'SEDANG ' + (bolangWork.job || '');
+  if(em && bolangWork.emoji) em.innerText = bolangWork.emoji;
+  bolangWorkTimer = setInterval(()=>{ let l2 = bolangWork.endAt - Date.now(); if(l2 <= 0){ bolangWorkTick(); } else { cd.innerText = bolangWorkFmt(l2); if(bar) bar.style.width = Math.min(100, Math.max(0, Math.round((total - l2) / total * 100))) + '%'; btn.innerText = '⏳ LAGI KERJA - ' + bolangWorkFmt(l2); } }, 1000);
+}
+function bolangWorkAction(){
+  if(!bolangWork){ bolangStartWork(); return; }
+  if(Date.now() < bolangWork.endAt){ toast('⏳ Kerja belum kelar! Sisa ' + bolangWorkFmt(bolangWork.endAt - Date.now())); return; }
+  bolangClaimWork();
+}
+async function bolangStartWork(){
+  if(bolangWorkIsActive()){ toast('⏳ Lu lagi kerja! Tunggu sampe kelar.'); bolangOpenWorkModal(); return; }
+  if(bolangCoins >= BOLANG_BET()){ toast('✅ Koin lu udah cukup, gak perlu kerja!'); return; }
+  let w = bolangWorkInfo();
+  // TEST MODE: ketik di Console bolangWorkTest() biar durasi jadi 60 detik, buat tes tanpa nunggu 2 jam
+  let testMode = false; try{ testMode = (localStorage.getItem('bolang_work_test') === '1'); }catch(e){}
+  let durMs = testMode ? 60000 : ((w.hours || 1) * 3600 * 1000);
+  let uid = (typeof myUserId === 'function') ? myUserId() : '';
+  if(!uid) return toast('Login dulu!');
+  try{
+    let r = await fetch('/api/bolang-work-start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: uid, level: bolangLevel, durationMs: durMs, reward: w.reward || 0, job: w.job || '' }) });
+    let j = await r.json();
+    if(!j || !j.ok) return toast('❌ ' + (j && j.error ? j.error : 'Gagal mulai kerja'));
+    bolangWork = { level: bolangLevel, job: w.job, emoji: w.emoji, reward: w.reward, startedAt: j.data.startedAt, endAt: j.data.endAt };
+    bolangWorkSaveLocal();
+    bolangCloseBalai();
+    bolangOpenWorkModal();
+    toast('🌾 Mulai kerja: ' + w.job + ' (' + (testMode ? '60 detik TEST' : (w.hours + ' jam')) + ')');
+  }catch(e){ toast('❌ Gagal mulai kerja, cek koneksi!'); }
+}
+async function bolangClaimWork(){
+  if(!bolangWork) return toast('Gak ada kerja yang lagi jalan.');
+  if(Date.now() < bolangWork.endAt) return toast('⏳ Belum kelar!');
+  let uid = (typeof myUserId === 'function') ? myUserId() : '';
+  if(!uid) return toast('Login dulu!');
+  try{
+    let r = await fetch('/api/bolang-work-claim', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: uid }) });
+    let j = await r.json();
+    if(!j || !j.ok) return toast('❌ ' + (j && j.error ? j.error : 'Gagal klaim'));
+    bolangCoins = Number(j.data.coins || bolangCoins);
+    bolangWork = null; bolangWorkSaveLocal();
+    bolangSaveToDB(); bolangUpdateProgress(); try{ bolangRenderWorld(); }catch(e){}
+    bolangCloseWorkModal();
+    toast('✅ KLAIM BERHASIL! +' + Number(j.data.reward || 0).toLocaleString('id-ID') + ' koin! Koin lu sekarang ' + bolangCoins.toLocaleString('id-ID'));
+  }catch(e){ toast('❌ Gagal klaim, cek koneksi!'); }
+}
+function bolangWorkTest(){ try{ localStorage.setItem('bolang_work_test','1'); }catch(e){} toast('🧪 TEST MODE ON: kerja jadi 60 detik. Ketik bolangWorkTestOff() buat matiin.'); }
+function bolangWorkTestOff(){ try{ localStorage.removeItem('bolang_work_test'); }catch(e){} toast('🧪 TEST MODE OFF: kerja balik jadi jam beneran.'); }
+// 6E: pas load, pulihin kerja yang belum kelar
+try{ bolangWorkLoadLocal(); }catch(e){}
 function bolangSettleGame(d){
   if(!bolangInGame || bolangSettled) return;
   bolangSettled = true;
@@ -5635,11 +5723,27 @@ updateAchLabel();
 🏆 Menang: <b id="bolangBalaiWin">+4.000</b>
 😐 Seri: <b id="bolangBalaiRefund">Refund 1.000</b>
     </div>
-    <div id="bolangBalaiWarn" style="display:none;color:#fca5a5;font-size:12px;margin-bottom:10px">❌ Koin lu kurang! Menangin dulu / tunggu modal lain.</div>
+    <div id="bolangBalaiWarn" style="display:none;color:#fca5a5;font-size:12px;margin-bottom:10px">❌ Koin lu kurang! Pencet MASUK, nanti muncul tombol KERJA biar dapet modal lagi.</div>
     <div style="display:flex;gap:10px">
       <button id="bolangBalaiMasukBtn" class="btn btn-gold" onclick="bolangConfirmBalai()" style="flex:1">✅ MASUK - BAYAR 1.000</button>
       <button class="btn btn-dark" onclick="bolangCloseBalai()" style="flex:1">❌ BATAL</button>
     </div>
+ </div>
+</div>
+<!-- 6E: MODAL KERJA DARURAT - MUNCUL KALO KOIN < TARUHAN -->
+<div id="bolangWorkModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:10006;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0f172a;border:2px solid #f59e0b;border-radius:20px;padding:22px;max-width:400px;width:100%;text-align:center;color:#fff">
+    <div id="bolangWorkEmoji" style="font-size:60px;animation:bolangStoryFloat 1.2s ease-in-out infinite">🌾</div>
+    <h2 id="bolangWorkTitle" style="color:#fde68a;margin:8px 0">KOIN HABIS!</h2>
+    <div id="bolangWorkDesc" style="font-size:13px;color:#cbd5e1;line-height:1.6">Koin lu kurang buat taruhan di sini.<br>Mau kerja dulu biar dapet modal lagi?</div>
+    <div id="bolangWorkDetail" style="background:rgba(0,0,0,.4);border-radius:14px;padding:12px;margin:14px 0;font-size:13px;line-height:1.7"></div>
+    <div id="bolangWorkCountdown" style="font-size:28px;font-weight:900;color:#fde68a;display:none">00:00:00</div>
+    <div style="background:#1e293b;border-radius:10px;height:12px;overflow:hidden;margin:10px 0;display:none" id="bolangWorkBarWrap"><div id="bolangWorkBar" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fde68a)"></div></div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button id="bolangWorkActionBtn" class="btn btn-gold" onclick="bolangWorkAction()" style="flex:1">🌾 MULAI KERJA</button>
+      <button class="btn btn-dark" onclick="bolangCloseWorkModal()" style="flex:1">❌ NANTI AJA</button>
+    </div>
+    <div style="font-size:11px;color:#94a3b8;margin-top:10px">Selama kerja, lu gak bisa main. Boleh tutup game, countdown tetep jalan (dicek server).</div>
   </div>
 </div>
 <!-- 6D: MODAL PILIH TITLE -->
