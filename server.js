@@ -296,6 +296,38 @@ app.post('/api/bolang-work-claim', async (req,res)=>{
     return res.json({ok:true, data:{ coins:newCoins, reward:w.reward }});
   }catch(e){ console.log('BOLANG-WORK-CLAIM EX:', e); return res.json({ok:false, error:'Server error'}); }
 });
+// ===== 6F: CAFE AUSTRALIA - NUNGGU JADWAL BERIKUTNYA 3 JAM =====
+let bolangCafeMap_6F = new Map(); // id -> {startedAt, endAt, claimed}
+app.post('/api/bolang-cafe-start', async (req,res)=>{
+  try{
+    let { id, durationMs } = req.body || {};
+    id = normId(id);
+    if(!id) return res.json({ok:false, error:'ID kosong!'});
+    let cur = bolangCafeMap_6F.get(id);
+    if(cur && Date.now() < cur.endAt) return res.json({ok:false, error:'Lu lagi di cafe! Tunggu sampe kelar.'});
+    let dur = Number(durationMs) || (3*3600*1000);
+    if(dur < 10000 || dur > 3*3600*1000) dur = 3*3600*1000;
+    let now = Date.now();
+    let w = { startedAt: now, endAt: now + dur, claimed:false };
+    bolangCafeMap_6F.set(id, w);
+    return res.json({ok:true, data:w});
+  }catch(e){ console.log('BOLANG-CAFE-START EX:', e); return res.json({ok:false, error:'Server error'}); }
+});
+app.post('/api/bolang-cafe-claim', async (req,res)=>{
+  try{
+    let { id } = req.body || {};
+    id = normId(id);
+    if(!id) return res.json({ok:false, error:'ID kosong!'});
+    let w = bolangCafeMap_6F.get(id);
+    if(!w) return res.json({ok:false, error:'Gak ada cafe yang lagi jalan.'});
+    if(w.claimed) return res.json({ok:false, error:'Udah diklaim!'});
+    if(Date.now() < w.endAt) return res.json({ok:false, error:'Belum 3 jam! Sisa ' + Math.ceil((w.endAt - Date.now())/1000) + ' detik.'});
+    w.claimed = true;
+    bolangCafeMap_6F.delete(id);
+    // 6F: cafe gak kasih koin, cuma buka jadwal turnamen lagi. Jadi gak update coins.
+    return res.json({ok:true, data:{ ok:true }});
+  }catch(e){ console.log('BOLANG-CAFE-CLAIM EX:', e); return res.json({ok:false, error:'Server error'}); }
+});
 app.post('/api/bolang-save', async (req,res)=>{
   try{
     let { id, coins, story_done, has_entered, level, floor, titles, active_title, authToken } = req.body || {};
