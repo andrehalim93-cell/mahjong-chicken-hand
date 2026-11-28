@@ -258,7 +258,44 @@ app.get('/api/bolang-get', async (req,res)=>{
     }});
   }catch(e){ console.log('BOLANG-GET EX:', e); return res.json({ok:false, error:'Server error'}); }
 });
-
+// ===== 6E: KERJA DARURAT - SERVER YANG NGATUR WAKTU, BUKAN HP =====
+let bolangWorkMap_6E = new Map(); // id -> {level, job, reward, startedAt, endAt, claimed}
+app.post('/api/bolang-work-start', async (req,res)=>{
+  try{
+    let { id, level, durationMs, reward, job } = req.body || {};
+    id = normId(id);
+    if(!id) return res.json({ok:false, error:'ID kosong!'});
+    let cur = bolangWorkMap_6E.get(id);
+    if(cur && Date.now() < cur.endAt) return res.json({ok:false, error:'Lu lagi kerja! Tunggu sampe kelar.'});
+    let dur = Number(durationMs) || 3600000;
+    if(dur < 10000 || dur > 3*3600*1000) dur = 3600000; // min 10 detik (buat tes), max 3 jam (Australia)
+    let rew = Math.max(0, Math.min(1500000, Math.floor(Number(reward) || 0)));
+    let now = Date.now();
+    let w = { level: Number(level) || 0, job: String(job || ''), reward: rew, startedAt: now, endAt: now + dur, claimed:false };
+    bolangWorkMap_6E.set(id, w);
+    return res.json({ok:true, data:w});
+  }catch(e){ console.log('BOLANG-WORK-START EX:', e); return res.json({ok:false, error:'Server error'}); }
+});
+app.post('/api/bolang-work-claim', async (req,res)=>{
+  try{
+    let { id } = req.body || {};
+    id = normId(id);
+    if(!id) return res.json({ok:false, error:'ID kosong!'});
+    let w = bolangWorkMap_6E.get(id);
+    if(!w) return res.json({ok:false, error:'Gak ada kerja yang lagi jalan. Mulai kerja dulu!'});
+    if(w.claimed) return res.json({ok:false, error:'Udah diklaim! Gak bisa klaim 2x.'});
+    if(Date.now() < w.endAt) return res.json({ok:false, error:'Belum kelar! Sisa ' + Math.ceil((w.endAt - Date.now())/1000) + ' detik.'});
+    // Ambil koin sekarang dari DB, tambahin reward, simpen balik. Jadi kalo HP ngaku-ngaku koinnya 999jt, server gak percaya.
+    let { data:u } = await supabase.from('bolang_progress').select('coins').eq('user_id', id).maybeSingle();
+    let curCoins = Number(u && u.coins || 0);
+    let newCoins = Math.min(999999999, curCoins + w.reward);
+    w.claimed = true;
+    bolangWorkMap_6E.delete(id);
+    let { error } = await supabase.from('bolang_progress').update({ coins: newCoins, updated_at: new Date().toISOString() }).eq('user_id', id);
+    if(error) throw error;
+    return res.json({ok:true, data:{ coins:newCoins, reward:w.reward }});
+  }catch(e){ console.log('BOLANG-WORK-CLAIM EX:', e); return res.json({ok:false, error:'Server error'}); }
+});
 app.post('/api/bolang-save', async (req,res)=>{
   try{
     let { id, coins, story_done, has_entered, level, floor, titles, active_title, authToken } = req.body || {};
