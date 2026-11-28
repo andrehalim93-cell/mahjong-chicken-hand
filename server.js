@@ -214,7 +214,9 @@ app.get('/api/get-hu', async (req,res)=>{
   res.json({ok:true, hu: u?.hu||0});
 });
 // ===== BOLANG - 6C: GET + SAVE LEVEL / FLOOR / TITLES / ACTIVE_TITLE =====
-const BOLANG_VALID_TITLES_6C = ['ADVENTURE','JAKARTA CHAMPION','SINGAPORE CHAMPION','MALAYSIA CHAMPION','JAPAN CHAMPION','TAIWAN CHAMPION','KOREAN CHAMPION','HONGKONG CHAMPION','MACAO CHAMPION','CHINA CHAMPION','RAJA MAHJONG'];
+const BOLANG_VALID_TITLES_6C = ['SANG PETUALANG','JAKARTA CHAMPION','SINGAPORE CHAMPION','MALAYSIA CHAMPION','JAPAN CHAMPION','TAIWAN CHAMPION','KOREAN CHAMPION','HONGKONG CHAMPION','MACAO CHAMPION','CHINA CHAMPION','RAJA MAHJONG'];
+// Migrasi: akun lama yang masih nyimpen ADVENTURE, ubah jadi SANG PETUALANG
+function bolangMapTitle_6D(t){ return (t === 'ADVENTURE' ? 'SANG PETUALANG' : t); }
 app.get('/api/bolang-get', async (req,res)=>{
   try{
     let id = normId(req.query.id);
@@ -227,7 +229,7 @@ app.get('/api/bolang-get', async (req,res)=>{
       data = r2.data;
     } else if(error) throw error;
     if(!data) return res.json({ok:true, data:null});
-    let tt = Array.isArray(data.titles) ? data.titles.filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : [];
+    let tt = Array.isArray(data.titles) ? data.titles.map(t=>bolangMapTitle_6D(t)).filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : [];
     return res.json({ok:true, data:{
       coins: data.coins || 0,
       story_done: !!data.story_done,
@@ -235,7 +237,7 @@ app.get('/api/bolang-get', async (req,res)=>{
       level: (typeof data.level === 'number' ? data.level : 0),
       floor: (typeof data.floor === 'number' ? data.floor : 0),
       titles: tt,
-      active_title: (typeof data.active_title === 'string' && tt.includes(data.active_title) ? data.active_title : tt[tt.length-1]),
+      active_title: (typeof data.active_title === 'string' && tt.includes(bolangMapTitle_6D(data.active_title)) ? bolangMapTitle_6D(data.active_title) : tt[tt.length-1]),
       updated_at: data.updated_at || null
     }});
   }catch(e){ console.log('BOLANG-GET EX:', e); return res.json({ok:false, error:'Server error'}); }
@@ -257,13 +259,14 @@ app.post('/api/bolang-save', async (req,res)=>{
     let fl = Number(floor);
     if(!Number.isFinite(fl) || fl < 0 || fl > 5) fl = 0;
        // 6D: validasi titles pake daftar asli BOLANG_LEVELS. RAJA MAHJONG cuma boleh kalo udah tamat, dicek di TAHAP 7.
-    let tt = Array.isArray(titles) ? titles.filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : [];
+    let tt = Array.isArray(titles) ? titles.map(t=>bolangMapTitle_6D(t)).filter(t=>BOLANG_VALID_TITLES_6C.includes(t)) : [];
     // Jangan unshift ADVENTURE lagi. ADVENTURE cuma masuk kalo beneran udah lewat Desa (dari bolangBuyTicket).
     // lv = level sekarang. Kalo lv 0 (masih di Desa), belum boleh punya title apa-apa. Kalo lv 1 (udah di Jakarta), boleh punya ADVENTURE (index 0). Kalo lv 2, boleh punya sampe JAKARTA CHAMPION (index 1), dst.
     let maxIdx = lv - 1;
     if(lv >= 10) maxIdx = 10;
     tt = tt.filter(t=>BOLANG_VALID_TITLES_6C.indexOf(t) <= maxIdx);
-    let at2 = (typeof active_title === 'string' && tt.includes(active_title)) ? active_title : (tt.length ? tt[tt.length-1] : '');
+        let at2raw = bolangMapTitle_6D(active_title);
+    let at2 = (typeof at2raw === 'string' && tt.includes(at2raw)) ? at2raw : (tt.length ? tt[tt.length-1] : '');
     let payload = {
       user_id: id,
       coins: safeCoins,
