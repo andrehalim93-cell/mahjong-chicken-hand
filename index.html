@@ -2525,6 +2525,7 @@ async function openProfile(allowEdit){
   let avBtn = el('profileAvatarBtn');
   if(avBtn) avBtn.style.display = allowEdit ? 'block' : 'none';
   el('profileModal').style.display = 'flex';
+  try{ bolangRenderTitleList(); }catch(e){}
   try{
     let r = await fetch('/api/get-hu?id=' + currentUser.id);
     let j = await r.json();
@@ -3479,9 +3480,9 @@ const BOLANG_LEVELS = [
 // Posisi sekarang. Default Desa Lantai 0. Di-load dari server di 6C.
 let bolangLevel = 0;
 let bolangFloor = 0;
-// Title yang udah kebuka. Desa (ADVENTURE) kebuka dari awal, sisanya ??? sampe tamat kota itu.
-let bolangTitles = [];
-// 6C revisi: mulai tanpa title. ADVENTURE baru dapet abis lewat Desa. Kalo belum ada title, tampil ???.
+  // Title yang udah kebuka. Mulai kosong, SANG PETUALANG baru dapet abis lewat Desa, sisanya ??? sampe tamat kota itu.
+  let bolangTitles = [];
+  // 6C revisi: mulai tanpa title. Kalo belum ada title, tampil ???.
 let bolangActiveTitle = '';
 let bolangLastSaveAt = 0;
 let bolangSaveTimer = null;
@@ -3623,14 +3624,14 @@ function bolangRenderWorld(){
 function bolangAllTitles(){
   let arr = [];
   try{ (BOLANG_LEVELS || []).forEach(L=>{ if(L && L.title && !arr.includes(L.title)) arr.push(L.title); }); }catch(e){}
-  if(!arr.includes('RAJA MAHJONG')) arr.push('RAJA MAHJONG');
+  if(!arr.includes('KING OF MAHJONG')) arr.push('KING OF MAHJONG');
   return arr;
 }
 function bolangTitleCity(t){
   try{
     let L = (BOLANG_LEVELS || []).find(x=>x && x.title === t);
     if(L) return L.city;
-    if(t === 'RAJA MAHJONG') return 'TAMAT GAME';
+    if(t === 'KING OF MAHJONG') return 'TAMAT GAME';
   }catch(e){}
   return '?';
 }
@@ -3882,10 +3883,11 @@ function bolangLoadLocal(){
     let f = Number(localStorage.getItem('bolang_floor') || 0);
     if(Number.isFinite(l) && l >= 0 && l < BOLANG_LEVELS.length) bolangLevel = l;
     if(Number.isFinite(f) && f >= 0 && f < (BOLANG_LEVELS[bolangLevel].floors || []).length) bolangFloor = f;
+    let _mapT = (x)=>{ let _m = {'ADVENTURE':'SANG PETUALANG','JAKARTA CHAMPION':'JAWARA JAKARTA','SINGAPORE CHAMPION':'SINGA MERLION','MALAYSIA CHAMPION':'PENDEKAR MALAYA','JAPAN CHAMPION':'RONIN MAHJONG','TAIWAN CHAMPION':'NAGA FORMOSA','KOREAN CHAMPION':'BINTANG SEOUL','HONGKONG CHAMPION':'RAJA KOWLOON','MACAO CHAMPION':'BANDAR MACAO','CHINA CHAMPION':'KAISAR NAGA','RAJA MAHJONG':'KING OF MAHJONG'}; return _m[x] || x; };
     let t = JSON.parse(localStorage.getItem('bolang_titles') || '[]');
-    if(Array.isArray(t)) bolangTitles = t.map(x=> (x === 'ADVENTURE' ? 'SANG PETUALANG' : x));
+    if(Array.isArray(t)) bolangTitles = t.map(x=> _mapT(x));
     let at = localStorage.getItem('bolang_active_title') || '';
-    if(at === 'ADVENTURE') at = 'SANG PETUALANG';
+    if(at) at = _mapT(at);
     if(at && bolangTitles.includes(at)) bolangActiveTitle = at;
     else bolangActiveTitle = bolangTitles.length ? bolangTitles[bolangTitles.length - 1] : '';
     let ua = Number(localStorage.getItem('bolang_updated_at') || 0);
