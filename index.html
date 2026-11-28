@@ -2343,7 +2343,7 @@ MACAU: ['LEI MENG','KA I','WAI KEI','CHI ON','SIU LENG','HOI IN','MAN LONG','JOA
 CHINA: ['WEI','LI','JUN','MEI','HAO','JING','FANG','TAO','MIN','YANG','JIE','XIN','LEI','NA','PENG','YAN','CHAO','XIA','FENG','QING','BO','HUI','DONG','YUE','KAI','LIN','HONG','YI','ZHEN','QIANG','SHUANG','YU','NING','RUI','XUE','CHEN','WEN','BIN','YAO','LAN'],
 AUSTRALIA: ['LIAM','OLIVIA','JACK','CHARLOTTE','NOAH','AMELIA','LUCAS','MIA','MASON','AVA','ETHAN','ISLA','JAMES','GRACE','BENJAMIN','SOPHIE','HENRY','CHLOE','ALEX','ZOE','DANIEL','ELLA','SAM','RUBY','HARRY','IVY','JOSH','LILY','COOPER','MILLIE','JACOB','EVIE','THOMAS','FREYA','MAX','POPPY','RYAN','MATILDA','LUKE','HARPER']
 };
-function bolangBotPool(){ try{ if(!bolangInGame) return BOT_NAMES; let c = (typeof bolangLevelObj === 'function' ? bolangLevelObj().city : 'DESA') || 'DESA'; return BOLANG_BOT_NAMES[c] || BOT_NAMES; }catch(e){ return BOT_NAMES; } }
+function bolangBotPool(){ try{ if(!bolangInGame) return BOT_NAMES; let c = (typeof bolangLevelObj === 'function' ? bolangLevelObj().city : 'DESA') || 'DESA'; if(c === 'AUSTRALIA'){ let all = []; for(let k in BOLANG_BOT_NAMES){ if(k === 'DESA' || k === 'JAKARTA') continue; all = all.concat(BOLANG_BOT_NAMES[k] || []); } let uniq = []; for(let n of all){ if(uniq.indexOf(n) < 0) uniq.push(n); } return uniq.length ? uniq : BOT_NAMES; } return BOLANG_BOT_NAMES[c] || BOT_NAMES; }catch(e){ return BOT_NAMES; } }
 let DICE_FACES=['','⚀','⚁','⚂','⚃','⚄','⚅'];
 function el(id){ return document.getElementById(id); }
 // ===== No.3 - GELAR dari TOTAL HU TANDING, gelar aja tanpa angka HU =====
