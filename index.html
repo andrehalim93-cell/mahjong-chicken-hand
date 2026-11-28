@@ -3494,7 +3494,9 @@ function bolangLevelObj(){ return BOLANG_LEVELS[bolangLevel] || BOLANG_LEVELS[0]
 function bolangFloorObj(){ let L = bolangLevelObj(); return (L.floors||[])[bolangFloor] || L.floors[0]; }
 function bolangBet(){ let b = bolangFloorObj().bet; return (typeof b === 'number') ? b : 1000; }
 function bolangWin(){ return bolangBet() * 4; }
-function bolangBots(){ return bolangFloorObj().bots || ['easy','easy','easy']; }
+function bolangTurnTime(){ if(bolangLevel === 0) return 30; if(bolangLevel <= 3) return 20; return 15; }
+function bolangShowLoading(txt){ let o = document.getElementById('bolangLoadingOverlay'); if(!o){ o = document.createElement('div'); o.id = 'bolangLoadingOverlay'; o.style.cssText = 'position:fixed;inset:0;z-index:500;background:radial-gradient(ellipse at 50% 30%,#2f7a44,#07130c);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#fff;text-align:center;padding:20px'; document.body.appendChild(o); } o.innerHTML = '<div style="font-size:64px">🀄</div><div style="font-size:20px;font-weight:900">' + (txt || '🔍 NYARI LAWAN...') + '</div><div style="font-size:13px;color:#a7f3d0">Bentar ya, meja lagi disiapin...</div>'; o.style.display = 'flex'; }
+function bolangHideLoading(){ let o = document.getElementById('bolangLoadingOverlay'); if(o) o.style.display = 'none'; }
 function bolangCheckpoint(){ return bolangFloorObj().checkpoint || 1; }
 function bolangProgressPct(){ return Math.min(100, Math.round(bolangCheckpoint() / BOLANG_TOTAL_CHECKPOINT * 100)); }
 function bolangOpenBalaiDesa(){
@@ -3527,6 +3529,8 @@ function bolangConfirmBalai(){
   bolangSettled = false;
   bolangAutoStarted = false;
   bolangLastBotAdd = 0;
+  turnTimeSec = bolangTurnTime();
+  bolangShowLoading('🔍 NYARI LAWAN DI ' + bolangLevelObj().city + '...');
   bolangSaveToDB();
   bolangUpdateProgress();
   bolangRenderWorld();
@@ -3541,11 +3545,12 @@ function bolangConfirmBalai(){
   let _bots = bolangBots();
   let _bi = 0;
   bolangAutoTimer = setInterval(()=>{
-    if(!bolangInGame){ clearInterval(bolangAutoTimer); return; }
+    if(!bolangInGame){ clearInterval(bolangAutoTimer); bolangHideLoading(); return; }
     if(!myCode) return;
+    let ls = document.getElementById('lobbyScreen'); if(ls) ls.classList.add('hidden');
     let n = (currentPlayers || []).length;
     if(n < 4){
-      if(Date.now() - bolangLastBotAdd > 1000){
+      if(Date.now() - bolangLastBotAdd > 150){
         bolangLastBotAdd = Date.now();
         try{ addBot(_bots[_bi % _bots.length]); _bi++; }catch(e){}
       }
@@ -3554,9 +3559,10 @@ function bolangConfirmBalai(){
     if(n >= 4 && !bolangAutoStarted){
       bolangAutoStarted = true;
       clearInterval(bolangAutoTimer);
-      setTimeout(()=>{ try{ doStartGame(); }catch(e){} }, 600);
+      bolangHideLoading();
+      setTimeout(()=>{ try{ doStartGame(); }catch(e){} }, 300);
     }
-  }, 500);
+  }, 200);
 }
 // ===== 6E: KERJA DARURAT - MUNCUL KALO KOIN < TARUHAN =====
 // Aturan dari gambar: Desa 1 jam 10k, Jakarta 2 jam 50k, Singapura 2 jam 200k, Malaysia 2 jam 300k, Jepang 2 jam 400k, Taiwan 2 jam 500k, Korea 2 jam 500k, Hongkong 2 jam 600k, Macau 2 jam 1jt, China 2 jam 1.5jt. Australia (TAHAP 7) 3 jam.
@@ -3705,6 +3711,8 @@ function bolangTourneyPlay(){
   bolangCloseTourneyModal();
   bolangInTourney = true;
   bolangInGame = true; bolangSettled = false; bolangAutoStarted = false; bolangLastBotAdd = 0;
+  turnTimeSec = 15;
+  bolangShowLoading('🇦🇺 NYARI LAWAN TURNAMEN...');
   let w = document.getElementById('bolangWorld'); if(w) w.style.display = 'none'; document.body.style.overflow = '';
   myName = currentUser.display_name;
   socket.emit('createRoom', { name: myName, roomName: ('AUSTRALIA - ' + bolangTourneyStageName() + ' - GRUP ' + bolangTourney.group), mode: 'latihan', isPrivate: true, password: '', avatar: currentUser ? currentUser.avatar : '🧑' });
@@ -3713,11 +3721,12 @@ function bolangTourneyPlay(){
   try{ clearInterval(bolangAutoTimer); }catch(e){}
   let _bi = 0;
   bolangAutoTimer = setInterval(()=>{
-    if(!bolangInGame){ clearInterval(bolangAutoTimer); return; }
+    if(!bolangInGame){ clearInterval(bolangAutoTimer); bolangHideLoading(); return; }
     if(!myCode) return;
+    let ls = document.getElementById('lobbyScreen'); if(ls) ls.classList.add('hidden');
     let n = (currentPlayers || []).length;
     if(n < 4){
-      if(Date.now() - bolangLastBotAdd > 1000){
+      if(Date.now() - bolangLastBotAdd > 150){
         bolangLastBotAdd = Date.now();
         try{ addBot('extreme'); _bi++; }catch(e){}
       }
@@ -3726,9 +3735,10 @@ function bolangTourneyPlay(){
     if(n >= 4 && !bolangAutoStarted){
       bolangAutoStarted = true;
       clearInterval(bolangAutoTimer);
-      setTimeout(()=>{ try{ doStartGame(); }catch(e){} }, 600);
+      bolangHideLoading();
+      setTimeout(()=>{ try{ doStartGame(); }catch(e){} }, 300);
     }
-  }, 500);
+  }, 200);
 }
 // Dipanggil dari bolangSettleGame (6F-4). Menang = naik stage, kalah = gugur ke cafe.
 function bolangTourneyOnResult(isWin, isDraw){
@@ -3836,6 +3846,7 @@ function bolangBackToWorld(){
   try{ socket.emit('cancelRematch', { code: myCode }); }catch(e){}
   try{ if(myCode) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
   bolangInGame = false;
+  bolangHideLoading();
   bolangInTourney = false;
   try{ clearInterval(bolangAutoTimer); }catch(e){}
   let wm = document.getElementById('winModal');
@@ -3852,6 +3863,7 @@ function bolangRematch(){
   try{ socket.emit('cancelRematch', { code: myCode }); }catch(e){}
   try{ if(myCode) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
   bolangInGame = false;
+  bolangHideLoading();
   bolangInTourney = false;
   try{ clearInterval(bolangAutoTimer); }catch(e){}
   let wm = document.getElementById('winModal');
