@@ -3810,8 +3810,8 @@ function bolangSaveLocal(){
     localStorage.setItem('bolang_has_entered', bolangHasEntered ? '1' : '0');
     localStorage.setItem('bolang_level', String(bolangLevel));
     localStorage.setItem('bolang_floor', String(bolangFloor));
-    localStorage.setItem('bolang_titles', JSON.stringify(bolangTitles || ['ADVENTURE']));
-    localStorage.setItem('bolang_active_title', bolangActiveTitle || 'ADVENTURE');
+    localStorage.setItem('bolang_titles', JSON.stringify(bolangTitles || []));
+    localStorage.setItem('bolang_active_title', bolangActiveTitle || '');
     localStorage.setItem('bolang_updated_at', String(bolangLastSaveAt || Date.now()));
   }catch(e){}
 }
@@ -3901,9 +3901,9 @@ async function bolangLoadFromDB(){
         bolangHasEntered = !!j.data.has_entered;
         if(typeof j.data.level === 'number' && j.data.level >= 0 && j.data.level < BOLANG_LEVELS.length) bolangLevel = j.data.level;
         if(typeof j.data.floor === 'number' && j.data.floor >= 0) bolangFloor = j.data.floor;
-        if(Array.isArray(j.data.titles) && j.data.titles.length) bolangTitles = j.data.titles;
+        if(Array.isArray(j.data.titles)) bolangTitles = j.data.titles;
         if(typeof j.data.active_title === 'string' && j.data.active_title && bolangTitles.includes(j.data.active_title)) bolangActiveTitle = j.data.active_title;
-        else bolangActiveTitle = bolangTitles[bolangTitles.length - 1] || 'ADVENTURE';
+        else bolangActiveTitle = bolangTitles.length ? bolangTitles[bolangTitles.length - 1] : '';
         if(j.data.updated_at){
           let t = Date.parse(j.data.updated_at);
           if(Number.isFinite(t)) bolangLastSaveAt = t;
