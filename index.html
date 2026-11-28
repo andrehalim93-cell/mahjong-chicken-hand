@@ -3822,8 +3822,9 @@ function bolangLoadLocal(){
     if(Number.isFinite(l) && l >= 0 && l < BOLANG_LEVELS.length) bolangLevel = l;
     if(Number.isFinite(f) && f >= 0 && f < (BOLANG_LEVELS[bolangLevel].floors || []).length) bolangFloor = f;
     let t = JSON.parse(localStorage.getItem('bolang_titles') || '[]');
-    if(Array.isArray(t)) bolangTitles = t;
+    if(Array.isArray(t)) bolangTitles = t.map(x=> (x === 'ADVENTURE' ? 'SANG PETUALANG' : x));
     let at = localStorage.getItem('bolang_active_title') || '';
+    if(at === 'ADVENTURE') at = 'SANG PETUALANG';
     if(at && bolangTitles.includes(at)) bolangActiveTitle = at;
     else bolangActiveTitle = bolangTitles.length ? bolangTitles[bolangTitles.length - 1] : '';
     let ua = Number(localStorage.getItem('bolang_updated_at') || 0);
