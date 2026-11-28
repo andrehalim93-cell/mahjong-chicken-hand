@@ -3492,7 +3492,7 @@ let bolangLastSaveAt = 0;
 let bolangSaveTimer = null;
 function bolangLevelObj(){ return BOLANG_LEVELS[bolangLevel] || BOLANG_LEVELS[0]; }
 function bolangFloorObj(){ let L = bolangLevelObj(); return (L.floors||[])[bolangFloor] || L.floors[0]; }
-function bolangBet(){ return bolangFloorObj().bet || 1000; }
+function bolangBet(){ let b = bolangFloorObj().bet; return (typeof b === 'number') ? b : 1000; }
 function bolangWin(){ return bolangBet() * 4; }
 function bolangBots(){ return bolangFloorObj().bots || ['easy','easy','easy']; }
 function bolangCheckpoint(){ return bolangFloorObj().checkpoint || 1; }
@@ -3617,7 +3617,11 @@ async function bolangStartWork(){
   try{
     let r = await fetch('/api/bolang-work-start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: uid, level: bolangLevel, durationMs: durMs, reward: w.reward || 0, job: w.job || '' }) });
     let j = await r.json();
-    if(!j || !j.ok) return toast('❌ ' + (j && j.error ? j.error : 'Gagal mulai kerja'));
+    if(!j || !j.ok){
+      // Kalo server restart, Map cafe ilang. Kalo waktu udah lewat 3 jam, anggap aja kelar, jangan nyangkut.
+      if(Date.now() >= bolangCafe.endAt && (j && /Gak ada cafe/.test(j.error || ''))) { /* lanjut ke bawah, anggap sukses */ }
+      else return toast('❌ ' + (j && j.error ? j.error : 'Gagal klaim cafe'));
+    }
     bolangWork = { level: bolangLevel, job: w.job, emoji: w.emoji, reward: w.reward, startedAt: j.data.startedAt, endAt: j.data.endAt };
     bolangWorkSaveLocal();
     bolangCloseBalai();
@@ -3832,6 +3836,7 @@ function bolangBackToWorld(){
   try{ socket.emit('cancelRematch', { code: myCode }); }catch(e){}
   try{ if(myCode) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
   bolangInGame = false;
+  bolangInTourney = false;
   try{ clearInterval(bolangAutoTimer); }catch(e){}
   let wm = document.getElementById('winModal');
   if(wm){ wm.classList.remove('show'); wm.style.display = 'none'; }
@@ -3847,6 +3852,7 @@ function bolangRematch(){
   try{ socket.emit('cancelRematch', { code: myCode }); }catch(e){}
   try{ if(myCode) socket.emit('leaveRoom', { code: myCode }); }catch(e){}
   bolangInGame = false;
+  bolangInTourney = false;
   try{ clearInterval(bolangAutoTimer); }catch(e){}
   let wm = document.getElementById('winModal');
   if(wm){ wm.classList.remove('show'); wm.style.display = 'none'; }
