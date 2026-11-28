@@ -3772,6 +3772,7 @@ function bolangTourneyPlay(){
       setTimeout(()=>{ try{ doStartGame(); }catch(e){} }, 300);
     }
   }, 200);
+  }
 // Dipanggil dari bolangSettleGame (6F-4). Menang = naik stage, kalah = gugur ke cafe.
 function bolangTourneyOnResult(isWin, isDraw){
   if(!bolangInTourney) return;
