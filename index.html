@@ -3495,7 +3495,8 @@ function bolangFloorObj(){ let L = bolangLevelObj(); return (L.floors||[])[bolan
 function bolangBet(){ let b = bolangFloorObj().bet; return (typeof b === 'number') ? b : 1000; }
 function bolangWin(){ return bolangBet() * 4; }
 function bolangTurnTime(){ if(bolangLevel === 0) return 30; if(bolangLevel <= 3) return 20; return 15; }
-function bolangShowLoading(txt){ let o = document.getElementById('bolangLoadingOverlay'); if(!o){ o = document.createElement('div'); o.id = 'bolangLoadingOverlay'; o.style.cssText = 'position:fixed;inset:0;z-index:500;background:radial-gradient(ellipse at 50% 30%,#2f7a44,#07130c);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#fff;text-align:center;padding:20px'; document.body.appendChild(o); } o.innerHTML = '<div style="font-size:64px">🀄</div><div style="font-size:20px;font-weight:900">' + (txt || '🔍 NYARI LAWAN...') + '</div><div style="font-size:13px;color:#a7f3d0">Bentar ya, meja lagi disiapin...</div>'; o.style.display = 'flex'; }
+function bolangShowLoading(txt){ let o = document.getElementById('bolangLoadingOverlay'); if(!o){ o = document.createElement('div'); o.id = 'bolangLoadingOverlay'; o.style.cssText = 'position:fixed;inset:0;z-index:500;background:radial-gradient(ellipse at 50% 30%,#2f7a44,#07130c);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#fff;text-align:center;padding:20px'; document.body.appendChild(o); } o.innerHTML = '<div style="font-size:64px">🀄</div><div style="font-size:20px;font-weight:900">' + (txt || '🔍 NYARI LAWAN...') + '</div><div style="font-size:13px;color:#a7f3d0">Bentar ya, meja lagi disiapin...</div><button onclick="bolangCancelLoading()" style="margin-top:12px;padding:12px 24px;border-radius:999px;border:0;background:#facc15;color:#422006;font-weight:900;font-size:14px">❌ BATAL - BALIK KE DUNIA</button>'; o.style.display = 'flex'; }
+function bolangCancelLoading(){ try{ clearInterval(bolangAutoTimer); }catch(e){} bolangHideLoading(); let wasTourney = !!bolangInTourney; bolangInGame = false; bolangInTourney = false; bolangSettled = true; try{ if(myCode) socket.emit('leaveRoom', {code: myCode}); }catch(e){} myCode = ''; currentPlayers = []; try{ sessionStorage.removeItem('mahjong_room'); }catch(e){} if(!wasTourney){ bolangCoins += BOLANG_BET(); bolangSaveNow(); toast('❌ Dibatalin, taruhan dibalikin.'); } else { toast('❌ Turnamen dibatalin.'); } bolangEnterWorld(); }
 function bolangHideLoading(){ let o = document.getElementById('bolangLoadingOverlay'); if(o) o.style.display = 'none'; }
 function bolangCheckpoint(){ return bolangFloorObj().checkpoint || 1; }
 function bolangProgressPct(){ return Math.min(100, Math.round(bolangCheckpoint() / BOLANG_TOTAL_CHECKPOINT * 100)); }
@@ -3530,7 +3531,12 @@ function bolangConfirmBalai(){
   bolangAutoStarted = false;
   bolangLastBotAdd = 0;
   turnTimeSec = bolangTurnTime();
+  myCode = '';
+  currentPlayers = [];
+  usedBotNames = [];
+  try{ sessionStorage.removeItem('mahjong_room'); }catch(e){}
   bolangShowLoading('🔍 NYARI LAWAN DI ' + bolangLevelObj().city + '...');
+  bolangLoadStartAt = Date.now();
   bolangSaveToDB();
   bolangUpdateProgress();
   bolangRenderWorld();
@@ -3546,13 +3552,23 @@ function bolangConfirmBalai(){
   let _bi = 0;
   bolangAutoTimer = setInterval(()=>{
     if(!bolangInGame){ clearInterval(bolangAutoTimer); bolangHideLoading(); return; }
-    if(!myCode) return;
+    if(!myCode){
+      if(Date.now() - (bolangLoadStartAt || Date.now()) > 10000){ clearInterval(bolangAutoTimer); bolangHideLoading(); bolangInGame = false; toast('❌ Gagal bikin meja, coba lagi!'); bolangCoins += BOLANG_BET(); bolangSaveNow(); }
+      return;
+    }
     let ls = document.getElementById('lobbyScreen'); if(ls) ls.classList.add('hidden');
     let n = (currentPlayers || []).length;
     if(n < 4){
       if(Date.now() - bolangLastBotAdd > 150){
         bolangLastBotAdd = Date.now();
         try{ addBot(_bots[_bi % _bots.length]); _bi++; }catch(e){}
+      }
+      if(Date.now() - (bolangLoadStartAt || Date.now()) > 12000){
+        clearInterval(bolangAutoTimer); bolangHideLoading(); bolangInGame = false;
+        try{ if(myCode) socket.emit('leaveRoom', {code: myCode}); }catch(e){}
+        myCode = ''; currentPlayers = [];
+        bolangCoins += BOLANG_BET(); bolangSaveNow();
+        toast('❌ Lawan gak ketemu, taruhan dibalikin. Coba lagi!');
       }
       return;
     }
@@ -3712,7 +3728,12 @@ function bolangTourneyPlay(){
   bolangInTourney = true;
   bolangInGame = true; bolangSettled = false; bolangAutoStarted = false; bolangLastBotAdd = 0;
   turnTimeSec = 15;
+  myCode = '';
+  currentPlayers = [];
+  usedBotNames = [];
+  try{ sessionStorage.removeItem('mahjong_room'); }catch(e){}
   bolangShowLoading('🇦🇺 NYARI LAWAN TURNAMEN...');
+  bolangLoadStartAt = Date.now();
   let w = document.getElementById('bolangWorld'); if(w) w.style.display = 'none'; document.body.style.overflow = '';
   myName = currentUser.display_name;
   socket.emit('createRoom', { name: myName, roomName: ('AUSTRALIA - ' + bolangTourneyStageName() + ' - GRUP ' + bolangTourney.group), mode: 'latihan', isPrivate: true, password: '', avatar: currentUser ? currentUser.avatar : '🧑' });
@@ -3722,13 +3743,22 @@ function bolangTourneyPlay(){
   let _bi = 0;
   bolangAutoTimer = setInterval(()=>{
     if(!bolangInGame){ clearInterval(bolangAutoTimer); bolangHideLoading(); return; }
-    if(!myCode) return;
+    if(!myCode){
+      if(Date.now() - (bolangLoadStartAt || Date.now()) > 10000){ clearInterval(bolangAutoTimer); bolangHideLoading(); bolangInGame = false; bolangInTourney = false; toast('❌ Gagal bikin meja turnamen, coba lagi!'); }
+      return;
+    }
     let ls = document.getElementById('lobbyScreen'); if(ls) ls.classList.add('hidden');
     let n = (currentPlayers || []).length;
     if(n < 4){
       if(Date.now() - bolangLastBotAdd > 150){
         bolangLastBotAdd = Date.now();
         try{ addBot('extreme'); _bi++; }catch(e){}
+      }
+      if(Date.now() - (bolangLoadStartAt || Date.now()) > 12000){
+        clearInterval(bolangAutoTimer); bolangHideLoading(); bolangInGame = false; bolangInTourney = false;
+        try{ if(myCode) socket.emit('leaveRoom', {code: myCode}); }catch(e){}
+        myCode = ''; currentPlayers = [];
+        toast('❌ Lawan turnamen gak ketemu, coba lagi!');
       }
       return;
     }
@@ -3739,7 +3769,6 @@ function bolangTourneyPlay(){
       setTimeout(()=>{ try{ doStartGame(); }catch(e){} }, 300);
     }
   }, 200);
-}
 // Dipanggil dari bolangSettleGame (6F-4). Menang = naik stage, kalah = gugur ke cafe.
 function bolangTourneyOnResult(isWin, isDraw){
   if(!bolangInTourney) return;
@@ -4613,7 +4642,7 @@ function setSkin(skin){
 }
 socket.on('skinUpdated', d=>{ applySkin(d.skin); toast('🎨 Skin meja diganti!'); });  
 function removeBot(name){ if(confirm('Hapus '+name+'?')) socket.emit('removeBot',{code:myCode, botName:name}); }
-socket.on('errorMsg', m=>{ showErr(m); toast(m); });
+socket.on('errorMsg', m=>{ showErr(m); toast(m); if(bolangInGame && !bolangAutoStarted && /Minimal 2 pemain|Cuma HOST|Meja|Room/i.test(String(m||''))){ try{ clearInterval(bolangAutoTimer); }catch(e){} bolangHideLoading(); bolangInGame = false; bolangInTourney = false; myCode = ''; currentPlayers = []; } });
 socket.on('gameStarted', d=>{
   trapBackInGame();
   el('lobbyScreen').classList.add('hidden'); el('gameScreen').classList.remove('hidden');
