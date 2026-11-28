@@ -3474,9 +3474,9 @@ const BOLANG_LEVELS = [
 let bolangLevel = 0;
 let bolangFloor = 0;
 // Title yang udah kebuka. Desa (ADVENTURE) kebuka dari awal, sisanya ??? sampe tamat kota itu.
-let bolangTitles = ['ADVENTURE'];
-// 6C: title yang lagi dipake (buat 6D nanti bisa dipilih). Default = title terakhir yang kebuka.
-let bolangActiveTitle = 'ADVENTURE';
+let bolangTitles = [];
+// 6C revisi: mulai tanpa title. ADVENTURE baru dapet abis lewat Desa. Kalo belum ada title, tampil ???.
+let bolangActiveTitle = '';
 let bolangLastSaveAt = 0;
 let bolangSaveTimer = null;
 function bolangLevelObj(){ return BOLANG_LEVELS[bolangLevel] || BOLANG_LEVELS[0]; }
@@ -3602,7 +3602,7 @@ function bolangRenderWorld(){
   let city = document.getElementById('bolangWorldCity'); if(city) city.innerText = bolangLevelObj().city + (bolangLevel === 0 ? '' : ' - ' + bolangFloorObj().name);
   let bet = document.getElementById('bolangWorldBet'); if(bet) bet.innerText = BOLANG_BET().toLocaleString('id-ID') + ' / Meja';
   let desc = document.getElementById('bolangWorldDesc'); if(desc) desc.innerText = bolangLevelObj().desc || '';
-  let titleEl = document.getElementById('bolangWorldTitle'); if(titleEl) titleEl.innerText = '🏆 ' + (bolangActiveTitle || (bolangTitles && bolangTitles.length ? bolangTitles[bolangTitles.length - 1] : 'ADVENTURE'));
+  let titleEl = document.getElementById('bolangWorldTitle'); if(titleEl) titleEl.innerText = '🏆 ' + (bolangActiveTitle || '???');
   let shopInfo = document.getElementById('bolangWorldShopInfo');
   if(shopInfo){
     let info = bolangNextInfo();
@@ -3821,11 +3821,11 @@ function bolangLoadLocal(){
     let f = Number(localStorage.getItem('bolang_floor') || 0);
     if(Number.isFinite(l) && l >= 0 && l < BOLANG_LEVELS.length) bolangLevel = l;
     if(Number.isFinite(f) && f >= 0 && f < (BOLANG_LEVELS[bolangLevel].floors || []).length) bolangFloor = f;
-    let t = JSON.parse(localStorage.getItem('bolang_titles') || '["ADVENTURE"]');
-    if(Array.isArray(t) && t.length) bolangTitles = t;
+    let t = JSON.parse(localStorage.getItem('bolang_titles') || '[]');
+    if(Array.isArray(t)) bolangTitles = t;
     let at = localStorage.getItem('bolang_active_title') || '';
     if(at && bolangTitles.includes(at)) bolangActiveTitle = at;
-    else bolangActiveTitle = bolangTitles[bolangTitles.length - 1] || 'ADVENTURE';
+    else bolangActiveTitle = bolangTitles.length ? bolangTitles[bolangTitles.length - 1] : '';
     let ua = Number(localStorage.getItem('bolang_updated_at') || 0);
     if(Number.isFinite(ua) && ua) bolangLastSaveAt = ua;
   }catch(e){}
