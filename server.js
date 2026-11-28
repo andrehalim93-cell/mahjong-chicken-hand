@@ -1233,7 +1233,12 @@ io.on('connection', (socket)=>{
   });
   socket.on('createRoom', ({ name, roomName, isPrivate, password, mode, avatar })=>{ let _uid = socket.myUserId||'';
   let code = genCode();
-  let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec: mode==='pro' ? 15 : 30, turnTimer:null, lastDice:null, passCount:0, passNeeded:0, passedNames:[], claimTimer:null, skin:'hijau',
+  let _rn = String(roomName || '').toUpperCase();
+  let _bolangSec = 30;
+  if(_rn.indexOf('JAKARTA') >= 0 || _rn.indexOf('SINGAPURA') >= 0 || _rn.indexOf('MALAYSIA') >= 0) _bolangSec = 20;
+  else if(_rn.indexOf('JEPANG') >= 0 || _rn.indexOf('TAIWAN') >= 0 || _rn.indexOf('KOREA') >= 0 || _rn.indexOf('HONGKONG') >= 0 || _rn.indexOf('MACAU') >= 0 || _rn.indexOf('CHINA') >= 0 || _rn.indexOf('AUSTRALIA') >= 0) _bolangSec = 15;
+  else if(_rn.indexOf('DESA') >= 0) _bolangSec = 30;
+  let room = { code, players:[], wall:[], phase:'lobby', turnIdx:0, lastDiscard:null, waitingClaim:false, turnTimeSec: mode==='pro' ? 15 : _bolangSec, turnTimer:null, lastDice:null, passCount:0, passNeeded:0, passedNames:[], claimTimer:null, skin:'hijau',
     roomName: (roomName||'Meja '+(name||'Player')).trim(),
     isPrivate: !!isPrivate, password: isPrivate ? (password||'') : '',
     mode: mode==='tanding' ? 'tanding' : (mode==='pro' ? 'pro' : 'latihan'),
@@ -1373,7 +1378,8 @@ socket.on('fillBots', ({ code, level })=>{
     if(!me || !me.isHost){ socket.emit('errorMsg','Cuma HOST yang bisa mulai game!'); return; }
     if(room.mode==='pro' && room.players.length<4){ socket.emit('errorMsg','Mode PRO wajib 4 pemain baru bisa mulai!'); return; }
 if(room.mode==='pro' && room.players.some(p=>p.isBot)){ socket.emit('errorMsg','Mode PRO gak boleh ada BOT!'); return; }
-if(room.mode==='pro') turnTimeSec = 15;
+    if(room.mode==='pro') turnTimeSec = 15;
+    else { let _rn2 = String(room.roomName || '').toUpperCase(); if(_rn2.indexOf('JAKARTA') >= 0 || _rn2.indexOf('SINGAPURA') >= 0 || _rn2.indexOf('MALAYSIA') >= 0) turnTimeSec = 20; else if(_rn2.indexOf('JEPANG') >= 0 || _rn2.indexOf('TAIWAN') >= 0 || _rn2.indexOf('KOREA') >= 0 || _rn2.indexOf('HONGKONG') >= 0 || _rn2.indexOf('MACAU') >= 0 || _rn2.indexOf('CHINA') >= 0 || _rn2.indexOf('AUSTRALIA') >= 0) turnTimeSec = 15; else if(_rn2.indexOf('DESA') >= 0) turnTimeSec = 30; }
 if(room.players.length<2){ socket.emit('errorMsg', 'Minimal 2 pemain buat mulai! Tambah bot!'); return; }
     startGame(room, turnTimeSec);
   });
