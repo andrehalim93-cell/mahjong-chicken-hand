@@ -601,13 +601,7 @@ function sendHand(room, p){
   }
 }
 // FIX 1: normal tetep normal, jangan jadi medium - index ngecek 'normal'
-function normalizeLevel(level){
-  if(level==='normal') return 'normal';
-  if(level==='medium') return 'normal';
-  if(level==='hard') return 'hard';
-  if(level==='easy') return 'easy';
-  return 'easy';
-}
+function normalizeLevel(level){ if(level==='normal') return 'normal'; if(level==='medium') return 'normal'; if(level==='hard') return 'hard'; if(level==='easy') return 'easy'; if(level==='extreme') return 'extreme'; return 'easy'; }
 
 // ============ CEK HU BENERAN ============
 function checkHu(hand){
@@ -686,8 +680,8 @@ function canHuWithTileAndMelds(hand, melds, tile){ return canHuWithMelds([...han
 
 // ============ BOT AI ============
 // ===== BOT LEVEL: biar GAMPANG / NORMAL / SUSAH beneran kerasa beda =====
-function botLevelOf(bot){ let l = String((bot&&bot.level)||'normal').toLowerCase(); if(l==='medium') return 'normal'; if(l==='hard'||l==='easy'||l==='normal') return l; return 'normal'; }
-function botThinkMs(bot, base){ let l = botLevelOf(bot); if(l==='easy') return Math.round(base*1.6); if(l==='hard') return Math.round(base*0.55); return base; }
+function botLevelOf(bot){ let l = String((bot&&bot.level)||'normal').toLowerCase(); if(l==='medium') return 'normal'; if(l==='hard'||l==='easy'||l==='normal'||l==='extreme') return l; return 'normal'; }
+function botThinkMs(bot, base){ let l = botLevelOf(bot); if(l==='easy') return Math.round(base*1.6); if(l==='hard') return Math.round(base*0.55); if(l==='extreme') return Math.round(base*0.4); return base; }
 // Seberapa berguna 1 tile di tangan. Makin kecil = makin aman dibuang.
 // Pair = berguna, tetangga deket (bisa jadi CHOW) = berguna, honor pair = berguna.
 function botTileUsefulness(hand, tile){
@@ -763,7 +757,7 @@ function botDecideClaim(bot, tile, isNext){
     // GAMPANG: 75% skip CHOW, biar tangannya lambat jadi set.
     if(lvl==='easy' && Math.random()<0.75) return null;
     // SUSAH: jangan CHOW kalo 2 tile-nya itu pair yang lagi dijaga. Cari yang 2-2nya single dulu.
-    if(lvl==='hard'){
+      if(lvl==='hard' || lvl==='extreme'){
       let counts = {}; bot.hand.forEach(t=>{ counts[t.key]=(counts[t.key]||0)+1; });
       let clean = options.filter(opt=>opt.every(n=>{
         let k = bot.hand.find(t=>t.type==='suit' && t.suit===tile.suit && t.num===n);
