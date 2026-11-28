@@ -3475,6 +3475,10 @@ const BOLANG_LEVELS = [
       { floor:3, name:'LANTAI 4', bet:1500000, bots:['hard','extreme','extreme'], checkpoint:53, next:{ kind:'floor', ticket:'VIP', price:10000000, minMoney:10000000, toLevel:9, toFloor:4 } },
       { floor:4, name:'LANTAI 5', bet:1750000, bots:['hard','extreme','extreme'], checkpoint:54, next:{ kind:'floor', ticket:'VIP', price:20000000, minMoney:15000000, toLevel:9, toFloor:5 } },
       { floor:5, name:'LANTAI 6', bet:2000000, bots:['extreme','extreme','extreme'], checkpoint:55, next:{ kind:'city', ticket:'PESAWAT+TOKEN', price:30000000, minMoney:10000000, toLevel:10, toFloor:0, note:'Pesawat 15jt + Token 15jt' } }
+    ]},
+  { level:10, city:'AUSTRALIA', title:'KING OF MAHJONG', desc:'Turnamen Australia 64 orang. 4 grup, 1 juara. Yang menang jadi KING OF MAHJONG.', work:{ job:'PENYANYI BAR DI CAFE', hours:3, reward:0, emoji:'🎤' },
+    floors:[
+    { floor:0, name:'TURNAMEN AUSTRALIA', bet:0, bots:['extreme','extreme','extreme'], checkpoint:56, next:null }
     ]}
 ];
 // Posisi sekarang. Default Desa Lantai 0. Di-load dari server di 6C.
@@ -3495,6 +3499,8 @@ function bolangCheckpoint(){ return bolangFloorObj().checkpoint || 1; }
 function bolangProgressPct(){ return Math.min(100, Math.round(bolangCheckpoint() / BOLANG_TOTAL_CHECKPOINT * 100)); }
 function bolangOpenBalaiDesa(){
   if(!currentUser) return toast('Login dulu!');
+  if(bolangLevel === 10){ bolangOpenTourneyModal(); return; }
+  if(bolangCafeIsActive()){ toast('⏳ Lu lagi di cafe! Tunggu 3 jam kelar dulu.'); bolangOpenCafeModal(); return; }
   let m = document.getElementById('bolangBalaiModal');
   let c = document.getElementById('bolangBalaiCoins');
   if(c) c.innerText = bolangCoins.toLocaleString('id-ID');
@@ -3511,6 +3517,7 @@ function bolangCloseBalai(){
   if(m) m.style.display = 'none';
 }
 function bolangConfirmBalai(){
+  if(bolangCafeIsActive()){ toast('⏳ Lu lagi di cafe! Tunggu 3 jam kelar dulu.'); bolangCloseBalai(); bolangOpenCafeModal(); return; }
   if(bolangWorkIsActive()){ toast('⏳ Lu lagi kerja! Tunggu sampe kelar dulu, baru bisa main.'); bolangCloseBalai(); bolangOpenWorkModal(); return; }
   if(bolangCoins < BOLANG_BET()){ toast('❌ Koin kurang! Butuh ' + BOLANG_BET().toLocaleString('id-ID') + ' buat masuk ' + bolangFloorObj().name + '.'); bolangCloseBalai(); bolangOpenWorkModal(); return; }
   bolangCloseBalai();
@@ -3638,9 +3645,156 @@ function bolangWorkTest(){ try{ localStorage.setItem('bolang_work_test','1'); }c
 function bolangWorkTestOff(){ try{ localStorage.removeItem('bolang_work_test'); }catch(e){} toast('🧪 TEST MODE OFF: kerja balik jadi jam beneran.'); }
 // 6E: pas load, pulihin kerja yang belum kelar
 try{ bolangWorkLoadLocal(); }catch(e){}
+// ===== 6F: TURNAMEN AUSTRALIA 64 ORANG =====
+// Excel: 64 org, 4 grup A-D @16, random. Per grup: Babak 1 (16->4 meja->4 pemenang) -> Semifinal Grup (4->1 juara grup) -> Final (4 juara grup -> KING). Lu cuma main 3 meja: Babak 1, Semifinal Grup, Final. Meja lain disimulasikan.
+// Hadiah: cuma title KING OF MAHJONG, gak ada koin. Kalah sekali = gugur -> cafe 3 jam -> ikut lagi dari awal, grup di-random lagi.
+let bolangTourney = null; // {group:'A', stage:0, wins:0} stage 0=Babak1, 1=Semifinal Grup, 2=Final
+let bolangInTourney = false;
+let bolangCafe = null; // {startedAt, endAt}
+let bolangCafeTimer = null;
+function bolangTourneySave(){ try{ if(bolangTourney) localStorage.setItem('bolang_tourney', JSON.stringify(bolangTourney)); else localStorage.removeItem('bolang_tourney'); }catch(e){} }
+function bolangTourneyLoad(){ try{ let t = JSON.parse(localStorage.getItem('bolang_tourney') || 'null'); if(t && typeof t.stage === 'number') bolangTourney = t; }catch(e){} }
+function bolangCafeSave(){ try{ if(bolangCafe) localStorage.setItem('bolang_cafe', JSON.stringify(bolangCafe)); else localStorage.removeItem('bolang_cafe'); }catch(e){} }
+function bolangCafeLoad(){ try{ let c = JSON.parse(localStorage.getItem('bolang_cafe') || 'null'); if(c && c.endAt) bolangCafe = c; }catch(e){} }
+function bolangCafeIsActive(){ return !!(bolangCafe && bolangCafe.endAt && Date.now() < bolangCafe.endAt); }
+function bolangTourneyStartNew(){
+  let groups = ['A','B','C','D'];
+  let g = groups[Math.floor(Math.random() * groups.length)];
+  bolangTourney = { group: g, stage: 0, wins: 0 };
+  bolangTourneySave();
+}
+function bolangTourneyStageName(){ if(!bolangTourney) return 'BABAK 1'; return ['BABAK 1 GRUP','SEMIFINAL GRUP','FINAL'][bolangTourney.stage] || 'BABAK 1 GRUP'; }
+function bolangOpenTourneyModal(){
+  if(bolangLevel !== 10) return toast('🔒 Turnamen Australia belum kebuka. Tamatkan China dulu!');
+  if(bolangCafeIsActive()){ bolangOpenCafeModal(); return; }
+  if(!bolangTourney) bolangTourneyStartNew();
+  let m = document.getElementById('bolangTourneyModal'); if(!m) return;
+  let groups = ['A','B','C','D'];
+  let b = document.getElementById('bolangTourneyBracket');
+  if(b){
+    let html = '';
+    groups.forEach(g=>{
+      let isMine = (g === bolangTourney.group);
+      let mark = isMine ? '👉 ' : '';
+      let status = '';
+      if(isMine){
+        if(bolangTourney.stage === 0) status = ' • LU DI SINI - BABAK 1';
+        else if(bolangTourney.stage === 1) status = ' • LU LOLOS - SEMIFINAL GRUP';
+        else if(bolangTourney.stage === 2) status = ' • LU JUARA GRUP - FINAL!';
+      } else status = ' • (disimulasi)';
+      html += mark + '<b>GRUP ' + g + '</b> (16 org)' + status + '<br>';
+    });
+    html += '↓<br><b>FINAL:</b> 4 Juara Grup → <b>KING OF MAHJONG 👑</b><br>';
+    html += 'Menang lu: <b>' + (bolangTourney.wins || 0) + ' / 3</b> • Grup lu: <b>' + bolangTourney.group + '</b>';
+    b.innerHTML = html;
+  }
+  let inf = document.getElementById('bolangTourneyInfo');
+  if(inf) inf.innerHTML = 'Meja berikutnya: <b>' + bolangTourneyStageName() + '</b><br>Lawan: 3 bot <b>EXTREME</b> • Taruhan: <b>GRATIS</b> (udah bayar Token) • Hadiah: <b>cuma title</b>';
+  let btn = document.getElementById('bolangTourneyBtn');
+  if(btn) btn.innerText = '🏆 MAIN ' + bolangTourneyStageName();
+  m.style.display = 'flex';
+}
+function bolangCloseTourneyModal(){ let m = document.getElementById('bolangTourneyModal'); if(m) m.style.display = 'none'; }
+function bolangTourneyPlay(){
+  if(bolangCafeIsActive()){ toast('⏳ Lu lagi di cafe! Tunggu 3 jam kelar dulu.'); bolangCloseTourneyModal(); bolangOpenCafeModal(); return; }
+  if(!bolangTourney) bolangTourneyStartNew();
+  bolangCloseTourneyModal();
+  bolangInTourney = true;
+  bolangInGame = true; bolangSettled = false; bolangAutoStarted = false; bolangLastBotAdd = 0;
+  // Bet 0, jadi gak potong koin. Kalo pake bolangConfirmBalai, koin kepotong. Makanya langsung createRoom.
+  let w = document.getElementById('bolangWorld'); if(w) w.style.display = 'none'; document.body.style.overflow = '';
+  myName = currentUser.display_name;
+  socket.emit('createRoom', { name: myName, roomName: ('AUSTRALIA - ' + bolangTourneyStageName() + ' - GRUP ' + bolangTourney.group), mode: 'latihan', isPrivate: true, password: '', avatar: currentUser ? currentUser.avatar : '🧑' });
+  toast('🇦🇺 ' + bolangTourneyStageName() + ' - Grup ' + bolangTourney.group + '! Lawan 3 bot EXTREME!');
+}
+// Dipanggil dari bolangSettleGame (6F-4). Menang = naik stage, kalah = gugur ke cafe.
+function bolangTourneyOnResult(isWin, isDraw){
+  if(!bolangInTourney) return;
+  bolangInTourney = false;
+  if(isDraw){ toast('😐 SERI! Ulang ' + bolangTourneyStageName() + ' lagi.'); return; }
+  if(!isWin){
+    // GUGUR -> CAFE 3 JAM
+    bolangTourney = null; bolangTourneySave();
+    bolangStartCafe();
+    return;
+  }
+  bolangTourney.wins = (bolangTourney.wins || 0) + 1;
+  if(bolangTourney.stage === 2){
+    // MENANG FINAL = KING OF MAHJONG
+    bolangTourney = null; bolangTourneySave();
+    if(!(bolangTitles || []).includes('KING OF MAHJONG')) bolangTitles.push('KING OF MAHJONG');
+    bolangActiveTitle = 'KING OF MAHJONG';
+    bolangSaveToDB();
+    toast('👑 KING OF MAHJONG! Lu juara Turnamen Australia 64 orang!');
+    setTimeout(()=>{ try{ bolangEnterWorld(); }catch(e){} }, 600);
+    return;
+  }
+  bolangTourney.stage += 1; bolangTourneySave();
+  toast('✅ LOLOS! Lanjut ke ' + bolangTourneyStageName() + '!');
+  setTimeout(()=>{ bolangOpenTourneyModal(); }, 800);
+}
+function bolangCafeTick(){
+  let cd = document.getElementById('bolangCafeCountdown'); let bar = document.getElementById('bolangCafeBar'); let btn = document.getElementById('bolangCafeBtn');
+  if(!cd || !btn) return;
+  if(bolangCafeTimer) clearInterval(bolangCafeTimer); bolangCafeTimer = null;
+  if(!bolangCafe){ cd.innerText = '00:00:00'; if(btn){ btn.innerText = '✅ IKUT TURNAMEN LAGI'; btn.disabled = false; } return; }
+  let left = bolangCafe.endAt - Date.now();
+  if(left <= 0){
+    cd.innerText = '00:00:00'; if(bar) bar.style.width = '100%';
+    btn.innerText = '✅ IKUT TURNAMEN LAGI'; btn.disabled = false;
+    return;
+  }
+  let total = (bolangCafe.endAt - (bolangCafe.startedAt || bolangCafe.endAt)) || 1;
+  if(bar) bar.style.width = Math.min(100, Math.max(0, Math.round((total - left) / total * 100))) + '%';
+  cd.innerText = bolangWorkFmt(left);
+  btn.innerText = '⏳ NUNGGU ' + bolangWorkFmt(left); btn.disabled = true;
+  bolangCafeTimer = setInterval(()=>{ let l2 = bolangCafe.endAt - Date.now(); if(l2 <= 0){ bolangCafeTick(); } else { cd.innerText = bolangWorkFmt(l2); if(bar) bar.style.width = Math.min(100, Math.max(0, Math.round((total - l2) / total * 100))) + '%'; btn.innerText = '⏳ NUNGGU ' + bolangWorkFmt(l2); } }, 1000);
+}
+function bolangOpenCafeModal(){ let m = document.getElementById('bolangCafeModal'); if(!m) return; m.style.display = 'flex'; bolangCafeTick(); }
+function bolangCloseCafeModal(){ let m = document.getElementById('bolangCafeModal'); if(m) m.style.display = 'none'; }
+async function bolangStartCafe(){
+  let uid = (typeof myUserId === 'function') ? myUserId() : '';
+  if(!uid) return toast('Login dulu!');
+  // TEST MODE: sama kayak 6E, bolangWorkTest() bikin cafe jadi 60 detik juga
+  let testMode = false; try{ testMode = (localStorage.getItem('bolang_work_test') === '1'); }catch(e){}
+  let durMs = testMode ? 60000 : (3 * 3600 * 1000);
+  try{
+    let r = await fetch('/api/bolang-cafe-start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: uid, durationMs: durMs }) });
+    let j = await r.json();
+    if(!j || !j.ok) return toast('❌ ' + (j && j.error ? j.error : 'Gagal mulai cafe'));
+    bolangCafe = { startedAt: j.data.startedAt, endAt: j.data.endAt };
+    bolangCafeSave();
+    bolangOpenCafeModal();
+    toast('🎤 GUGUR! Refreshing di cafe 3 jam, nunggu jadwal turnamen berikutnya.');
+  }catch(e){ toast('❌ Gagal mulai cafe, cek koneksi!'); }
+}
+async function bolangCafeAction(){
+  if(!bolangCafe) { bolangCloseCafeModal(); bolangOpenTourneyModal(); return; }
+  if(Date.now() < bolangCafe.endAt) return toast('⏳ Belum 3 jam!');
+  let uid = (typeof myUserId === 'function') ? myUserId() : '';
+  try{
+    let r = await fetch('/api/bolang-cafe-claim', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: uid }) });
+    let j = await r.json();
+    if(!j || !j.ok) return toast('❌ ' + (j && j.error ? j.error : 'Gagal klaim cafe'));
+    bolangCafe = null; bolangCafeSave();
+    bolangCloseCafeModal();
+    bolangTourneyStartNew();
+    toast('✅ Jadwal turnamen berikutnya kebuka! Grup baru lu: ' + bolangTourney.group);
+    bolangOpenTourneyModal();
+  }catch(e){ toast('❌ Gagal klaim cafe!'); }
+}
+try{ bolangTourneyLoad(); bolangCafeLoad(); }catch(e){}
 function bolangSettleGame(d){
   if(!bolangInGame || bolangSettled) return;
   bolangSettled = true;
+    if(bolangInTourney){
+    // 6F: turnamen gak pake koin. Seri = ulang, menang = naik stage, kalah = cafe.
+    if(!d || !d.winner){ bolangTourneyOnResult(false, true); }
+    else if(d.winner === myName){ bolangTourneyOnResult(true, false); }
+    else { bolangTourneyOnResult(false, false); }
+    bolangSaveToDB(); bolangUpdateProgress(); try{ bolangRenderWorld(); }catch(e){}
+    return;
+  }
   try{ clearInterval(bolangAutoTimer); }catch(e){}
   if(!d || !d.winner){
   bolangCoins += BOLANG_BET();
@@ -3703,7 +3857,7 @@ function bolangRenderWorld(){
   if(shopInfo){
     let info = bolangNextInfo();
     if(!info) shopInfo.innerText = '🏆 Udah mentok! Tunggu TAHAP 7.';
-    else if(info.next.toLevel >= BOLANG_LEVELS.length) shopInfo.innerText = '🔒 Tujuan berikutnya: Turnamen Australia. Belum dibuka, tunggu TAHAP 7.';
+    else if(info.next.toLevel >= BOLANG_LEVELS.length) shopInfo.innerText = '🏆 Udah mentok! Tamatkan Turnamen Australia buat jadi KING OF MAHJONG.';
     else if(info.isCity) shopInfo.innerText = '🛒 Ke ' + info.destName + ': Beli tiket ' + info.next.ticket + ' ' + info.next.price.toLocaleString('id-ID') + ' + sisa ' + info.next.minMoney.toLocaleString('id-ID') + ' (butuh total ' + info.need.toLocaleString('id-ID') + ')';
     else shopInfo.innerText = '🛒 Ke ' + info.destName + ': Uang minimal ' + info.need.toLocaleString('id-ID') + ', beli tiket ' + info.next.ticket + ' ' + info.next.price.toLocaleString('id-ID');
   }
@@ -3808,7 +3962,7 @@ function bolangCloseShop(){
 function bolangBuyTicket(){
   let info = bolangNextInfo();
   if(!info) return;
-  if(info.next.toLevel >= BOLANG_LEVELS.length){ toast('🔒 Turnamen Australia belum dibuka. Tunggu TAHAP 7.'); return; }
+    if(info.next.toLevel > 10){ toast('🔒 Turnamen Australia belum dibuka.'); return; }
   if(bolangCoins < info.need){
     toast('❌ Koin kurang! Butuh ' + info.need.toLocaleString('id-ID') + ', koin lu ' + bolangCoins.toLocaleString('id-ID') + '.');
     bolangOpenShop();
@@ -5744,6 +5898,36 @@ updateAchLabel();
       <button class="btn btn-dark" onclick="bolangCloseWorkModal()" style="flex:1">❌ NANTI AJA</button>
     </div>
     <div style="font-size:11px;color:#94a3b8;margin-top:10px">Selama kerja, lu gak bisa main. Boleh tutup game, countdown tetep jalan (dicek server).</div>
+  </div>
+</div>
+<!-- 6F: MODAL TURNAMEN AUSTRALIA 64 ORANG -->
+<div id="bolangTourneyModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:10007;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0f172a;border:2px solid #f59e0b;border-radius:20px;padding:22px;max-width:420px;width:100%;text-align:center;color:#fff">
+    <div style="font-size:50px">🇦🇺</div>
+    <h2 style="color:#fde68a;margin:8px 0">TURNAMEN AUSTRALIA</h2>
+    <div style="font-size:12px;color:#94a3b8">64 orang • 4 grup @16 • Random • Bot EXTREME semua</div>
+    <div id="bolangTourneyBracket" style="background:rgba(0,0,0,.4);border-radius:14px;padding:12px;margin:14px 0;font-size:13px;line-height:1.8;text-align:left"></div>
+    <div id="bolangTourneyInfo" style="font-size:12px;color:#cbd5e1;line-height:1.6"></div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button id="bolangTourneyBtn" class="btn btn-gold" onclick="bolangTourneyPlay()" style="flex:1">🏆 MAIN BABAK 1</button>
+      <button class="btn btn-dark" onclick="bolangCloseTourneyModal()" style="flex:1">❌ TUTUP</button>
+    </div>
+    <div style="font-size:11px;color:#94a3b8;margin-top:10px">Menang 3x = KING OF MAHJONG. Kalah sekali = gugur, nunggu 3 jam di cafe.</div>
+  </div>
+</div>
+<!-- 6F: MODAL CAFE 3 JAM - NUNGGU JADWAL BERIKUTNYA -->
+<div id="bolangCafeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:10008;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0f172a;border:2px solid #f59e0b;border-radius:20px;padding:22px;max-width:400px;width:100%;text-align:center;color:#fff">
+    <div style="font-size:60px;animation:bolangStoryFloat 1.2s ease-in-out infinite">🎤</div>
+    <h2 style="color:#fde68a;margin:8px 0">REFRESHING DI CAFE</h2>
+    <div style="font-size:13px;color:#cbd5e1;line-height:1.6">Lu gugur. Lagi nunggu jadwal turnamen berikutnya.<br>Sambil nunggu, nyanyi dulu di cafe ☕🎤</div>
+    <div id="bolangCafeCountdown" style="font-size:28px;font-weight:900;color:#fde68a;margin:12px 0">03:00:00</div>
+    <div style="background:#1e293b;border-radius:10px;height:12px;overflow:hidden;margin:10px 0"><div id="bolangCafeBar" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fde68a)"></div></div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button id="bolangCafeBtn" class="btn btn-gold" onclick="bolangCafeAction()" style="flex:1" disabled>⏳ NUNGGU 03:00:00</button>
+      <button class="btn btn-dark" onclick="bolangCloseCafeModal()" style="flex:1">❌ TUTUP</button>
+    </div>
+    <div style="font-size:11px;color:#94a3b8;margin-top:10px">Selama di cafe (3 jam), lu gak bisa main sama sekali. Boleh tutup game, countdown tetep jalan (dicek server).</div>
   </div>
 </div>
 <!-- 6D: MODAL PILIH TITLE -->
