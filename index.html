@@ -5903,51 +5903,38 @@ updateAchLabel();
   </div>
 </div>
 <!-- BOLANG - TAHAP 3R: DUNIA BOLANG FULL SCREEN, BERSIH, BEDA DARI HOME -->
-<div id="bolangWorld" style="display:none;position:fixed;inset:0;z-index:10002;overflow-y:auto">
-  <!-- BACKGROUND DESA - NANTI DIGANTI PER KOTA DI TAHAP 6 -->
-  <div id="bolangWorldBg" style="min-height:100vh;background:linear-gradient(180deg,#7dd3fc 0%,#fef9c3 35%,#86efac 60%,#4ade80 100%);padding:14px;padding-bottom:30px">
-
-    <!-- HEADER: KOIN + KELUAR -->
-    <div style="display:flex;justify-content:space-between;align-items:center;max-width:520px;margin:0 auto">
-      <div style="background:rgba(0,0,0,.55);color:#fff;padding:8px 14px;border-radius:20px;font-weight:bold;font-size:14px">
-        🪙 <span id="bolangWorldCoins">0</span> KOIN
+<div id="bolangWorld" style="display:none;position:fixed;inset:0;z-index:10002;overflow-y:auto;background:#0B0714">
+  <div id="bolangWorldBg" style="min-height:100vh;background:radial-gradient(600px 300px at 20% 0%,rgba(168,85,247,.45),transparent 60%),radial-gradient(500px 300px at 90% 10%,rgba(236,72,153,.35),transparent 60%),linear-gradient(180deg,#0B0714,#1A0B2E 55%,#0B0714);padding:16px;padding-bottom:28px;font-family:system-ui,-apple-system,sans-serif">
+    <div style="max-width:480px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(10px);padding:8px 14px;border-radius:999px;color:#fff;font-weight:800;font-size:13px">🪙 <span id="bolangWorldCoins">0</span> <span style="color:#FDE68A">KOIN</span></div>
+        <button onclick="bolangExitWorld()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;padding:9px 14px;border-radius:999px;font-weight:800;cursor:pointer;font-size:13px">✕ Keluar</button>
       </div>
-      <button onclick="bolangExitWorld()" style="background:#dc2626;color:#fff;border:none;padding:10px 14px;border-radius:14px;font-weight:bold;cursor:pointer">⬅️ KELUAR</button>
-    </div>
-
-    <!-- JUDUL KOTA -->
-    <div style="text-align:center;margin-top:14px">
-      <div style="font-size:12px;color:#14532d;letter-spacing:2px">📍 POSISI SAAT INI</div>
-      <h1 id="bolangWorldCity" style="margin:2px 0;color:#14532d;font-size:30px">DESA</h1>
-      <div id="bolangWorldDesc" style="font-size:13px;color:#1f2937;max-width:420px;margin:0 auto;line-height:1.5">Sebuah desa kecil yang tenang. Dari sinilah perjalanan Bolang dimulai.</div>
-    </div>
-
-    <!-- AVATAR GEDE - NANTI DIGANTI PNG 3D -->
-    <div style="text-align:center;margin:16px 0 6px">
-      <!-- NANTI: ganti src-nya jadi assets/bolang/avatars/bolang_desa.png -->
-      <img id="bolangWorldAvatar" src="assets/bolang/avatars/bolang_desa.png" onerror="this.style.display='none';document.getElementById('bolangWorldAvatarFallback').style.display='block'" style="width:170px;height:170px;object-fit:cover;border-radius:50%;border:5px solid #f59e0b;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.35)">
-      <div id="bolangWorldAvatarFallback" style="display:none;font-size:140px;animation:bolangStoryFloat 2s ease-in-out infinite">🧑‍🌾</div>
-      <div style="margin-top:6px;font-weight:bold;color:#14532d">BOLANG</div>
-            <div id="bolangWorldTitle" style="font-size:12px;color:#92400e;background:#fde68a;display:inline-block;padding:3px 10px;border-radius:20px">🏆 ???</div>
-      <div style="margin-top:8px"><button onclick="bolangOpenTitleModal()" style="background:#f59e0b;color:#000;border:none;border-radius:20px;padding:8px 16px;font-weight:900;cursor:pointer">🏆 PILIH TITLE ▸</button></div>
-    </div>
-
-    <!-- BALAI DESA - BISA DIKLIK -->
-    <div style="max-width:460px;margin:0 auto;text-align:center">
-      <button onclick="bolangOpenBalaiDesa()" style="width:100%;background:linear-gradient(180deg,#92400e,#78350f);border:3px solid #fde68a;border-radius:20px;padding:18px;color:#fff;cursor:pointer">
-        <div style="font-size:60px">🏛️</div>
-        <div style="font-size:20px;font-weight:bold">BALAI DESA</div>
-        <div style="font-size:12px;opacity:.9">Klik buat main Mahjong di sini</div>
-        <div style="margin-top:10px;background:#f59e0b;color:#000;display:inline-block;padding:8px 16px;border-radius:20px;font-weight:bold">▶️ MASUK BALAI DESA</div>
-      </button>
-      <button onclick="bolangOpenShop()" style="width:100%;margin-top:10px;background:#f59e0b;color:#000;border:none;border-radius:14px;padding:12px;font-weight:900;cursor:pointer;font-size:14px">🛒 SHOP - BELI TIKET NAIK</button>
-<div id="bolangWorldShopInfo" style="margin-top:10px;font-size:12px;color:#14532d;background:rgba(255,255,255,.85);padding:10px;border-radius:12px">🚌 Syarat ke Jakarta: Beli tiket bus 50.000 + sisa uang minimal 50.000</div>
-    </div>
-
-    <!-- PROGRESS DI DUNIA -->
-    <div style="max-width:460px;margin:14px auto;background:rgba(0,0,0,.55);color:#fff;border-radius:14px;padding:10px">
-      <div style="display:flex;justify-content:space-between;font-size:12px"><span>🗺️ Bolang Progress</span><span id="bolangWorldProgressText">0%</span></div>
-      <div style="height:12px;background:#1e293b;border-radius:10px;overflow:hidden;margin-top:6px"><div id="bolangWorldProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#f59e0b,#fde68a)"></div></div>
+      <div style="text-align:center;margin-top:22px">
+        <div style="display:inline-block;background:rgba(168,85,247,.2);border:1px solid rgba(168,85,247,.4);color:#DDD6FE;font-size:11px;font-weight:800;letter-spacing:2px;padding:6px 12px;border-radius:999px">📍 POSISI SAAT INI</div>
+        <h1 id="bolangWorldCity" style="margin:10px 0 6px;font-size:38px;line-height:1;font-weight:900;letter-spacing:-1px;background:linear-gradient(90deg,#fff,#F0ABFC,#FDE68A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;color:#fff">DESA</h1>
+        <div id="bolangWorldDesc" style="font-size:13px;color:#C4B5FD;max-width:340px;margin:0 auto;line-height:1.6">Sebuah desa kecil yang tenang. Dari sinilah perjalanan Bolang dimulai.</div>
+      </div>
+      <div style="text-align:center;margin:20px 0 6px">
+        <div style="width:148px;height:148px;margin:0 auto;border-radius:50%;padding:4px;background:linear-gradient(135deg,#A855F7,#EC4899,#F59E0B);box-shadow:0 16px 40px rgba(168,85,247,.45)">
+          <img id="bolangWorldAvatar" src="assets/bolang/avatars/bolang_desa.png" onerror="this.style.display='none';document.getElementById('bolangWorldAvatarFallback').style.display='block'" style="width:140px;height:140px;object-fit:cover;border-radius:50%;background:#fff;display:block">
+        </div>
+        <div id="bolangWorldAvatarFallback" style="display:none;font-size:110px;line-height:1">🧑‍🌾</div>
+        <div style="margin-top:12px;font-weight:900;color:#fff;font-size:16px;letter-spacing:1px">BOLANG</div>
+        <div id="bolangWorldTitle" style="margin-top:6px;font-size:11px;font-weight:800;color:#FDE68A;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);display:inline-block;padding:5px 12px;border-radius:999px">🏆 ???</div>
+        <div style="margin-top:10px"><button onclick="bolangOpenTitleModal()" style="background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:999px;padding:8px 16px;font-weight:800;cursor:pointer;font-size:12px">🏆 Ganti Title ▸</button></div>
+      </div>
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:12px">
+        <button onclick="bolangOpenBalaiDesa()" style="border:none;border-radius:24px;padding:20px;text-align:left;color:#fff;cursor:pointer;background:linear-gradient(135deg,#7C3AED,#DB2777);box-shadow:0 16px 32px rgba(219,39,119,.35)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:11px;opacity:.85;font-weight:800;letter-spacing:1px">MAIN SEKARANG</div><div style="font-size:22px;font-weight:900;margin-top:4px">Balai Desa</div><div style="font-size:12px;opacity:.85;margin-top:4px">Gas main Mahjong di sini 🔥</div></div>
+            <div style="width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:26px">🀄</div>
+          </div>
+          <div style="margin-top:14px;background:#fff;color:#111;display:inline-block;padding:9px 16px;border-radius:999px;font-weight:900;font-size:13px">▶ Main Sekarang</div>
+        </button>
+        <button onclick="bolangOpenShop()" style="border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);backdrop-filter:blur(10px);color:#fff;border-radius:20px;padding:15px;font-weight:900;cursor:pointer;font-size:14px">🛒 Shop - Beli Tiket Naik</button>
+      </div>
+      <div style="text-align:center;color:#7C6AA8;font-size:11px;margin-top:18px">Bolang • Jadi Raja Mahjong 👑</div>
     </div>
   </div>
 </div>
