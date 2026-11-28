@@ -842,8 +842,7 @@ function startGame(room, turnTimeSec){
   // FITUR 2: LEMPAR DADU - tentukan dealer dari dadu
   let d1 = 1+Math.floor(Math.random()*6);
   let d2 = 1+Math.floor(Math.random()*6);
-  let total = d1+d2;
-let total = d1+d2; 
+  let total = d1+d2; 
 let baseIdx = 0; 
 if(room._countFromWinner && room.lastWinnerName){ let wi = room.players.findIndex(p=>p.name===room.lastWinnerName); if(wi>=0) baseIdx = wi; } 
 room._countFromWinner = false; 
