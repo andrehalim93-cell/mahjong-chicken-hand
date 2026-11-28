@@ -2878,9 +2878,10 @@ document.addEventListener('fullscreenchange', ()=>{
 });
 // ===== LEVEL BOT: hijau = GAMPANG, kuning = NORMAL, merah = SUSAH =====
 function botLevelOf(p){ let l = String((p&&(p.botLevel||p.level))||'normal').toLowerCase(); if(l==='medium') return 'normal'; if(l==='hard'||l==='normal'||l==='easy'||l==='extreme') return l; return 'easy'; }
-function botLevelLabel(p){ let l = botLevelOf(p); if(l==='extreme') return '💀 EXTREME'; if(l==='hard') return '😈 SUSAH'; if(l==='normal') return '😐 NORMAL'; return '😊 GAMPANG'; }
-function botLevelClass(p){ return 'bot-' + botLevelOf(p); }
-function botSeatStyle(p){ let l = botLevelOf(p); if(l==='extreme') return 'background:linear-gradient(180deg,#7c3aed,#3b0764);border-color:#c084fc;'; if(l==='hard') return 'background:linear-gradient(180deg,#b91c1c,#7f1d1d);border-color:#f87171;'; if(l==='normal') return 'background:linear-gradient(180deg,#a16207,#713f12);border-color:#facc15;'; return 'background:linear-gradient(180deg,#15803d,#14532d);border-color:#4ade80;'; }
+function bolangHideBotLevel(){ try{ return !!bolangInGame; }catch(e){ return false; } }
+function botLevelLabel(p){ if(bolangHideBotLevel()) return ''; let l = botLevelOf(p); if(l==='extreme') return '💀 EXTREME'; if(l==='hard') return '😈 SUSAH'; if(l==='normal') return '😐 NORMAL'; return '😊 GAMPANG'; }
+function botLevelClass(p){ if(bolangHideBotLevel()) return ''; return 'bot-' + botLevelOf(p); }
+function botSeatStyle(p){ if(bolangHideBotLevel()) return ''; let l = botLevelOf(p); if(l==='extreme') return 'background:linear-gradient(180deg,#7c3aed,#3b0764);border-color:#c084fc;'; if(l==='hard') return 'background:linear-gradient(180deg,#b91c1c,#7f1d1d);border-color:#f87171;'; if(l==='normal') return 'background:linear-gradient(180deg,#a16207,#713f12);border-color:#facc15;'; return 'background:linear-gradient(180deg,#15803d,#14532d);border-color:#4ade80;'; }
 function botDisplayName(p){ return esc(p.name); }
 function randomBotName(){ let pool=BOT_NAMES.filter(n=>!usedBotNames.includes(n) && n!==myName); if(pool.length===0) pool=BOT_NAMES.slice(); let n=pool[Math.floor(Math.random()*pool.length)]; usedBotNames.push(n); return n; }
 function setTurnTime(sec, btn){ if(!isHost){ toast('Cuma HOST yang bisa ganti waktu!'); return; } turnTimeSec=sec; document.querySelectorAll('#timeBtns button').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); el('timeInfo').innerText = sec===0 ? 'Saat ini: Tanpa batas' : 'Saat ini: '+sec+' detik per giliran'; el('turnTimer').innerText = sec===0 ? '♾️' : sec+'s'; socket.emit('setTurnTime',{code:myCode, seconds:sec}); }
